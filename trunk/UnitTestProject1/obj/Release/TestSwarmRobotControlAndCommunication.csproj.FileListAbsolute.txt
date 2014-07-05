@@ -1,0 +1,9 @@
+D:\Google Drive\Work\Csharp\SwarmRobotWPF\SwarmRobotControlAndCommunicationRF\UnitTestProject1\bin\Release\TestSwarmRobotControlAndCommunication.dll
+D:\Google Drive\Work\Csharp\SwarmRobotWPF\SwarmRobotControlAndCommunicationRF\UnitTestProject1\bin\Release\TestSwarmRobotControlAndCommunication.pdb
+D:\Google Drive\Work\Csharp\SwarmRobotWPF\SwarmRobotControlAndCommunicationRF\UnitTestProject1\bin\Release\SwarmRobotControlAndCommunication.exe
+D:\Google Drive\Work\Csharp\SwarmRobotWPF\SwarmRobotControlAndCommunicationRF\UnitTestProject1\bin\Release\usbGenericHidCommunications.dll
+D:\Google Drive\Work\Csharp\SwarmRobotWPF\SwarmRobotControlAndCommunicationRF\UnitTestProject1\bin\Release\SwarmRobotControlAndCommunication.pdb
+D:\Google Drive\Work\Csharp\SwarmRobotWPF\SwarmRobotControlAndCommunicationRF\UnitTestProject1\bin\Release\usbGenericHidCommunications.pdb
+D:\Google Drive\Work\Csharp\SwarmRobotWPF\SwarmRobotControlAndCommunicationRF\UnitTestProject1\obj\Release\TestSwarmRobotControlAndCommunication.csprojResolveAssemblyReference.cache
+D:\Google Drive\Work\Csharp\SwarmRobotWPF\SwarmRobotControlAndCommunicationRF\UnitTestProject1\obj\Release\TestSwarmRobotControlAndCommunication.dll
+D:\Google Drive\Work\Csharp\SwarmRobotWPF\SwarmRobotControlAndCommunicationRF\UnitTestProject1\obj\Release\TestSwarmRobotControlAndCommunication.pdb

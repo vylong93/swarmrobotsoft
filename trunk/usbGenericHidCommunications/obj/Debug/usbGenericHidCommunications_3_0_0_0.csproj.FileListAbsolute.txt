@@ -1,0 +1,50 @@
+D:\C_project\USB Generic HID reference application 3_0_0_0\usbGenericHidCommunications\bin\Debug\usbGenericHidCommunications.dll
+D:\C_project\USB Generic HID reference application 3_0_0_0\usbGenericHidCommunications\bin\Debug\usbGenericHidCommunications.pdb
+D:\C_project\USB Generic HID reference application 3_0_0_0\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications_3_0_0_0.csprojResolveAssemblyReference.cache
+D:\C_project\USB Generic HID reference application 3_0_0_0\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications.dll
+D:\C_project\USB Generic HID reference application 3_0_0_0\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications.pdb
+D:\Google Drive\Work\Csharp\USB Generic HID reference application 3_0_0_0\usbGenericHidCommunications\bin\Debug\usbGenericHidCommunications.dll
+D:\Google Drive\Work\Csharp\USB Generic HID reference application 3_0_0_0\usbGenericHidCommunications\bin\Debug\usbGenericHidCommunications.pdb
+D:\Google Drive\Work\Csharp\USB Generic HID reference application 3_0_0_0\usbGenericHidCommunications\obj\Debug\ResolveAssemblyReference.cache
+D:\Google Drive\Work\Csharp\USB Generic HID reference application 3_0_0_0\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications.dll
+D:\Google Drive\Work\Csharp\USB Generic HID reference application 3_0_0_0\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications.pdb
+E:\Google Drive\Work\Csharp\USB Generic HID reference application 3_0_0_0\usbGenericHidCommunications\bin\Debug\usbGenericHidCommunications.dll
+E:\Google Drive\Work\Csharp\USB Generic HID reference application 3_0_0_0\usbGenericHidCommunications\bin\Debug\usbGenericHidCommunications.pdb
+E:\Google Drive\Work\Csharp\USB Generic HID reference application 3_0_0_0\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications_3_0_0_0.csprojResolveAssemblyReference.cache
+E:\Google Drive\Work\Csharp\USB Generic HID reference application 3_0_0_0\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications.dll
+E:\Google Drive\Work\Csharp\USB Generic HID reference application 3_0_0_0\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications.pdb
+E:\Google Drive\Work\Csharp\Swarm Robot Control & Communication\usbGenericHidCommunications\bin\Debug\usbGenericHidCommunications.dll
+E:\Google Drive\Work\Csharp\Swarm Robot Control & Communication\usbGenericHidCommunications\bin\Debug\usbGenericHidCommunications.pdb
+E:\Google Drive\Work\Csharp\Swarm Robot Control & Communication\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications_3_0_0_0.csprojResolveAssemblyReference.cache
+E:\Google Drive\Work\Csharp\Swarm Robot Control & Communication\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications.dll
+E:\Google Drive\Work\Csharp\Swarm Robot Control & Communication\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications.pdb
+D:\Google Drive\Work\Csharp\Swarm Robot Control & Communication\usbGenericHidCommunications\bin\Debug\usbGenericHidCommunications.dll
+D:\Google Drive\Work\Csharp\Swarm Robot Control & Communication\usbGenericHidCommunications\bin\Debug\usbGenericHidCommunications.pdb
+D:\Google Drive\Work\Csharp\Swarm Robot Control & Communication\usbGenericHidCommunications\obj\Debug\ResolveAssemblyReference.cache
+D:\Google Drive\Work\Csharp\Swarm Robot Control & Communication\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications.dll
+D:\Google Drive\Work\Csharp\Swarm Robot Control & Communication\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications.pdb
+D:\Google Drive\Work\Csharp\SwarmRobotWPF\SwarmRobotControlAndCommunication\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications_3_0_0_0.csprojResolveAssemblyReference.cache
+D:\Google Drive\Work\Csharp\SwarmRobotWPF\SwarmRobotControlAndCommunication\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications.dll
+D:\Google Drive\Work\Csharp\SwarmRobotWPF\SwarmRobotControlAndCommunication\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications.pdb
+D:\Google Drive\Work\Csharp\SwarmRobotWPF\SwarmRobotControlAndCommunication\usbGenericHidCommunications\bin\Debug\usbGenericHidCommunications.dll
+D:\Google Drive\Work\Csharp\SwarmRobotWPF\SwarmRobotControlAndCommunication\usbGenericHidCommunications\bin\Debug\usbGenericHidCommunications.pdb
+E:\Google Drive\Work\Csharp\SwarmRobotWPF\SwarmRobotControlAndCommunication\usbGenericHidCommunications\bin\Debug\usbGenericHidCommunications.dll
+E:\Google Drive\Work\Csharp\SwarmRobotWPF\SwarmRobotControlAndCommunication\usbGenericHidCommunications\bin\Debug\usbGenericHidCommunications.pdb
+E:\Google Drive\Work\Csharp\SwarmRobotWPF\SwarmRobotControlAndCommunication\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications_3_0_0_0.csprojResolveAssemblyReference.cache
+E:\Google Drive\Work\Csharp\SwarmRobotWPF\SwarmRobotControlAndCommunication\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications.dll
+E:\Google Drive\Work\Csharp\SwarmRobotWPF\SwarmRobotControlAndCommunication\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications.pdb
+D:\Google Drive\Work\Csharp\SwarmRobotWPF\SwarmRobotControlAndCommunicationRF\usbGenericHidCommunications\bin\Debug\usbGenericHidCommunications.dll
+D:\Google Drive\Work\Csharp\SwarmRobotWPF\SwarmRobotControlAndCommunicationRF\usbGenericHidCommunications\bin\Debug\usbGenericHidCommunications.pdb
+D:\Google Drive\Work\Csharp\SwarmRobotWPF\SwarmRobotControlAndCommunicationRF\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications_3_0_0_0.csprojResolveAssemblyReference.cache
+D:\Google Drive\Work\Csharp\SwarmRobotWPF\SwarmRobotControlAndCommunicationRF\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications.dll
+D:\Google Drive\Work\Csharp\SwarmRobotWPF\SwarmRobotControlAndCommunicationRF\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications.pdb
+D:\Google Drive\Work\Csharp\SwarmRobotWPF\SwarmRobotControlAndCommunicationRFV2\usbGenericHidCommunications\bin\Debug\usbGenericHidCommunications.dll
+D:\Google Drive\Work\Csharp\SwarmRobotWPF\SwarmRobotControlAndCommunicationRFV2\usbGenericHidCommunications\bin\Debug\usbGenericHidCommunications.pdb
+D:\Google Drive\Work\Csharp\SwarmRobotWPF\SwarmRobotControlAndCommunicationRFV2\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications_3_0_0_0.csprojResolveAssemblyReference.cache
+D:\Google Drive\Work\Csharp\SwarmRobotWPF\SwarmRobotControlAndCommunicationRFV2\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications.dll
+D:\Google Drive\Work\Csharp\SwarmRobotWPF\SwarmRobotControlAndCommunicationRFV2\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications.pdb
+E:\00 SwarmRobot\Workspace\SwarmRobotControlAndCommunicationRFV2\usbGenericHidCommunications\bin\Debug\usbGenericHidCommunications.dll
+E:\00 SwarmRobot\Workspace\SwarmRobotControlAndCommunicationRFV2\usbGenericHidCommunications\bin\Debug\usbGenericHidCommunications.pdb
+E:\00 SwarmRobot\Workspace\SwarmRobotControlAndCommunicationRFV2\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications_3_0_0_0.csprojResolveAssemblyReference.cache
+E:\00 SwarmRobot\Workspace\SwarmRobotControlAndCommunicationRFV2\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications.dll
+E:\00 SwarmRobot\Workspace\SwarmRobotControlAndCommunicationRFV2\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications.pdb
