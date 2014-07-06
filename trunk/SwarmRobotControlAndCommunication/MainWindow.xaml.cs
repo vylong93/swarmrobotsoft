@@ -55,6 +55,12 @@ namespace SwarmRobotControlAndCommunication
             private const byte COMMAND_READ_ADC2            = 0xA1;
             private const byte COMMAND_DISTANCE_SENSING     = 0xA2;
             private const byte COMMAND_BATTERY_MEASUREMENT  = 0xA3;
+
+            private const byte COMMAND_STOP_MOTOR1          = 0xA4;
+            private const byte COMMAND_STOP_MOTOR2          = 0xA5;
+
+            private const byte MOTOR_FORWARD_DIRECTION      = 0x00;
+            private const byte MOTOR_REVERSE_DIRECTION      = 0x01;
             //---------------------------------Commands to control all Robots
         #endregion
 
@@ -623,9 +629,30 @@ namespace SwarmRobotControlAndCommunication
 
                     case "Change Motors Speed":
                         transmittedData[0] = COMMAND_CHANGE_MOTOR_SPEED;
-                        transmittedData[1] = Convert.ToByte(this.motor1SpeedTextBox.Text);
-                        transmittedData[2] = Convert.ToByte(this.motor2SpeedTextBox.Text);
-                        theControlBoard.transmitBytesToRobot(transmittedData, 3, 1);
+
+                        if (motor1ReverseCheckBox.IsChecked == true)
+                        {
+                            transmittedData[1] = MOTOR_REVERSE_DIRECTION;
+                            transmittedData[2] = (byte)(100 - Convert.ToByte(this.motor1SpeedTextBox.Text));
+                        }
+                        else 
+                        {
+                            transmittedData[1] = MOTOR_FORWARD_DIRECTION;
+                            transmittedData[2] = Convert.ToByte(this.motor1SpeedTextBox.Text);
+                        }
+
+                        if (motor2ReverseCheckBox.IsChecked == true)
+                        {
+                            transmittedData[3] = MOTOR_REVERSE_DIRECTION;
+                            transmittedData[4] = (byte)(100 - Convert.ToByte(this.motor2SpeedTextBox.Text));
+                        }
+                        else 
+                        {
+                            transmittedData[3] = MOTOR_FORWARD_DIRECTION; 
+                            transmittedData[4] = Convert.ToByte(this.motor2SpeedTextBox.Text);
+                        }
+
+                        theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
                         break;
                     
                     case "Test RF Carrier Detection":
@@ -783,10 +810,18 @@ namespace SwarmRobotControlAndCommunication
                 throw new Exception("Test transmitting data " + ex.Message);
             }
         }
-      
+
+        private void stopMotor1Button_Click(object sender, RoutedEventArgs e)
+        {
+            theControlBoard.transmitBytesToRobot(COMMAND_STOP_MOTOR1);
+        }
+
+        private void stopMotor2Button_Click(object sender, RoutedEventArgs e)
+        {
+            theControlBoard.transmitBytesToRobot(COMMAND_STOP_MOTOR2);
+        }
+
         #endregion
-
-
     }
 
     #region IValueConverter Members
