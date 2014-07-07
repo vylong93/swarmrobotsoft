@@ -25,46 +25,46 @@ namespace SwarmRobotControlAndCommunication
             /// <summary>
             /// The bootloader start address is located at the start of
             /// the flash (from 0x00 -> EndAddress)
-            /// is not allowed to be written in this area
+            /// It is not allowed to be written in this area
             /// </summary>
-            private const uint BootLoaderEndAddress         = 0x1FFF;
+            private const uint BOOTLOADER_END_ADDRESS = 0x1FFF;
 
             /// <summary>
             /// Used to check the first address of the hex file to see
             /// if the user has relocated the app starting address to the
             /// same as in the bootloader or not.
             /// </summary>
-            private const uint ApplicationStartAddress      = 0x2000; 
+            private const uint APP_START_ADDRESS = 0x2000; 
 
             /// <summary>
             /// The size of one block of bytes that will be written
             /// into the  flash memory in each programming frame
             /// </summary>
-            private const byte SizeOfOneProgramBlock        = 32;
+            private const byte SIZE_ONE_PROGRAM_BLOCK = 32;
 
             /// <summary>
             /// The size of flash memory that will be reased at one time
             /// </summary>
-            private const uint SizeOfOneErasedBlock         = 1024;
+            private const uint SIZE_ONE_ERASED_BLOCK = 1024;
 
             /// <summary>
             /// Command used to signal a robot to start update its
             /// program using the bootloader
             /// </summary>
-            private const byte GotoIntoBootLoaderCommand    = 0xAA;
+            private const byte BOOTLOADER_START_COMMAND = 0xAA;
 
             /// <summary>
             /// The end of a hex file is detected when a hex line 
             /// do not contain any data (byteCount = 0)
             /// </summary>
-            private const byte EndOfHexFile                 = 0x00;
+            private const byte END_HEX_FILE = 0x00;
 
             /// <summary>
             /// The wait time between each programming frame so that 
             /// a robot finish writting a programm block to its flash
             /// memory. Unit [ms] 
             /// </summary>
-            private const byte WaitTimeBetweenEachProgammingBlock = 10;
+            private const byte WAIT_TIME_BETWEEN_PROGRAM_BLOCKS = 10;
 
             /// <summary>
             ///  The opcode of NOP command in byte
@@ -74,29 +74,28 @@ namespace SwarmRobotControlAndCommunication
             /// <summary>
             /// The record type for data to program according to INTEL HEX
             /// </summary>
-            private const byte DataRecord = 0x00;
+            private const byte RECORD_DATA = 0x00;
 
             /// <summary>
             /// The extended address record type according to INTEL HEX
             /// </summary>
-            private const byte ExtendedAddressRecord = 0x04;
+            private const byte RECORD_EXTENDED_ADDRESS = 0x04;
 
             /// <summary>
             /// Used to create the buffer to store one line of data
             /// Should be larger or equal to the maximum data of one line
             /// </summary>
-            private const byte MaxLineDataLength = 64;
+            private const byte MAX_LINE_DATA_LENGTH = 64;
 
             /// <summary>
             /// This is multiplied with transfersize in KB to determine
             /// the real wait time for mass erasing flash memory
             /// </summary>
-            private const byte WaitForMassFlassErase = 25;
+            private const byte WAIT_FOR_MASS_FLASH_ERASE = 25;
         #endregion
 
         #region Variables for bootloader commands
             private byte extendedAddress;
-            private uint startAddress;
             private uint endLineAddess;
             private uint endLineByteCount;
             private bool notAllOfNextLineDataIsSentFlag;
@@ -130,9 +129,9 @@ namespace SwarmRobotControlAndCommunication
             extendedAddress = 0;
             notAllOfNextLineDataIsSentFlag = false;
             currentHexLinePointer = 0;
-            startAddressCurrentProgramBlock = ApplicationStartAddress;
-            startAddressNextProgramBlock = startAddressCurrentProgramBlock + SizeOfOneProgramBlock;
-            toSendData = new byte[SizeOfOneProgramBlock];
+            startAddressCurrentProgramBlock = APP_START_ADDRESS;
+            startAddressNextProgramBlock = startAddressCurrentProgramBlock + SIZE_ONE_PROGRAM_BLOCK;
+            toSendData = new byte[SIZE_ONE_PROGRAM_BLOCK];
             dataPointer = 0;
             startLocationLeftOverData = 0;
             lengthOfLeftOverData = 0;
@@ -161,7 +160,7 @@ namespace SwarmRobotControlAndCommunication
             numberOfLines = 0;
 
             IntelHexFormat currentLine = new IntelHexFormat();
-            currentLine.data = new Byte[MaxLineDataLength];            
+            currentLine.data = new Byte[MAX_LINE_DATA_LENGTH];            
             int byteRead = 0;
             try
             {
@@ -172,11 +171,11 @@ namespace SwarmRobotControlAndCommunication
                 while (true)
                 {
                     //Detect End of File (EoF) Signature
-                    if (currentLine.byteCount == EndOfHexFile) 
+                    if (currentLine.byteCount == END_HEX_FILE) 
                         return numberOfLines;
 
                     checkRecordType(currentLine.recordType);
-                    if (currentLine.recordType == DataRecord)
+                    if (currentLine.recordType == RECORD_DATA)
                     {
                         checkNotBootLoaderAddress(currentLine.address);
                         verifyCheckSum(currentLine);
@@ -236,7 +235,7 @@ namespace SwarmRobotControlAndCommunication
 
                 currentLine.recordType = getOneByte(ref intelHexFile);
 
-                currentLine.data = new byte[MaxLineDataLength];
+                currentLine.data = new byte[MAX_LINE_DATA_LENGTH];
                 for (byte i = 0; i < currentLine.byteCount; i++)
                 {
                     currentLine.data[i] = getOneByte(ref intelHexFile);
@@ -244,7 +243,7 @@ namespace SwarmRobotControlAndCommunication
 
                 currentLine.checkSum = getOneByte(ref intelHexFile);
 
-                if (currentLine.recordType == ExtendedAddressRecord)
+                if (currentLine.recordType == RECORD_EXTENDED_ADDRESS)
                         extendedAddress = currentLine.data[currentLine.byteCount - 1];
 
                 //Find the real address
@@ -271,8 +270,8 @@ namespace SwarmRobotControlAndCommunication
         }
         private void checkRecordType(uint recordType)
         {
-            if ( (recordType == DataRecord) || (recordType == 0x01) ||
-                 (recordType == ExtendedAddressRecord) || (recordType == 0x03)
+            if ( (recordType == RECORD_DATA) || (recordType == 0x01) ||
+                 (recordType == RECORD_EXTENDED_ADDRESS) || (recordType == 0x03)
                )
                 return;
 
@@ -286,17 +285,17 @@ namespace SwarmRobotControlAndCommunication
             {
                 string errorMessage = String.Format("Invalid HEX file\n" +
                                 "Bootloader protected address: 0x0000 -> 0x{0} \n" +
-                                "Application address: 0x{1}", BootLoaderEndAddress.ToString("X4"), address.ToString("X4"));
+                                "Application address: 0x{1}", BOOTLOADER_END_ADDRESS.ToString("X4"), address.ToString("X4"));
                 throw new Exception(errorMessage);
             }
         }
         private void checkAppStartAddress(uint address)
         {
-            if (address != ApplicationStartAddress)
+            if (address != APP_START_ADDRESS)
             {
                 string errorMessage = String.Format("Invalid HEX file\n" +
                                 "Application start address must be: 0x{0} \n" +
-                                "Application address: 0x{1}", ApplicationStartAddress.ToString("X4"), address.ToString("X4"));
+                                "Application address: 0x{1}", APP_START_ADDRESS.ToString("X4"), address.ToString("X4"));
                 throw new Exception(errorMessage);
             }
         }
@@ -309,7 +308,7 @@ namespace SwarmRobotControlAndCommunication
         }
         private bool isBootLoaderAddress(uint address)
         {
-            if (address <= BootLoaderEndAddress)
+            if (address <= BOOTLOADER_END_ADDRESS)
             {
                 return true;
             }
@@ -361,7 +360,7 @@ namespace SwarmRobotControlAndCommunication
         {
             try
             {
-                theControlBoard.transmitBytesToRobot(GotoIntoBootLoaderCommand);
+                theControlBoard.transmitBytesToRobot(BOOTLOADER_START_COMMAND);
             }
             catch (Exception ex)
             {
@@ -377,9 +376,9 @@ namespace SwarmRobotControlAndCommunication
             extendedAddress = 0;
             notAllOfNextLineDataIsSentFlag = false;
             currentHexLinePointer = 0;
-            startAddressCurrentProgramBlock = ApplicationStartAddress;
-            startAddressNextProgramBlock = startAddressCurrentProgramBlock + SizeOfOneProgramBlock;
-            toSendData = new byte[SizeOfOneProgramBlock];
+            startAddressCurrentProgramBlock = APP_START_ADDRESS;
+            startAddressNextProgramBlock = startAddressCurrentProgramBlock + SIZE_ONE_PROGRAM_BLOCK;
+            toSendData = new byte[SIZE_ONE_PROGRAM_BLOCK];
             dataPointer = 0;
             startLocationLeftOverData = 0;
             lengthOfLeftOverData = 0;
@@ -396,8 +395,8 @@ namespace SwarmRobotControlAndCommunication
         {
             hexFile = new FileStream(fileName, FileMode.Open, FileAccess.Read);
 
-            firstHexLine.data = new byte[SizeOfOneProgramBlock];
-            nextHexLine.data = new byte[SizeOfOneProgramBlock];
+            firstHexLine.data = new byte[SIZE_ONE_PROGRAM_BLOCK];
+            nextHexLine.data = new byte[SIZE_ONE_PROGRAM_BLOCK];
 
             try
             {
@@ -427,20 +426,14 @@ namespace SwarmRobotControlAndCommunication
 
             nextHexLine = readOneLineOfHexFile(ref hexFile);
                 
-            startAddress = nextHexLine.address;
             byte[] transmitData = new byte[8];
-            transmitData[0] = (byte)((startAddress >> 24) & 0xFF);
-            transmitData[1] = (byte)((startAddress >> 16) & 0xFF);
-            transmitData[2] = (byte)((startAddress >> 8) & 0xFF);
-            transmitData[3] = (byte)(startAddress & 0xFF);
-
-            transferSize = endLineAddess - startAddress + endLineByteCount;
-            transmitData[4] = (byte)((transferSize >> 24) & 0xFF);
-            transmitData[5] = (byte)((transferSize >> 16) & 0xFF);
-            transmitData[6] = (byte)((transferSize >> 8) & 0xFF);
-            transmitData[7] = (byte)(transferSize & 0xFF);
+            transferSize = endLineAddess - APP_START_ADDRESS + endLineByteCount;
+            transmitData[0] = (byte)((transferSize >> 24) & 0xFF);
+            transmitData[1] = (byte)((transferSize >> 16) & 0xFF);
+            transmitData[2] = (byte)((transferSize >> 8) & 0xFF);
+            transmitData[3] = (byte)(transferSize & 0xFF);
             theControlBoard.transmitBytesToRobot(transmitData, 8, 1);
-            System.Threading.Thread.Sleep((int)(WaitForMassFlassErase*transferSize/1024));
+            System.Threading.Thread.Sleep((int)(WAIT_FOR_MASS_FLASH_ERASE*transferSize/1024));
             //MessageBox.Show(transferSize.ToString());
             currentHexLinePointer++;
         }
@@ -460,13 +453,13 @@ namespace SwarmRobotControlAndCommunication
 
                 if (isSkipTheRest == true)
                 {
-                    programOneByteFrameToFlash(SizeOfOneProgramBlock, startAddressCurrentProgramBlock, toSendData);
+                    programOneByteFrameToFlash(SIZE_ONE_PROGRAM_BLOCK, startAddressCurrentProgramBlock, toSendData);
                     updateAddressesAndDataPointer();
                     continue;
                 }
                 if (isOneByteFrameReady() == true)
                 {
-                    programOneByteFrameToFlash(SizeOfOneProgramBlock, startAddressCurrentProgramBlock, toSendData);
+                    programOneByteFrameToFlash(SIZE_ONE_PROGRAM_BLOCK, startAddressCurrentProgramBlock, toSendData);
                     updateAddressesAndDataPointer();
                 }
                 //Update all next* variables if only part of nextHexLineData is sent
@@ -481,7 +474,7 @@ namespace SwarmRobotControlAndCommunication
 
                 while (true)
                 {
-                    if (nextHexLine.byteCount == EndOfHexFile)
+                    if (nextHexLine.byteCount == END_HEX_FILE)
                     {
                         // If there is still data left then send it before exiting the bootloader
                         if (dataPointer != 0)
@@ -492,7 +485,7 @@ namespace SwarmRobotControlAndCommunication
                     nextHexLine = readOneLineOfHexFile(ref hexFile);
                     currentHexLinePointer++;
                     
-                    if (nextHexLine.recordType == DataRecord)
+                    if (nextHexLine.recordType == RECORD_DATA)
                         break;
                 }
             }
@@ -512,7 +505,7 @@ namespace SwarmRobotControlAndCommunication
         {
             if (isNextAddressInsideCurrentBlock() == false)
             {
-                fillNopCommandFromCurrentDataPointerToNextProgrammedBlock(ref toSendData, dataPointer, SizeOfOneProgramBlock);
+                fillNopCommandFromCurrentDataPointerToNextProgrammedBlock(ref toSendData, dataPointer, SIZE_ONE_PROGRAM_BLOCK);
                 return true;
             }
             else if (isNextAddressAndAllOfItsDataInsideCurrentBlock() == true)
@@ -555,34 +548,34 @@ namespace SwarmRobotControlAndCommunication
             //}
             //else
             //{
-            //    fillNopCommandFromCurrentDataPointerToNextProgrammedBlock(ref toSendData, dataPointer, SizeOfOneProgramBlock);
+            //    fillNopCommandFromCurrentDataPointerToNextProgrammedBlock(ref toSendData, dataPointer, SIZE_ONE_PROGRAM_BLOCK);
             //    return true;
 
             //}
         }
         private bool isNextAddressInsideCurrentBlock()
         {
-            if (nextHexLine.address - startAddressCurrentProgramBlock >= SizeOfOneProgramBlock)
+            if (nextHexLine.address - startAddressCurrentProgramBlock >= SIZE_ONE_PROGRAM_BLOCK)
                 return false;
             else
                 return true;
         }
         private void updateAddressesAndDataPointer()
         {
-            startAddressCurrentProgramBlock += SizeOfOneProgramBlock;
-            startAddressNextProgramBlock += SizeOfOneProgramBlock;
+            startAddressCurrentProgramBlock += SIZE_ONE_PROGRAM_BLOCK;
+            startAddressNextProgramBlock += SIZE_ONE_PROGRAM_BLOCK;
             dataPointer = 0;
         }
         private bool isNextAddressAndAllOfItsDataInsideCurrentBlock()
         {
-            if (nextHexLine.address - startAddressCurrentProgramBlock + nextHexLine.byteCount <= SizeOfOneProgramBlock)
+            if (nextHexLine.address - startAddressCurrentProgramBlock + nextHexLine.byteCount <= SIZE_ONE_PROGRAM_BLOCK)
                 return true;
             else
                 return false;
         }
         private bool isOneByteFrameReady()
         {
-            if (dataPointer == SizeOfOneProgramBlock)
+            if (dataPointer == SIZE_ONE_PROGRAM_BLOCK)
                 return true;
             else
                 return false;
@@ -611,9 +604,9 @@ namespace SwarmRobotControlAndCommunication
 
             return;
         }
-        private void fillNopCommandFromCurrentDataPointerToNextProgrammedBlock(ref byte[] programData, byte dataPointer, uint SizeOfOneProgramBlock)
+        private void fillNopCommandFromCurrentDataPointerToNextProgrammedBlock(ref byte[] programData, byte dataPointer, uint SIZE_ONE_PROGRAM_BLOCK)
         {
-            for (int i = 0; i < (SizeOfOneProgramBlock - dataPointer); i++)
+            for (int i = 0; i < (SIZE_ONE_PROGRAM_BLOCK - dataPointer); i++)
             {
                 programData[dataPointer + i] = NOP;
             }
@@ -653,7 +646,7 @@ namespace SwarmRobotControlAndCommunication
             {
                 UInt16 checkSum = generateCheckSum(byteCount, startAddress, programData);
                 sendByteCountCheckSumAddress(byteCount, checkSum, startAddress);
-                theControlBoard.transmitBytesToRobot(programData, byteCount, WaitTimeBetweenEachProgammingBlock);
+                theControlBoard.transmitBytesToRobot(programData, byteCount, WAIT_TIME_BETWEEN_PROGRAM_BLOCKS);
                 transferSize -= byteCount;
             }
             catch (Exception ex)
@@ -672,7 +665,7 @@ namespace SwarmRobotControlAndCommunication
             setupData[3] = (byte)(((startAddress >> 16) & 0xFF));
             setupData[4] = (byte)(((startAddress >> 8) & 0xFF));
             setupData[5] = (byte)(startAddress & 0xFF);
-            theControlBoard.transmitBytesToRobot(setupData, length, WaitTimeBetweenEachProgammingBlock);
+            theControlBoard.transmitBytesToRobot(setupData, length, WAIT_TIME_BETWEEN_PROGRAM_BLOCKS);
         }
         private UInt16 generateCheckSum(byte byteCount, uint startAddress, byte[] programData)
         {
