@@ -73,7 +73,7 @@ namespace SwarmRobotControlAndCommunication
 
         public static ControlBoardInterface theControlBoard = new TM4C123ControlBoard(0x04D8, 0x003F);
 
-        public BootLoaderInterface bootLoader = new TivaBootLoader(theControlBoard);
+        public BootLoaderInterface bootLoader = new TivaBootLoader(theControlBoard, 256);
 
         public MainWindow()
         {
@@ -685,7 +685,7 @@ namespace SwarmRobotControlAndCommunication
             uint value = 0;
             try
             {
-                theControlBoard.receiveBytesFromRobot(Command, length, ref receivedData);
+                theControlBoard.receiveBytesFromRobot(Command, length, ref receivedData, 1000);
                 uint i = 0;
                 while (true)
                 {
@@ -728,7 +728,7 @@ namespace SwarmRobotControlAndCommunication
             tBox.Text = "";
             try
             {
-                theControlBoard.receiveBytesFromRobot(Command, length, ref receivedData);
+                theControlBoard.receiveBytesFromRobot(Command, length, ref receivedData, 1000);
                 uint i = 0;
                 for(uint pointer = 0; pointer < length/2; pointer++)
                 {
@@ -770,7 +770,7 @@ namespace SwarmRobotControlAndCommunication
             float BatteryVoltage;
             try
             {
-                theControlBoard.receiveBytesFromRobot(COMMAND_BATTERY_MEASUREMENT, length, ref receivedData);
+                theControlBoard.receiveBytesFromRobot(COMMAND_BATTERY_MEASUREMENT, length, ref receivedData, 1000);
                 adcData = (receivedData[1] << 8) | receivedData[0];
                 BatteryVoltage = (adcData * 3330) / 2048;
                 readBatteryVoltageTextBox.Text = BatteryVoltage.ToString() + "mV (ADCvalue = " + 

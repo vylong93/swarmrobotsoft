@@ -76,8 +76,19 @@ namespace SwarmRobotControlAndCommunication.CustomInterfaces
         /// The received data length is limited to 2^32.
         /// </summary>
         /// <param name="command">The command to specify what data should the target transmits to the PC</param>
-        /// <param name="numberOfReceivedData">The length of the expected data</param>
+        /// <param name="numberOfReceivedData">The length of the expected data (also transmitted to the target)</param>
         /// <param name="data">The buffer to hold the received data</param>
-        void receiveBytesFromRobot(byte command, UInt32 numberOfReceivedBytes, ref byte[] data);
+        /// <param name="waitTime">The waiting time for a packet to be received</param>
+        void receiveBytesFromRobot(byte command, UInt32 numberOfReceivedBytes, ref byte[] data, UInt32 waitTime);
+
+        /// <summary>
+        /// Receive data from target through the control board 
+        /// without transmitting command and data length to other devices.
+        /// The received data length is limited to 2^32.
+        /// </summary>
+        /// <param name="numberOfReceivedData">The length of the expected data (NOT transmitted to the target)</param>
+        /// <param name="data">The buffer to hold the received data</param>
+        /// <param name="waitTime">The waiting time for a packet to be received</param>
+        void receiveBytesFromRobot(UInt32 numberOfReceivedBytes, ref byte[] data, UInt32 waitTime);
     }
 }
