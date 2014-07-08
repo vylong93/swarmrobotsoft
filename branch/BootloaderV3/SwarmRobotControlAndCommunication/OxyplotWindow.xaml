@@ -1,0 +1,12 @@
+﻿<Window x:Name="PlotWindow" x:Class="SwarmRobotControlAndCommunication.OxyplotWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:oxy="http://oxyplot.codeplex.com"
+        xmlns:local="clr-namespace:SwarmRobotControlAndCommunication"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Height="300" Width="312" Loaded="OxyplotWindow_Loaded" WindowStartupLocation="CenterScreen" Style="{StaticResource PlotWindow}" ScrollViewer.CanContentScroll="True" ResizeMode="NoResize">
+    
+    <Grid>
+        <oxy:Plot x:Name="Plot1" Title="A Graph" Model="{Binding PlotModel}" Margin="10" Grid.Row="1">
+        </oxy:Plot>
+    </Grid>
+
+</Window>
