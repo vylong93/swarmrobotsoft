@@ -36,6 +36,11 @@ namespace SwarmRobotControlAndCommunication
     public partial class MainWindow : Window, IDisposable
     {
         #region Constants
+            //--------------------Control board-----------------------------
+            private const string DEFAULT_TX_ADDRESS = "BEADDE";
+            private const string DEFAULT_RX_ADDRESS = "C1AC0E";
+            //-------------------------------------------------Control board
+
             //------------Commands to control all Robots---------------------
             private const byte COMMAND_RESET = 0x01;
             private const byte COMMAND_SLEEP = 0x02;
@@ -88,7 +93,8 @@ namespace SwarmRobotControlAndCommunication
             theControlBoard.findTargetDevice(); 
             setStatusBarAndButtonsAppearanceFromDeviceState();
 
-            this.TXAdrrTextBox.Text = "BEADDE";
+            this.TXAdrrTextBox.Text = DEFAULT_TX_ADDRESS;
+            this.Pipe0AddressTextBox.Text = DEFAULT_RX_ADDRESS;
         }
 
         private void usbEvent_receiver(object o, EventArgs e)
@@ -526,25 +532,40 @@ namespace SwarmRobotControlAndCommunication
                 if ((bool)this.LNACheckBox.IsChecked)
                     lnaGainEnable |= 0x01;                                              
                  
-                byte[] rfAddress = new byte[3];
+                byte[] rfTXAddress = new byte[3];
                 string TX_ADDRstring = this.TXAdrrTextBox.Text;
                 if (TX_ADDRstring.Length != (2 * RF24_ADDRESS_WIDTH))
                 {
                     string msg = String.Format("TX address must have {0} characters!", 2*RF24_ADDRESS_WIDTH);
                     throw new Exception(msg);
                 }
-                Int32 TX_ADDR_value = 0;
+                Int32 address = 0;
                 for (int i = 0; i < 6; i++)
                 {
-                    TX_ADDR_value <<= 4;
-                    TX_ADDR_value += TivaBootLoader.convertCharToHex(TX_ADDRstring[i]);        
+                    address <<= 4;
+                    address += TivaBootLoader.convertCharToHex(TX_ADDRstring[i]);        
                 }
+                rfTXAddress[0] = (byte)address;
+                rfTXAddress[1] = (byte)(address >> 8);
+                rfTXAddress[2] = (byte)(address >> 16);
 
-                rfAddress[0] = (byte)TX_ADDR_value;
-                rfAddress[1] = (byte)(TX_ADDR_value >> 8);
-                rfAddress[2] = (byte)(TX_ADDR_value >> 16);
+                byte[] rfRXAddress = new byte[3];
+                string RX_ADDRstring = this.Pipe0AddressTextBox.Text;
+                if (RX_ADDRstring.Length != (2 * RF24_ADDRESS_WIDTH))
+                {
+                    string msg = String.Format("RX address must have {0} characters!", 2 * RF24_ADDRESS_WIDTH);
+                    throw new Exception(msg);
+                }
+                for (int i = 0; i < 6; i++)
+                {
+                    address <<= 4;
+                    address += TivaBootLoader.convertCharToHex(RX_ADDRstring[i]);
+                }
+                rfRXAddress[0] = (byte)address;
+                rfRXAddress[1] = (byte)(address >> 8);
+                rfRXAddress[2] = (byte)(address >> 16);
 
-                byte[] setupData = new byte[11 + RF24_ADDRESS_WIDTH];
+                byte[] setupData = new byte[7 + 2*RF24_ADDRESS_WIDTH];
                 setupData[0] = crcByte;
                 setupData[1] = RF24_ADDRESS_WIDTH;
                 setupData[2] = channel;
@@ -554,7 +575,8 @@ namespace SwarmRobotControlAndCommunication
                 setupData[6] = lnaGainEnable;
                 for (int i = 0; i < RF24_ADDRESS_WIDTH; i++)
                 {
-                    setupData[7 + i] = rfAddress[i];
+                    setupData[7 + i] = rfTXAddress[i];
+                    setupData[7 + i + RF24_ADDRESS_WIDTH] = rfRXAddress[i];
                 }
 
                 theControlBoard.configureRF(setupData);
@@ -572,22 +594,11 @@ namespace SwarmRobotControlAndCommunication
                 e.Handled = true;
             }
         }
-        private void TXAdrrTextBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            try
-            {
-                this.Pipe0TextBox.Text = this.TXAdrrTextBox.Text;
-            }
-            catch (Exception)
-            {
-
-            }
-
-        }
         private void rfDefaultButton_Click(object sender, RoutedEventArgs e)
         {
             this.RFModeComboBox.SelectedIndex = 0;
-            this.TXAdrrTextBox.Text = "BEADDE";
+            this.TXAdrrTextBox.Text = DEFAULT_TX_ADDRESS;
+            this.Pipe0AddressTextBox.Text = DEFAULT_RX_ADDRESS;
             this.rfChannelTextBox.Text = "0";
             this.rfAirRateComboBox.SelectedIndex = 0;
             this.TXPowerComboBox.SelectedIndex = 3;

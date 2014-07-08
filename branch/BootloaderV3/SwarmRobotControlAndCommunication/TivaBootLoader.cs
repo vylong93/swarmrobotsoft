@@ -643,18 +643,21 @@ namespace SwarmRobotControlAndCommunication
                     sendByteCountCheckSumAddress(byteCount, checkSum, startAddress);
                     theControlBoard.transmitBytesToRobot(programData, byteCount, 0);
 
-                    // IMPORTANT!: The  waiting time is extremely important. 
-                    // Requiring extensive testing for an appropirate value
-                    theControlBoard.receiveBytesFromRobot(DATA_FRAME_ACK_LENGTH, ref ackSignal, DATA_FRAME_ACK_WAIT_TIME);
-
-                    if (checkAckSignal(ackSignal, COMPLETED_DATA_FRAME_ACK))
-                    {// Successfully written a data frame to the devices
-                        arrayDataFrame[currentDataFramePointer].byteCount = byteCount;
-                        arrayDataFrame[currentDataFramePointer].startAddress = startAddress;
-                        arrayDataFrame[currentDataFramePointer].data = programData;
-                        currentDataFramePointer++;
-                        return true;
+                    try
+                    {
+                        // IMPORTANT!: The  waiting time is extremely important. 
+                        // Requiring extensive testing for an appropirate value
+                        theControlBoard.receiveBytesFromRobot(DATA_FRAME_ACK_LENGTH, ref ackSignal, DATA_FRAME_ACK_WAIT_TIME);
+                        if (checkAckSignal(ackSignal, COMPLETED_DATA_FRAME_ACK))
+                        {// Successfully written a data frame to the devices
+                            arrayDataFrame[currentDataFramePointer].byteCount = byteCount;
+                            arrayDataFrame[currentDataFramePointer].startAddress = startAddress;
+                            arrayDataFrame[currentDataFramePointer].data = programData;
+                            currentDataFramePointer++;
+                            return true;
+                        }
                     }
+                    catch{}
 
                     // Is this not the first data frame?
                     if (currentDataFramePointer != 0)
@@ -663,7 +666,6 @@ namespace SwarmRobotControlAndCommunication
                      // or we reach the first data frame. 
                      // This is a roundabout way so we don't need "error" devices to send back 
                      // their current flash address.
-
                         currentDataFramePointer--;
                         programOneByteFrameToFlash(arrayDataFrame[currentDataFramePointer].byteCount,
                                                    arrayDataFrame[currentDataFramePointer].startAddress,
