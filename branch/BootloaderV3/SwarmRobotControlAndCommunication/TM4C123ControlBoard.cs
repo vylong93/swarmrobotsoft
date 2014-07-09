@@ -51,7 +51,7 @@ namespace SwarmRobotControlAndCommunication
         private const byte MAX_NUM_BYTE_RECEIVED = 32;
 
         public string failedToSendData = "Can't send data to the control board";
-        public string failedToreadData = "No respone from the control board";
+        public string failedToReadData = "No respone from the control board";
         public string numberOfDataOutOfRange = "The number of sent data is too high";
         public string invalidRespone = "Invalid response from the control board";
         //--------------------------------------------//ACK definitions
@@ -460,7 +460,7 @@ namespace SwarmRobotControlAndCommunication
             Byte[] inputBuffer = new Byte[USB_BUFFER_LENGTH];
 
             bool success = readSingleReportFromDevice(ref inputBuffer);
-            if (!success) throw new Exception(failedToreadData);
+            if (!success) throw new Exception(failedToReadData);
             return inputBuffer;
         }
 

@@ -26,6 +26,8 @@ using System.IO;
 using Microsoft.Win32;
 using System.Threading;
 
+using System.Diagnostics;
+
 using SwarmRobotControlAndCommunication.CustomInterfaces;
 
 namespace SwarmRobotControlAndCommunication
@@ -361,7 +363,7 @@ namespace SwarmRobotControlAndCommunication
                     UInt32 numberOfLines = await getNumberOfLinesAndCheckHexFileAsync();
                     //TODO: Find a way to throw/catch an exception from await/async to avoid double checking like this
                     if (numberOfLines == 0) return;
-
+                    Debug.WriteLine("Number of Hex data lines = {0}", numberOfLines);
                     buttonClicked.Content = "Stop";
                     ellipseProgressEffect.Begin();
                     toggleAllButtonStatusExceptSelected(buttonClicked);
