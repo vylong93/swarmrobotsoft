@@ -655,24 +655,15 @@ namespace SwarmRobotControlAndCommunication
                 UInt16 checkSum = generateCheckSum(byteCount, startAddress, programData);
                 byte[] ackSignal = new byte[3];
 
-                // arrayDataFrame[currentDataFramePointer].byteCount = byteCount;
-                // arrayDataFrame[currentDataFramePointer].startAddress = startAddress;
-                // arrayDataFrame[currentDataFramePointer].data = programData;
-
-                do 
-				{
-					sendByteCountCheckSumAddress(byteCount, checkSum, startAddress);
-                    theControlBoard.transmitBytesToRobot(programData, byteCount, 0);
-					
-					theControlBoard.receiveBytesFromRobot(DATA_FRAME_ACK_LENGTH, ref ackSignal, DATA_FRAME_ACK_WAIT_TIME);
-				}
-				while((isCanceledByUser(cancelToken) != false) || isAckSignal(ackSignal, COMPLETED_DATA_FRAME_ACK) == false)
+                 arrayDataFrame[currentDataFramePointer].byteCount = byteCount;
+                 arrayDataFrame[currentDataFramePointer].startAddress = startAddress;
+                 arrayDataFrame[currentDataFramePointer].data = programData;
 
 
-				// while (isCanceledByUser(cancelToken) == false)
-                // {
-                    // sendByteCountCheckSumAddress(byteCount, checkSum, startAddress);
-                    // theControlBoard.transmitBytesToRobot(programData, byteCount, 0);
+                 while (isCanceledByUser(cancelToken) == false)
+                 {
+                     sendByteCountCheckSumAddress(byteCount, checkSum, startAddress);
+                     theControlBoard.transmitBytesToRobot(programData, byteCount, 0);
 
                     //try
                     //{
