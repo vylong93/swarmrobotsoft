@@ -90,7 +90,7 @@ namespace SwarmRobotControlAndCommunication
             /// <summary>
             /// Wait time between two packets of a data frame
             /// </summary>
-            private const byte WAIT_BETWEEN_PACKETS = 2;
+            private const byte WAIT_BETWEEN_PACKETS = 1;
 
             /// <summary>
             /// An ACK signal used to acknowledge that a data frame has been
@@ -106,7 +106,7 @@ namespace SwarmRobotControlAndCommunication
             /// <summary>
             /// The waitting for an ACK of a completed data frame (unit: ms).
             /// </summary>
-            private const byte DATA_FRAME_ACK_WAIT_TIME = 2;
+            private const byte DATA_FRAME_ACK_WAIT_TIME = 4;
         #endregion
 
         #region Variables for bootloader commands
@@ -488,13 +488,13 @@ namespace SwarmRobotControlAndCommunication
 
                 if (isSkipTheRest == true)
                 {
-                    programOneByteFrameToFlash(SIZE_ONE_PROGRAM_BLOCK, startAddressCurrentProgramBlock, toSendData);
+                    programOneByteFrameToFlash(SIZE_ONE_PROGRAM_BLOCK, startAddressCurrentProgramBlock, toSendData, cancelToken);
                     updateAddressesAndDataPointer();
                     continue;
                 }
                 if (isOneByteFrameReady() == true)
                 {
-                    programOneByteFrameToFlash(SIZE_ONE_PROGRAM_BLOCK, startAddressCurrentProgramBlock, toSendData);
+                    programOneByteFrameToFlash(SIZE_ONE_PROGRAM_BLOCK, startAddressCurrentProgramBlock, toSendData, cancelToken);
                     updateAddressesAndDataPointer();
                 }
                 //Update all next* variables if only part of nextHexLineData is sent
@@ -513,7 +513,7 @@ namespace SwarmRobotControlAndCommunication
                     {
                         // If there is still data left then send it before exiting the bootloader
                         if (dataPointer != 0)
-                            programOneByteFrameToFlash(dataPointer, startAddressCurrentProgramBlock, toSendData);
+                            programOneByteFrameToFlash(dataPointer, startAddressCurrentProgramBlock, toSendData, cancelToken);
                         return;
                     }
                     movePointerToTheNextLine();
@@ -648,56 +648,71 @@ namespace SwarmRobotControlAndCommunication
         /// <returns>
         /// Return true if success. Otherwise throw an exception
         /// </returns>
-        private bool programOneByteFrameToFlash(byte byteCount, uint startAddress, byte[] programData)
+        private bool programOneByteFrameToFlash(byte byteCount, uint startAddress, byte[] programData, CancellationTokenSource cancelToken)
         {
             try
             {
                 UInt16 checkSum = generateCheckSum(byteCount, startAddress, programData);
                 byte[] ackSignal = new byte[3];
-                while (true)
-                {
-                    sendByteCountCheckSumAddress(byteCount, checkSum, startAddress);
+
+                // arrayDataFrame[currentDataFramePointer].byteCount = byteCount;
+                // arrayDataFrame[currentDataFramePointer].startAddress = startAddress;
+                // arrayDataFrame[currentDataFramePointer].data = programData;
+
+                do 
+				{
+					sendByteCountCheckSumAddress(byteCount, checkSum, startAddress);
                     theControlBoard.transmitBytesToRobot(programData, byteCount, 0);
+					
+					theControlBoard.receiveBytesFromRobot(DATA_FRAME_ACK_LENGTH, ref ackSignal, DATA_FRAME_ACK_WAIT_TIME);
+				}
+				while((isCanceledByUser(cancelToken) != false) || isAckSignal(ackSignal, COMPLETED_DATA_FRAME_ACK) == false)
 
-                    try
-                    {
-                        // IMPORTANT!: The  waiting time is extremely important. 
-                        // Requiring extensive testing for an appropirate value
-                        theControlBoard.receiveBytesFromRobot(DATA_FRAME_ACK_LENGTH, ref ackSignal, DATA_FRAME_ACK_WAIT_TIME);
-                        if (isAckSignal(ackSignal, COMPLETED_DATA_FRAME_ACK))
-                        {// Successfully written a data frame to the devices
-                            arrayDataFrame[currentDataFramePointer].byteCount = byteCount;
-                            arrayDataFrame[currentDataFramePointer].startAddress = startAddress;
-                            arrayDataFrame[currentDataFramePointer].data = programData;
-                            currentDataFramePointer++;
-                            // Do a dumb read to wait for over 1ms before writing 
-                            // next data frame since waiting directly by using C#
-                            // will take too long.
-                            // This is to assure that the targeted device used for 
-                            // ACK purpose has enough time to go back to RX state
-                            oneMsDumbRead();
+
+				// while (isCanceledByUser(cancelToken) == false)
+                // {
+                    // sendByteCountCheckSumAddress(byteCount, checkSum, startAddress);
+                    // theControlBoard.transmitBytesToRobot(programData, byteCount, 0);
+
+                    //try
+                    //{
+                    //    // IMPORTANT!: The  waiting time is extremely important. 
+                    //    // Requiring extensive testing for an appropirate value
+                    //    theControlBoard.receiveBytesFromRobot(DATA_FRAME_ACK_LENGTH, ref ackSignal, DATA_FRAME_ACK_WAIT_TIME);
+                    //    if (isAckSignal(ackSignal, COMPLETED_DATA_FRAME_ACK))
+                    //    {// Successfully written a data frame to the devicesprogramOneByteFrameToFlash
+                    //        //currentDataFramePointer++;
+                    //        // Do a dumb read to wait for over 1ms before writing 
+                    //        // next data frame since waiting directly by using C#
+                    //        // will take too long.
+                    //        // This is to assure that the targeted device used for 
+                    //        // ACK purpose has enough time to go back to RX state
+                    //        //oneMsDumbRead();
                             return true;
-                        }
-                    }
-                    catch{}
+                    //    }
+                    //}
+                    //catch { }
 
-                    // Is this not the first data frame?
-                    if (currentDataFramePointer != 0)
-                    {// Re-written the previous data frame before writing this data frame
-                     // -> keep going back to previous data frames until a successfull write occurs
-                     // or we reach the first data frame. 
-                     // This is a roundabout way so we don't need "error" devices to send back 
-                     // their current flash address.
-                        currentDataFramePointer--;
-                        programOneByteFrameToFlash(arrayDataFrame[currentDataFramePointer].byteCount,
-                                                   arrayDataFrame[currentDataFramePointer].startAddress,
-                                                   arrayDataFrame[currentDataFramePointer].data);
-                    }
+                    //// Is this not the first data frame?
+                    //if (currentDataFramePointer != 0)
+                    //{// Re-written the previous data frame before writing this data frame
+                    //    // -> keep going back to previous data frames until a successfull write occurs
+                    //    // or we reach the first data frame. 
+                    //    // This is a roundabout way so we don't need "error" devices to send back 
+                    //    // their current flash address.
+                    //    currentDataFramePointer--;
+                    //    programOneByteFrameToFlash(arrayDataFrame[currentDataFramePointer].byteCount,
+                    //                               arrayDataFrame[currentDataFramePointer].startAddress,
+                    //                               arrayDataFrame[currentDataFramePointer].data,
+                    //                               cancelToken);
+                    //}
                 }
+                 return false;
             }
             catch (Exception ex)
             {
-                throw new Exception("Program one byte Frame: " + ex.Message);
+                String mssg = String.Format("Byte count: {0} ", byteCount);
+                throw new Exception("Program one byte Frame: " + mssg + ex.Message);
             }
         }
         private void sendByteCountCheckSumAddress(byte byteCount, UInt16 checkSum, UInt32 startAddress)
