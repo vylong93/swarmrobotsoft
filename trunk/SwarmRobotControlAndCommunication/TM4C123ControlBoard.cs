@@ -34,8 +34,9 @@ namespace SwarmRobotControlAndCommunication
         //--------------------Commands definitions--------------------//
         private const byte TRANSMIT_DATA_TO_ROBOT = 0x10;
         private const byte RECEIVE_DATA_FROM_ROBOT = 0x11;
-        private const byte CONFIGURE_RF = 0x12;
-        private const byte CONFIGURE_SPI = 0x13;
+        private const byte RECEIVE_DATA_FROM_ROBOT_WITH_COMMAND = 0x12;
+        private const byte CONFIGURE_RF = 0x13;
+        private const byte CONFIGURE_SPI = 0x14;
         //----------------------------------------//Commands definitions
 
         //----------------------ACK definitions----------------------//
@@ -50,7 +51,7 @@ namespace SwarmRobotControlAndCommunication
         private const byte MAX_NUM_BYTE_RECEIVED = 32;
 
         public string failedToSendData = "Can't send data to the control board";
-        public string failedToreadData = "No respone from the control board";
+        public string failedToReadData = "No respone from the control board";
         public string numberOfDataOutOfRange = "The number of sent data is too high";
         public string invalidRespone = "Invalid response from the control board";
         //--------------------------------------------//ACK definitions
@@ -298,9 +299,10 @@ namespace SwarmRobotControlAndCommunication
         /// The received data length is limited to 2^32.
         /// </summary>
         /// <param name="command">The command to specify what data should the target transmits to the PC</param>
-        /// <param name="numberOfReceivedData">The length of the expected data</param>
+        /// <param name="numberOfReceivedData">The length of the expected data (also transmitted to the target)</param>
         /// <param name="data">The buffer to hold the received data</param>
-        public void receiveBytesFromRobot(byte command, UInt32 numberOfReceivedBytes, ref byte[] data)
+        /// <param name="waitTime">The waiting time for a packet to be received</param>
+        public void receiveBytesFromRobot(byte command, UInt32 numberOfReceivedBytes, ref byte[] data, UInt32 waitTime)
         {
                 byte[] outputBuffer = new Byte[65];
                 byte[] inputBuffer = new Byte[65];
@@ -313,19 +315,94 @@ namespace SwarmRobotControlAndCommunication
                     throw new Exception("Data length must be larger than 1");
 
                 outputBuffer[0] = 0;
-                outputBuffer[1] = RECEIVE_DATA_FROM_ROBOT;
+                outputBuffer[1] = RECEIVE_DATA_FROM_ROBOT_WITH_COMMAND;
                 outputBuffer[2] = command;
                 outputBuffer[3] = (byte)((numberOfReceivedBytes >> 24) & 0x0FF);
                 outputBuffer[4] = (byte)((numberOfReceivedBytes >> 16) & 0x0FF);
                 outputBuffer[5] = (byte)((numberOfReceivedBytes >> 8) & 0x0FF);
                 outputBuffer[6] = (byte)(numberOfReceivedBytes & 0x0FF);
-                    
+                outputBuffer[7] = (byte)((waitTime >> 24) & 0x0FF);
+                outputBuffer[8] = (byte)((waitTime >> 16) & 0x0FF);
+                outputBuffer[9] = (byte)((waitTime >> 8) & 0x0FF);
+                outputBuffer[10] = (byte)(waitTime & 0x0FF);
+    
                 sendDataToControlBoard(outputBuffer);
                 outputBuffer[1] = RECEIVE_DATA_FROM_ROBOT_CONTINUE;
                 while (true)
                 {
                     inputBuffer = readDataFromControlBoard();
                         
+                    checkIfReceivedDataFromRobot(inputBuffer);
+
+                    if (dataLength > MAX_NUM_BYTE_RECEIVED)
+                        length = MAX_NUM_BYTE_RECEIVED;
+                    else
+                        length = dataLength;
+
+                    for (UInt32 j = 1; j <= length; j++)
+                    {
+                        data[pointer] = inputBuffer[j];
+                        pointer++;
+                    }
+
+                    dataLength -= length;
+                    if (dataLength <= 0)
+                        break;
+
+                    sendDataToControlBoard(outputBuffer);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Received data: " + ex.Message + "\n" +
+                                    "Number of data left: " + dataLength.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Receive data from target through the control board 
+        /// without transmitting command and data length to other devices.
+        /// The received data length is limited to 2^32.
+        /// </summary>
+        /// <param name="numberOfReceivedData">The length of the expected data (NOT transmitted to the target)</param>
+        /// <param name="data">The buffer to hold the received data</param>
+        /// <param name="waitTime">The waiting time for a packet to be received</param>
+        public void receiveBytesFromRobot(UInt32 numberOfReceivedBytes, ref byte[] data, UInt32 waitTime)
+        {
+            byte[] outputBuffer = new Byte[65];
+            byte[] inputBuffer = new Byte[65];
+            UInt32 length = 0;
+            UInt32 dataLength = numberOfReceivedBytes;
+            UInt32 pointer = 0;
+            try
+            {
+                if (numberOfReceivedBytes < 1)
+                    throw new Exception("Data length must be larger than 1");
+
+
+                outputBuffer[0] = 0;
+                outputBuffer[1] = RECEIVE_DATA_FROM_ROBOT;
+
+                outputBuffer[2] = 0;    // Reserved, this byte only use for command mode.
+
+                outputBuffer[3] = (byte)((numberOfReceivedBytes >> 24) & 0x0FF);
+                outputBuffer[4] = (byte)((numberOfReceivedBytes >> 16) & 0x0FF);
+                outputBuffer[5] = (byte)((numberOfReceivedBytes >> 8) & 0x0FF);
+                outputBuffer[6] = (byte)(numberOfReceivedBytes & 0x0FF);
+
+                outputBuffer[7] = (byte)((waitTime >> 24) & 0x0FF);
+                outputBuffer[8] = (byte)((waitTime >> 16) & 0x0FF);
+                outputBuffer[9] = (byte)((waitTime >> 8) & 0x0FF);
+                outputBuffer[10] = (byte)(waitTime & 0x0FF);
+
+                sendDataToControlBoard(outputBuffer);
+
+
+                outputBuffer[1] = RECEIVE_DATA_FROM_ROBOT_CONTINUE;
+                while (true)
+                {
+                    inputBuffer = readDataFromControlBoard();
+
                     checkIfReceivedDataFromRobot(inputBuffer);
 
                     if (dataLength > MAX_NUM_BYTE_RECEIVED)
@@ -388,7 +465,7 @@ namespace SwarmRobotControlAndCommunication
             Byte[] inputBuffer = new Byte[USB_BUFFER_LENGTH];
 
             bool success = readSingleReportFromDevice(ref inputBuffer);
-            if (!success) throw new Exception(failedToreadData);
+            if (!success) throw new Exception(failedToReadData);
             return inputBuffer;
         }
 

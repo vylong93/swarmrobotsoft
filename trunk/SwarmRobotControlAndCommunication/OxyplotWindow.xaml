@@ -5,8 +5,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Height="300" Width="312" Loaded="OxyplotWindow_Loaded" WindowStartupLocation="CenterScreen" Style="{StaticResource PlotWindow}" ScrollViewer.CanContentScroll="True" ResizeMode="NoResize">
     
     <Grid>
-        <oxy:Plot x:Name="Plot1" Title="A Graph" Model="{Binding PlotModel}" Margin="10" Grid.Row="1">
-        </oxy:Plot>
+        <oxy:PlotView x:Name="Plot1" Title="A Graph" Model="{Binding PlotModel}" Margin="10" Grid.Row="1">
+        </oxy:PlotView>
     </Grid>
 
 </Window>

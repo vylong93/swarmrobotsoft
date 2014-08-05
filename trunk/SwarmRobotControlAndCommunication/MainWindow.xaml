@@ -258,7 +258,7 @@
                         Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1.8,0">
                         <Label x:Name="label1" Content="TX Address" 
                                HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,1" Width="69"/>
-                        <TextBox x:Name="TXAdrrTextBox" Text="BEADDE" TextChanged="TXAdrrTextBox_TextChanged"
+                        <TextBox x:Name="TXAdrrTextBox"
                         	HorizontalAlignment="Center" VerticalContentAlignment="Center" FlowDirection="LeftToRight" 
                         	VerticalAlignment="Center" TextWrapping="Wrap" Width="{Binding Width, ElementName=RFModeComboBox}" 
                         	Height="20"  Padding="0" Margin="0,4"  Style="{StaticResource PathTextbox}" KeyDown="TXAdrrTextBox_KeyDown"/>
@@ -312,15 +312,15 @@
                                     Orientation="Horizontal" FlowDirection="LeftToRight" Width="151" />
                     </StackPanel>
 
-                    <StackPanel x:Name="Pipe0Panel"  Grid.Row="1" Grid.Column="1" IsEnabled="False"
+                    <StackPanel x:Name="Pipe0Panel"  Grid.Row="1" Grid.Column="1"
                                     HorizontalAlignment="Left"  VerticalAlignment="Bottom" Margin="0.2,0,0,0"
                                     Orientation="Horizontal" FlowDirection="LeftToRight" Height="28" Width="155">
                         <Label Content="RX Address"
                                HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,1" Width="69"/>
-                        <TextBox x:Name="Pipe0TextBox" Text="BEADDE" IsReadOnly="True"
+                        <TextBox x:Name="Pipe0AddressTextBox" IsReadOnly="False"
                         	HorizontalAlignment="Center" VerticalContentAlignment="Center" FlowDirection="LeftToRight" 
                         	VerticalAlignment="Center" TextWrapping="Wrap" Width="{Binding Width, ElementName=TXAdrrTextBox}" 
-                        	Height="20"  Padding="0" Margin="0,4"  Style="{StaticResource PathTextbox}"/>
+                        	Height="20"  Padding="0" Margin="0,4"  Style="{StaticResource PathTextbox}" KeyDown="TXAdrrTextBox_KeyDown"/>
                     </StackPanel>
                     <StackPanel x:Name="CRCPanel" Grid.Row="2" Grid.Column="1" Margin="0.2,0,0,0"
                                 HorizontalAlignment="Left"  VerticalAlignment="Bottom" 

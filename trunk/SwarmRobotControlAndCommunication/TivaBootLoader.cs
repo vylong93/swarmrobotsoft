@@ -12,6 +12,7 @@ using System.IO;
 using System.Threading;
 using SwarmRobotControlAndCommunication.CustomInterfaces;
 using System.Windows;
+using System.Diagnostics;
 
 namespace SwarmRobotControlAndCommunication
 {
@@ -40,7 +41,7 @@ namespace SwarmRobotControlAndCommunication
             /// The size of one block of bytes that will be written
             /// into the  flash memory in each programming frame
             /// </summary>
-            private const byte SIZE_ONE_PROGRAM_BLOCK = 32;
+            private const byte SIZE_ONE_PROGRAM_BLOCK = 16;
 
             /// <summary>
             /// The size of flash memory that will be reased at one time
@@ -58,13 +59,6 @@ namespace SwarmRobotControlAndCommunication
             /// do not contain any data (byteCount = 0)
             /// </summary>
             private const byte END_HEX_FILE = 0x00;
-
-            /// <summary>
-            /// The wait time between each programming frame so that 
-            /// a robot finish writting a programm block to its flash
-            /// memory. Unit [ms] 
-            /// </summary>
-            private const byte WAIT_TIME_BETWEEN_PROGRAM_BLOCKS = 10;
 
             /// <summary>
             ///  The opcode of NOP command in byte
@@ -88,43 +82,73 @@ namespace SwarmRobotControlAndCommunication
             private const byte MAX_LINE_DATA_LENGTH = 64;
 
             /// <summary>
-            /// This is multiplied with transfersize in KB to determine
+            /// This is multiplied with transfer size in KB to determine
             /// the real wait time for mass erasing flash memory
             /// </summary>
-            private const byte WAIT_FOR_MASS_FLASH_ERASE = 25;
+            private const byte WAIT_FOR_MASS_FLASH_ERASE = 5;
+
+            /// <summary>
+            /// Wait time between two packets of a data frame
+            /// </summary>
+            private const byte WAIT_BETWEEN_PACKETS = 1;
+
+            /// <summary>
+            /// An ACK signal used to acknowledge that a data frame has been
+            /// written successfully
+            /// </summary>
+            private readonly byte[] COMPLETED_DATA_FRAME_ACK = new byte[] { 0xAC, 0x0C, 0x48 };
+            private readonly byte[] COMPLETED_DATA_FRAME_NACK = new byte[] { 0x00, 0x00, 0x00 };
+
+            /// <summary>
+            /// The length of an ACK of a completed data frame.
+            /// </summary>
+            private const byte DATA_FRAME_ACK_LENGTH = 3;
+            private const byte DATA_FRAME_NACK_LENGTH = 3;
+
+            /// <summary>
+            /// The waitting for an ACK of a completed data frame (unit: ms).
+            /// </summary>
+            private const byte DATA_FRAME_ACK_WAIT_TIME = 10; // unit = 1ms
+            private const byte DATA_FRAME_NACK_WAIT_TIME = 10; // unit = 1ms
         #endregion
 
         #region Variables for bootloader commands
-            private byte extendedAddress;
-            private uint endLineAddess;
-            private uint endLineByteCount;
+            private UInt32 extendedAddress;
+            private UInt32 endLineAddess;
+            private UInt32 endLineByteCount;
             private bool notAllOfNextLineDataIsSentFlag;
-            private uint currentHexLinePointer;
-            private uint startAddressCurrentProgramBlock;
-            private uint startAddressNextProgramBlock;
+            private UInt32 currentHexLinePointer;
+            private UInt32 startAddressCurrentProgramBlock;
+            private UInt32 startAddressNextProgramBlock;
             private byte[] toSendData;
             private byte dataPointer;
-            private uint startLocationLeftOverData;
+            private UInt32 startLocationLeftOverData;
             private byte lengthOfLeftOverData;
             private UInt32 transferSize;
+            private UInt32 numberOfLines;
+            FileStream hexFile;
             private struct IntelHexFormat
             {
                 public byte byteCount;
-                public uint address;
+                public UInt32 address;
                 public byte recordType;
                 public byte checkSum;
                 public byte[] data;
             }
-            private IntelHexFormat firstHexLine;
             private IntelHexFormat nextHexLine;
-            private UInt32 numberOfLines;
-
-            FileStream hexFile;
-
+            private struct DataFrameFormat
+            {
+                public byte byteCount;
+                public UInt32 startAddress;
+                public byte[] data;
+            }
+            private DataFrameFormat[] arrayDataFrame;
+            private UInt32 maxNumberOfDataFrame;
+            private UInt32 currentDataFramePointer;
             private ControlBoardInterface theControlBoard;
         #endregion
 
-        public TivaBootLoader(ControlBoardInterface controlBoard)
+        public TivaBootLoader(ControlBoardInterface controlBoard, UInt32 flashSizeInKB)
         {
             extendedAddress = 0;
             notAllOfNextLineDataIsSentFlag = false;
@@ -135,11 +159,10 @@ namespace SwarmRobotControlAndCommunication
             dataPointer = 0;
             startLocationLeftOverData = 0;
             lengthOfLeftOverData = 0;
-            firstHexLine = new IntelHexFormat();
             nextHexLine = new IntelHexFormat();
-
+            maxNumberOfDataFrame = flashSizeInKB*1024/SIZE_ONE_PROGRAM_BLOCK;
+            arrayDataFrame = new DataFrameFormat[maxNumberOfDataFrame];
             numberOfLines = 0;
-
             theControlBoard = controlBoard;
         }
 
@@ -224,32 +247,48 @@ namespace SwarmRobotControlAndCommunication
         {
             try
             {
-                IntelHexFormat currentLine = new IntelHexFormat();
-
-                UInt32[] lineAddress = new UInt32[2];
-
-                currentLine.byteCount = getOneByte(ref intelHexFile);
-
-                lineAddress[0] = getOneByte(ref intelHexFile);
-                lineAddress[1] = getOneByte(ref intelHexFile);
-
-                currentLine.recordType = getOneByte(ref intelHexFile);
-
-                currentLine.data = new byte[MAX_LINE_DATA_LENGTH];
-                for (byte i = 0; i < currentLine.byteCount; i++)
+                while (true)
                 {
-                    currentLine.data[i] = getOneByte(ref intelHexFile);
+
+                    IntelHexFormat currentLine = new IntelHexFormat();
+
+                    UInt32[] lineAddress = new UInt32[2];
+
+                    currentLine.byteCount = getOneByte(ref intelHexFile);
+
+                    lineAddress[0] = getOneByte(ref intelHexFile);
+                    lineAddress[1] = getOneByte(ref intelHexFile);
+
+                    currentLine.recordType = getOneByte(ref intelHexFile);
+
+                    currentLine.data = new byte[MAX_LINE_DATA_LENGTH];
+                    for (byte i = 0; i < currentLine.byteCount; i++)
+                    {
+                        currentLine.data[i] = getOneByte(ref intelHexFile);
+                    }
+
+                    currentLine.checkSum = getOneByte(ref intelHexFile);
+
+                    if (currentLine.recordType == RECORD_EXTENDED_ADDRESS)
+                    {
+                        extendedAddress = currentLine.data[0];
+                        extendedAddress <<= 8;
+                        extendedAddress |= currentLine.data[1];
+                        extendedAddress <<= 16;
+                        // Move to the next line since this line
+                        // only contains the upper 16 bits.
+                        while (intelHexFile.ReadByte() != ':') ;
+                        continue;
+                    }
+
+                    //Find the real address
+                    currentLine.address = lineAddress[0];
+                    currentLine.address <<= 8;
+                    currentLine.address |= lineAddress[1];
+                    currentLine.address |= extendedAddress;
+
+                    return currentLine;
                 }
-
-                currentLine.checkSum = getOneByte(ref intelHexFile);
-
-                if (currentLine.recordType == RECORD_EXTENDED_ADDRESS)
-                        extendedAddress = currentLine.data[currentLine.byteCount - 1];
-
-                //Find the real address
-                currentLine.address = (uint)((extendedAddress << 16) + (lineAddress[0] << 8) + lineAddress[1]);
-
-                return currentLine;
             }
             catch (Exception ex)
             {
@@ -279,7 +318,7 @@ namespace SwarmRobotControlAndCommunication
                             "Record type: 0x0{0}", recordType);
             throw new Exception(errorMessage);
         }
-        private void checkNotBootLoaderAddress(uint address)
+        private void checkNotBootLoaderAddress(UInt32 address)
         {
             if (isBootLoaderAddress(address) == true)
             {
@@ -289,7 +328,7 @@ namespace SwarmRobotControlAndCommunication
                 throw new Exception(errorMessage);
             }
         }
-        private void checkAppStartAddress(uint address)
+        private void checkAppStartAddress(UInt32 address)
         {
             if (address != APP_START_ADDRESS)
             {
@@ -306,7 +345,7 @@ namespace SwarmRobotControlAndCommunication
             else
                 return false;
         }
-        private bool isBootLoaderAddress(uint address)
+        private bool isBootLoaderAddress(UInt32 address)
         {
             if (address <= BOOTLOADER_END_ADDRESS)
             {
@@ -348,7 +387,7 @@ namespace SwarmRobotControlAndCommunication
         /// <param name="cts">A cancel token to stop the programming process</param>
         public void startProgramming(string fileName, CancellationTokenSource cts)
         {
-            sendGoIntoBootLoaderModeCommand();
+            //sendGoIntoBootLoaderModeCommand();
             resetBootLoaderVariables();
             programHexFileToRobots(fileName,cts);
         }
@@ -382,8 +421,9 @@ namespace SwarmRobotControlAndCommunication
             dataPointer = 0;
             startLocationLeftOverData = 0;
             lengthOfLeftOverData = 0;
-            firstHexLine = new IntelHexFormat();
             nextHexLine = new IntelHexFormat();
+            arrayDataFrame = new DataFrameFormat[maxNumberOfDataFrame];
+            currentDataFramePointer = 0;
         }
 
         /// <summary>
@@ -395,12 +435,11 @@ namespace SwarmRobotControlAndCommunication
         {
             hexFile = new FileStream(fileName, FileMode.Open, FileAccess.Read);
 
-            firstHexLine.data = new byte[SIZE_ONE_PROGRAM_BLOCK];
             nextHexLine.data = new byte[SIZE_ONE_PROGRAM_BLOCK];
-
             try
             {
-                prepareBootLoader();
+                //prepareBootLoader();
+                sendStartBootloaderPacket();
                 startProgrammingUsingBootLoader(cts); 
             }
             catch (OperationCanceledException)
@@ -417,6 +456,36 @@ namespace SwarmRobotControlAndCommunication
             }
         }
         #region program hex file to robots private functions
+        // Long Dang, 31 Jul 2014, add 
+        private void sendStartBootloaderPacket()
+        {
+            currentProgrammingPercentEvent(0);
+
+            //Discard the start symbol of the first line
+            hexFile.ReadByte();
+
+            nextHexLine = readOneLineOfHexFile(ref hexFile);
+
+            byte checkSum = 0;
+            byte[] transmitData = new byte[1 + 4 + 1]; //<0xAA><tranferSize><checksum>
+
+            transmitData[0] = (byte)(BOOTLOADER_START_COMMAND);
+
+            transferSize = endLineAddess - APP_START_ADDRESS + endLineByteCount;
+            transmitData[1] = (byte)((transferSize >> 24) & 0xFF);
+            transmitData[2] = (byte)((transferSize >> 16) & 0xFF);
+            transmitData[3] = (byte)((transferSize >> 8) & 0xFF);
+            transmitData[4] = (byte)(transferSize & 0xFF);
+
+            checkSum = (byte)(~(transmitData[0] + transmitData[1] + transmitData[2] + transmitData[3] + transmitData[4]) + 1);
+            transmitData[5] = checkSum;
+
+            theControlBoard.transmitBytesToRobot(transmitData, 6, 1);
+
+            System.Threading.Thread.Sleep((int)(WAIT_FOR_MASS_FLASH_ERASE * transferSize / 1024));
+
+            currentHexLinePointer++;
+        }        
         private void prepareBootLoader()
         {
             currentProgrammingPercentEvent(0);
@@ -426,13 +495,13 @@ namespace SwarmRobotControlAndCommunication
 
             nextHexLine = readOneLineOfHexFile(ref hexFile);
                 
-            byte[] transmitData = new byte[8];
+            byte[] transmitData = new byte[4];
             transferSize = endLineAddess - APP_START_ADDRESS + endLineByteCount;
             transmitData[0] = (byte)((transferSize >> 24) & 0xFF);
             transmitData[1] = (byte)((transferSize >> 16) & 0xFF);
             transmitData[2] = (byte)((transferSize >> 8) & 0xFF);
             transmitData[3] = (byte)(transferSize & 0xFF);
-            theControlBoard.transmitBytesToRobot(transmitData, 8, 1);
+            theControlBoard.transmitBytesToRobot(transmitData, 4, 1);
             System.Threading.Thread.Sleep((int)(WAIT_FOR_MASS_FLASH_ERASE*transferSize/1024));
             //MessageBox.Show(transferSize.ToString());
             currentHexLinePointer++;
@@ -453,13 +522,13 @@ namespace SwarmRobotControlAndCommunication
 
                 if (isSkipTheRest == true)
                 {
-                    programOneByteFrameToFlash(SIZE_ONE_PROGRAM_BLOCK, startAddressCurrentProgramBlock, toSendData);
+                    programOneByteFrameToFlash(SIZE_ONE_PROGRAM_BLOCK, startAddressCurrentProgramBlock, toSendData, cancelToken);
                     updateAddressesAndDataPointer();
                     continue;
                 }
                 if (isOneByteFrameReady() == true)
                 {
-                    programOneByteFrameToFlash(SIZE_ONE_PROGRAM_BLOCK, startAddressCurrentProgramBlock, toSendData);
+                    programOneByteFrameToFlash(SIZE_ONE_PROGRAM_BLOCK, startAddressCurrentProgramBlock, toSendData, cancelToken);
                     updateAddressesAndDataPointer();
                 }
                 //Update all next* variables if only part of nextHexLineData is sent
@@ -478,7 +547,7 @@ namespace SwarmRobotControlAndCommunication
                     {
                         // If there is still data left then send it before exiting the bootloader
                         if (dataPointer != 0)
-                            programOneByteFrameToFlash(dataPointer, startAddressCurrentProgramBlock, toSendData);
+                            programOneByteFrameToFlash(dataPointer, startAddressCurrentProgramBlock, toSendData, cancelToken);
                         return;
                     }
                     movePointerToTheNextLine();
@@ -525,33 +594,6 @@ namespace SwarmRobotControlAndCommunication
                     notAllOfNextLineDataIsSentFlag = true;
                     return false;
             }
-                
-            //if (isNextAddressInsideCurrentBlock())
-            //{
-            //    if (isNextAddressAndAllOfItsDataInsideCurrentBlock() == true)
-            //    {
-            //        fillNopCommandFromCurrentDataPointerToNextAddress(ref toSendData, ref dataPointer, nextHexLine.address);
-            //        fillSentDataWithAllOfNextLineData(ref toSendData, ref dataPointer, nextHexLine.byteCount, nextHexLine.data);
-            //        return false;
-            //    }
-            //    else //The next address is inside of the current write and erase block but not all of its data
-            //    {
-            //        startLocationLeftOverData = (uint)(startAddressNextProgramBlock - nextHexLine.address);
-            //        lengthOfLeftOverData = (byte)(nextHexLine.byteCount - startLocationLeftOverData);
-
-            //        fillNopCommandFromCurrentDataPointerToNextAddress(ref toSendData, ref dataPointer, nextHexLine.address);
-            //        fillSentDataWithPartOfNextLineData(ref toSendData, ref dataPointer, startLocationLeftOverData, nextHexLine.data);
-
-            //        notAllOfNextLineDataIsSentFlag = true;
-            //        return false;
-            //    }
-            //}
-            //else
-            //{
-            //    fillNopCommandFromCurrentDataPointerToNextProgrammedBlock(ref toSendData, dataPointer, SIZE_ONE_PROGRAM_BLOCK);
-            //    return true;
-
-            //}
         }
         private bool isNextAddressInsideCurrentBlock()
         {
@@ -640,39 +682,128 @@ namespace SwarmRobotControlAndCommunication
         /// <returns>
         /// Return true if success. Otherwise throw an exception
         /// </returns>
-        private bool programOneByteFrameToFlash(byte byteCount, uint startAddress, byte[] programData)
+        private bool programOneByteFrameToFlash(byte byteCount, uint startAddress, byte[] programData, CancellationTokenSource cancelToken)
         {
             try
             {
                 UInt16 checkSum = generateCheckSum(byteCount, startAddress, programData);
-                sendByteCountCheckSumAddress(byteCount, checkSum, startAddress);
-                theControlBoard.transmitBytesToRobot(programData, byteCount, WAIT_TIME_BETWEEN_PROGRAM_BLOCKS);
-                transferSize -= byteCount;
+                //byte[] ackSignal = new byte[3];
+                byte[] nackSignal = new byte[3];
+                byte programPacketLength = (byte)(4 + 1 + byteCount + 2); //  <start address><byte count><data[0]...data[byte count - 1]><checksum>
+
+                byte[] transmitBuffer = new byte[programPacketLength]; 
+
+                 arrayDataFrame[currentDataFramePointer].byteCount = byteCount;
+                 arrayDataFrame[currentDataFramePointer].startAddress = startAddress;
+                 arrayDataFrame[currentDataFramePointer].data = programData;
+
+                 transmitBuffer[0] = (byte)(((startAddress >> 24) & 0xFF));
+                 transmitBuffer[1] = (byte)(((startAddress >> 16) & 0xFF));
+                 transmitBuffer[2] = (byte)(((startAddress >> 8) & 0xFF));
+                 transmitBuffer[3] = (byte)(startAddress & 0xFF);
+                 transmitBuffer[4] = (byte)byteCount;
+                 for (int i = 0; i < byteCount; i++)
+                 {
+                     transmitBuffer[i + 5] = programData[i];
+                 }
+                 transmitBuffer[programPacketLength - 2] = (byte)((checkSum >> 8) & 0xFF);
+                 transmitBuffer[programPacketLength - 1] = (byte)(checkSum & 0xFF);
+
+
+                 while (isCanceledByUser(cancelToken) == false)
+                 {
+                     //sendByteCountCheckSumAddress(byteCount, checkSum, startAddress);
+                     //theControlBoard.transmitBytesToRobot(programData, byteCount, 0);
+
+                     theControlBoard.transmitBytesToRobot(transmitBuffer, programPacketLength, 0);
+
+                     theControlBoard.receiveBytesFromRobot(DATA_FRAME_NACK_LENGTH, ref nackSignal, DATA_FRAME_NACK_WAIT_TIME);
+                     if (isNackSignal(nackSignal, COMPLETED_DATA_FRAME_NACK))
+                     {
+                         if (currentDataFramePointer != 0)
+                         {// Re-written the previous data frame before writing this data frame
+                             // -> keep going back to previous data frames until a successfull write occurs
+                             // or we reach the first data frame. 
+                             // This is a roundabout way so we don't need "error" devices to send back 
+                             // their current flash address.
+                             currentDataFramePointer--;
+                             programOneByteFrameToFlash(arrayDataFrame[currentDataFramePointer].byteCount,
+                                                        arrayDataFrame[currentDataFramePointer].startAddress,
+                                                        arrayDataFrame[currentDataFramePointer].data,
+                                                        cancelToken);
+                         }
+                     }
+                     else
+                     {
+                         currentDataFramePointer++;
+                         return true;
+                     }
+
+                     //try
+                     //{
+                     //    // IMPORTANT!: The  waiting time is extremely important. 
+                     //    // Requiring extensive testing for an appropirate value
+                     //    theControlBoard.receiveBytesFromRobot(DATA_FRAME_ACK_LENGTH, ref ackSignal, DATA_FRAME_ACK_WAIT_TIME);
+                     //    if (isAckSignal(ackSignal, COMPLETED_DATA_FRAME_ACK))
+                     //    {// Successfully written a data frame to the devicesprogramOneByteFrameToFlash
+                     //        currentDataFramePointer++;
+                     //        // Do a dumb read to wait for over 1ms before writing 
+                     //        // next data frame since waiting directly by using C#
+                     //        // will take too long.
+                     //        // This is to assure that the targeted device used for 
+                     //        // ACK purpose has enough time to go back to RX state
+                     //        //oneMsDumbRead();
+
+                     //        //  Thread.Sleep(2000);
+
+                     //        return true;
+                     //    }
+                     //}
+                     //catch { }
+
+                     //// Is this not the first data frame?
+                     //if (currentDataFramePointer != 0)
+                     //{// Re-written the previous data frame before writing this data frame
+                     //    // -> keep going back to previous data frames until a successfull write occurs
+                     //    // or we reach the first data frame. 
+                     //    // This is a roundabout way so we don't need "error" devices to send back 
+                     //    // their current flash address.
+                     //    currentDataFramePointer--;
+                     //    programOneByteFrameToFlash(arrayDataFrame[currentDataFramePointer].byteCount,
+                     //                               arrayDataFrame[currentDataFramePointer].startAddress,
+                     //                               arrayDataFrame[currentDataFramePointer].data,
+                     //                               cancelToken);
+                     //}
+                }
+                 return false;
             }
             catch (Exception ex)
             {
-                throw new Exception("Program one byte Frame: " + ex.Message);
+                String mssg = String.Format("Byte count: {0} ", byteCount);
+                throw new Exception("Program one byte Frame: " + mssg + ex.Message);
             }
-            return true;
         }
-        private void sendByteCountCheckSumAddress(byte byteCount, UInt16 checkSum, uint startAddress)
+        private void sendByteCountCheckSumAddress(byte byteCount, UInt16 checkSum, UInt32 startAddress)
         {
-            byte length = 6;
+            byte length = 7;
             byte[] setupData = new byte[length];
             setupData[0] = byteCount;
             setupData[1] = (byte)((checkSum >> 8) & 0xFF);
             setupData[2] = (byte)(checkSum  & 0xFF);
-            setupData[3] = (byte)(((startAddress >> 16) & 0xFF));
-            setupData[4] = (byte)(((startAddress >> 8) & 0xFF));
-            setupData[5] = (byte)(startAddress & 0xFF);
-            theControlBoard.transmitBytesToRobot(setupData, length, WAIT_TIME_BETWEEN_PROGRAM_BLOCKS);
+            setupData[3] = (byte)(((startAddress >> 24) & 0xFF));
+            setupData[4] = (byte)(((startAddress >> 16) & 0xFF));
+            setupData[5] = (byte)(((startAddress >> 8) & 0xFF));
+            setupData[6] = (byte)(startAddress & 0xFF);
+            theControlBoard.transmitBytesToRobot(setupData, length, WAIT_BETWEEN_PACKETS);
         }
-        private UInt16 generateCheckSum(byte byteCount, uint startAddress, byte[] programData)
+        private UInt16 generateCheckSum(byte byteCount, UInt32 startAddress, byte[] programData)
         {
             uint checkSum = 0;
             UInt16 generatedChecksum = 0;
 
-            checkSum = byteCount + ((startAddress >> 16) & 0xFF) + ((startAddress >> 8) & 0xFF) + (startAddress & 0xFF);
+            checkSum = byteCount + ((startAddress >> 24) & 0xFF) + ((startAddress >> 16) & 0xFF) 
+                                 + ((startAddress >> 8)  & 0xFF) + (startAddress & 0xFF);
+
             for (int i = 0; i < byteCount; i++)
             {
                 checkSum = checkSum + programData[i];
@@ -687,6 +818,39 @@ namespace SwarmRobotControlAndCommunication
             else
             {
                 throw new Exception("The generated check sum is wrong");
+            }
+        }
+        private bool isAckSignal(byte[] signalToTest, byte[] ackValue)
+        {
+            int i = 0;
+            foreach (int item in signalToTest)
+            {
+                if (item != ackValue[i])
+                    return false;
+                i++;
+            }
+            return true;
+        }
+        private bool isNackSignal(byte[] signalToTest, byte[] NackValue)
+        {
+            int i = 0;
+            foreach (int item in signalToTest)
+            {
+                if (item != NackValue[i])
+                    return false;
+                i++;
+            }
+            return true;
+        }
+        private void oneMsDumbRead()
+        {
+            try
+            {
+                byte[] data = new byte[3];
+                theControlBoard.receiveBytesFromRobot(1, ref data, 1);
+            }
+            catch
+            {
             }
         }
         public static byte convertCharToHex(char readByte)
