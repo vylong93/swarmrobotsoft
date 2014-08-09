@@ -62,6 +62,9 @@ namespace SwarmRobotControlAndCommunication
             private const byte COMMAND_READ_ADC2            = 0xA1;
             private const byte COMMAND_DISTANCE_SENSING     = 0xA2;
             private const byte COMMAND_BATTERY_MEASUREMENT  = 0xA3;
+            
+            private const byte COMMAND_READ_EEPROM          = 0xE0;
+            private const byte COMMAND_WRITE_EEPROM         = 0xE1;
 
             private const byte COMMAND_STOP_MOTOR1          = 0xA4;
             private const byte COMMAND_STOP_MOTOR2          = 0xA5;
@@ -832,6 +835,59 @@ namespace SwarmRobotControlAndCommunication
         private void stopMotor2Button_Click(object sender, RoutedEventArgs e)
         {
             theControlBoard.transmitBytesToRobot(COMMAND_STOP_MOTOR2);
+        }
+
+        private void readEepromButton_Click(object sender, RoutedEventArgs e)
+        {
+            Byte[] transmittedData = new Byte[5]; // <Read EEPROM command><read address>
+            Int32 readAddress;
+
+            transmittedData[0] = COMMAND_READ_EEPROM;
+
+            readAddress = Convert.ToInt32(this.EepromAddressTextBox.Text);
+            transmittedData[1] = (Byte)(readAddress >> 24);
+            transmittedData[2] = (Byte)(readAddress >> 16);
+            transmittedData[3] = (Byte)(readAddress >> 8);
+            transmittedData[4] = (Byte)(readAddress & 0xFF);
+
+            theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
+
+            Byte[] receivedData = new Byte[4];
+            Int32 receivedWord;
+
+            try
+            {
+                theControlBoard.receiveBytesFromRobot(4, ref receivedData, 1000);
+                receivedWord = (receivedData[3] << 24) | (receivedData[2] << 16) | (receivedData[1] << 8) | receivedData[0];
+                this.EepromContentTextBox.Text = receivedWord.ToString();
+            }
+            catch (Exception ex)
+            {
+                defaultExceptionHandle(ex);
+            }
+        }
+
+        private void writeEepromButton_Click(object sender, RoutedEventArgs e)
+        {
+            Byte[] transmittedData = new Byte[9]; // <Write EEPROM command><write address><Word>
+            Int32 writeAddress;
+            Int32 writeWord;
+
+            transmittedData[0] = COMMAND_WRITE_EEPROM;
+
+            writeAddress = Convert.ToInt32(this.EepromAddressTextBox.Text);
+            transmittedData[1] = (Byte)(writeAddress >> 24);
+            transmittedData[2] = (Byte)(writeAddress >> 16);
+            transmittedData[3] = (Byte)(writeAddress >> 8);
+            transmittedData[4] = (Byte)(writeAddress & 0xFF);
+
+            writeWord = Convert.ToInt32(this.EepromContentTextBox.Text);
+            transmittedData[5] = (Byte)(writeWord >> 24);
+            transmittedData[6] = (Byte)(writeWord >> 16);
+            transmittedData[7] = (Byte)(writeWord >> 8);
+            transmittedData[8] = (Byte)(writeWord & 0xFF);
+
+            theControlBoard.transmitBytesToRobot(transmittedData, 9, 1);
         }
 
         #endregion

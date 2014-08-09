@@ -689,6 +689,7 @@ namespace SwarmRobotControlAndCommunication
                 UInt16 checkSum = generateCheckSum(byteCount, startAddress, programData);
                 //byte[] ackSignal = new byte[3];
                 byte[] nackSignal = new byte[3];
+
                 byte programPacketLength = (byte)(4 + 1 + byteCount + 2); //  <start address><byte count><data[0]...data[byte count - 1]><checksum>
 
                 byte[] transmitBuffer = new byte[programPacketLength]; 
@@ -717,7 +718,14 @@ namespace SwarmRobotControlAndCommunication
 
                      theControlBoard.transmitBytesToRobot(transmitBuffer, programPacketLength, 0);
 
-                     theControlBoard.receiveBytesFromRobot(DATA_FRAME_NACK_LENGTH, ref nackSignal, DATA_FRAME_NACK_WAIT_TIME);
+                     try
+                     {
+                         theControlBoard.receiveBytesFromRobot(DATA_FRAME_NACK_LENGTH, ref nackSignal, DATA_FRAME_NACK_WAIT_TIME);
+                     }
+                     catch 
+                     {
+                         nackSignal[0] = 0xFF;
+                     }
                      if (isNackSignal(nackSignal, COMPLETED_DATA_FRAME_NACK))
                      {
                          if (currentDataFramePointer != 0)

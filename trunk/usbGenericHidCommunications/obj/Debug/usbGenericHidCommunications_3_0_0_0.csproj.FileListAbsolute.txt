@@ -62,3 +62,4 @@ E:\00 SwarmRobot\Workspace\CsharpProject\usbGenericHidCommunications\bin\Debug\u
 E:\00 SwarmRobot\Workspace\CsharpProject\usbGenericHidCommunications\bin\Debug\usbGenericHidCommunications.pdb
 E:\00 SwarmRobot\Workspace\CsharpProject\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications.dll
 E:\00 SwarmRobot\Workspace\CsharpProject\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications.pdb
+E:\00 SwarmRobot\Workspace\CsharpProject\usbGenericHidCommunications\obj\Debug\usbGenericHidCommunications_3_0_0_0.csprojResolveAssemblyReference.cache
