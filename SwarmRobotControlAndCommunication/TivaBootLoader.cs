@@ -28,14 +28,14 @@ namespace SwarmRobotControlAndCommunication
             /// the flash (from 0x00 -> EndAddress)
             /// It is not allowed to be written in this area
             /// </summary>
-            private const uint BOOTLOADER_END_ADDRESS = 0x1FFF;
+            private const uint BOOTLOADER_END_ADDRESS = 0x3FFF;
 
             /// <summary>
             /// Used to check the first address of the hex file to see
             /// if the user has relocated the app starting address to the
             /// same as in the bootloader or not.
             /// </summary>
-            private const uint APP_START_ADDRESS = 0x2000; 
+            private const uint APP_START_ADDRESS = 0x4000; 
 
             /// <summary>
             /// The size of one block of bytes that will be written
@@ -93,22 +93,8 @@ namespace SwarmRobotControlAndCommunication
             private const byte WAIT_BETWEEN_PACKETS = 1;
 
             /// <summary>
-            /// An ACK signal used to acknowledge that a data frame has been
-            /// written successfully
+            /// The waitting time for a NACK signal to be received (unit: ms).
             /// </summary>
-            private readonly byte[] COMPLETED_DATA_FRAME_ACK = new byte[] { 0xAC, 0x0C, 0x48 };
-            private readonly byte[] COMPLETED_DATA_FRAME_NACK = new byte[] { 0x00, 0x00, 0x00 };
-
-            /// <summary>
-            /// The length of an ACK of a completed data frame.
-            /// </summary>
-            private const byte DATA_FRAME_ACK_LENGTH = 3;
-            private const byte DATA_FRAME_NACK_LENGTH = 3;
-
-            /// <summary>
-            /// The waitting for an ACK of a completed data frame (unit: ms).
-            /// </summary>
-            private const byte DATA_FRAME_ACK_WAIT_TIME = 10; // unit = 1ms
             private const byte DATA_FRAME_NACK_WAIT_TIME = 10; // unit = 1ms
         #endregion
 
@@ -687,126 +673,68 @@ namespace SwarmRobotControlAndCommunication
             try
             {
                 UInt16 checkSum = generateCheckSum(byteCount, startAddress, programData);
-                //byte[] ackSignal = new byte[3];
+                bool isReceivedSignal = false;
                 byte[] nackSignal = new byte[3];
 
                 byte programPacketLength = (byte)(4 + 1 + byteCount + 2); //  <start address><byte count><data[0]...data[byte count - 1]><checksum>
 
                 byte[] transmitBuffer = new byte[programPacketLength]; 
 
-                 arrayDataFrame[currentDataFramePointer].byteCount = byteCount;
-                 arrayDataFrame[currentDataFramePointer].startAddress = startAddress;
-                 arrayDataFrame[currentDataFramePointer].data = programData;
+                arrayDataFrame[currentDataFramePointer].byteCount = byteCount;
+                arrayDataFrame[currentDataFramePointer].startAddress = startAddress;
+                arrayDataFrame[currentDataFramePointer].data = new byte[programPacketLength];
 
-                 transmitBuffer[0] = (byte)(((startAddress >> 24) & 0xFF));
-                 transmitBuffer[1] = (byte)(((startAddress >> 16) & 0xFF));
-                 transmitBuffer[2] = (byte)(((startAddress >> 8) & 0xFF));
-                 transmitBuffer[3] = (byte)(startAddress & 0xFF);
-                 transmitBuffer[4] = (byte)byteCount;
-                 for (int i = 0; i < byteCount; i++)
-                 {
-                     transmitBuffer[i + 5] = programData[i];
-                 }
-                 transmitBuffer[programPacketLength - 2] = (byte)((checkSum >> 8) & 0xFF);
-                 transmitBuffer[programPacketLength - 1] = (byte)(checkSum & 0xFF);
-
-
-                 while (isCanceledByUser(cancelToken) == false)
-                 {
-                     //sendByteCountCheckSumAddress(byteCount, checkSum, startAddress);
-                     //theControlBoard.transmitBytesToRobot(programData, byteCount, 0);
-
-                     theControlBoard.transmitBytesToRobot(transmitBuffer, programPacketLength, 0);
-
-                     try
-                     {
-                         if ((endLineAddess + endLineByteCount) == (startAddress + byteCount))
-                             theControlBoard.receiveBytesFromRobot(DATA_FRAME_NACK_LENGTH, ref nackSignal, 255);
-                         else
-                             theControlBoard.receiveBytesFromRobot(DATA_FRAME_NACK_LENGTH, ref nackSignal, DATA_FRAME_NACK_WAIT_TIME);
-
-                     }
-                     catch 
-                     {
-                         nackSignal[0] = 0xFF;
-                     }
-                     if (isNackSignal(nackSignal, COMPLETED_DATA_FRAME_NACK))
-                     {
-                         if (currentDataFramePointer != 0)
-                         {// Re-written the previous data frame before writing this data frame
-                             // -> keep going back to previous data frames until a successfull write occurs
-                             // or we reach the first data frame. 
-                             // This is a roundabout way so we don't need "error" devices to send back 
-                             // their current flash address.
-                             currentDataFramePointer--;
-                             programOneByteFrameToFlash(arrayDataFrame[currentDataFramePointer].byteCount,
-                                                        arrayDataFrame[currentDataFramePointer].startAddress,
-                                                        arrayDataFrame[currentDataFramePointer].data,
-                                                        cancelToken);
-                         }
-                     }
-                     else
-                     {
-                         currentDataFramePointer++;
-                         return true;
-                     }
-
-                     //try
-                     //{
-                     //    // IMPORTANT!: The  waiting time is extremely important. 
-                     //    // Requiring extensive testing for an appropirate value
-                     //    theControlBoard.receiveBytesFromRobot(DATA_FRAME_ACK_LENGTH, ref ackSignal, DATA_FRAME_ACK_WAIT_TIME);
-                     //    if (isAckSignal(ackSignal, COMPLETED_DATA_FRAME_ACK))
-                     //    {// Successfully written a data frame to the devicesprogramOneByteFrameToFlash
-                     //        currentDataFramePointer++;
-                     //        // Do a dumb read to wait for over 1ms before writing 
-                     //        // next data frame since waiting directly by using C#
-                     //        // will take too long.
-                     //        // This is to assure that the targeted device used for 
-                     //        // ACK purpose has enough time to go back to RX state
-                     //        //oneMsDumbRead();
-
-                     //        //  Thread.Sleep(2000);
-
-                     //        return true;
-                     //    }
-                     //}
-                     //catch { }
-
-                     //// Is this not the first data frame?
-                     //if (currentDataFramePointer != 0)
-                     //{// Re-written the previous data frame before writing this data frame
-                     //    // -> keep going back to previous data frames until a successfull write occurs
-                     //    // or we reach the first data frame. 
-                     //    // This is a roundabout way so we don't need "error" devices to send back 
-                     //    // their current flash address.
-                     //    currentDataFramePointer--;
-                     //    programOneByteFrameToFlash(arrayDataFrame[currentDataFramePointer].byteCount,
-                     //                               arrayDataFrame[currentDataFramePointer].startAddress,
-                     //                               arrayDataFrame[currentDataFramePointer].data,
-                     //                               cancelToken);
-                     //}
+                transmitBuffer[0] = (byte)(((startAddress >> 24) & 0xFF));
+                transmitBuffer[1] = (byte)(((startAddress >> 16) & 0xFF));
+                transmitBuffer[2] = (byte)(((startAddress >> 8) & 0xFF));
+                transmitBuffer[3] = (byte)(startAddress & 0xFF);
+                transmitBuffer[4] = (byte)byteCount;
+                for (int i = 0; i < byteCount; i++)
+                {
+                    transmitBuffer[i + 5] = programData[i];
+                    arrayDataFrame[currentDataFramePointer].data[i] = programData[i];
                 }
-                 return false;
+                transmitBuffer[programPacketLength - 2] = (byte)((checkSum >> 8) & 0xFF);
+                transmitBuffer[programPacketLength - 1] = (byte)(checkSum & 0xFF);
+
+
+                while (isCanceledByUser(cancelToken) == false)
+                {
+                    theControlBoard.transmitBytesToRobot(transmitBuffer, programPacketLength, 0);
+
+                    if ((endLineAddess + endLineByteCount) == (startAddress + byteCount))
+                        isReceivedSignal = theControlBoard.tryReceiveBytesFromRobot(1, ref nackSignal, 255);
+                    else
+                        isReceivedSignal = theControlBoard.tryReceiveBytesFromRobot(1, ref nackSignal, DATA_FRAME_NACK_WAIT_TIME);
+
+                    if (isReceivedSignal)
+                    {
+                        if (currentDataFramePointer != 0)
+                        {// Re-written the previous data frame before writing this data frame
+                            // -> keep going back to previous data frames until a successfull write occurs
+                            // or we reach the first data frame. 
+                            // This is a roundabout way so we don't need "error" devices to send back 
+                            // their current flash address.
+                            currentDataFramePointer--;
+                            programOneByteFrameToFlash(arrayDataFrame[currentDataFramePointer].byteCount,
+                                                    arrayDataFrame[currentDataFramePointer].startAddress,
+                                                    arrayDataFrame[currentDataFramePointer].data,
+                                                    cancelToken);
+                        }
+                    }
+                    else
+                    {
+                        currentDataFramePointer++;
+                        return true;
+                    }
+               }
+               return false;
             }
             catch (Exception ex)
             {
                 String mssg = String.Format("Byte count: {0} ", byteCount);
                 throw new Exception("Program one byte Frame: " + mssg + ex.Message);
             }
-        }
-        private void sendByteCountCheckSumAddress(byte byteCount, UInt16 checkSum, UInt32 startAddress)
-        {
-            byte length = 7;
-            byte[] setupData = new byte[length];
-            setupData[0] = byteCount;
-            setupData[1] = (byte)((checkSum >> 8) & 0xFF);
-            setupData[2] = (byte)(checkSum  & 0xFF);
-            setupData[3] = (byte)(((startAddress >> 24) & 0xFF));
-            setupData[4] = (byte)(((startAddress >> 16) & 0xFF));
-            setupData[5] = (byte)(((startAddress >> 8) & 0xFF));
-            setupData[6] = (byte)(startAddress & 0xFF);
-            theControlBoard.transmitBytesToRobot(setupData, length, WAIT_BETWEEN_PACKETS);
         }
         private UInt16 generateCheckSum(byte byteCount, UInt32 startAddress, byte[] programData)
         {
@@ -830,39 +758,6 @@ namespace SwarmRobotControlAndCommunication
             else
             {
                 throw new Exception("The generated check sum is wrong");
-            }
-        }
-        private bool isAckSignal(byte[] signalToTest, byte[] ackValue)
-        {
-            int i = 0;
-            foreach (int item in signalToTest)
-            {
-                if (item != ackValue[i])
-                    return false;
-                i++;
-            }
-            return true;
-        }
-        private bool isNackSignal(byte[] signalToTest, byte[] NackValue)
-        {
-            int i = 0;
-            foreach (int item in signalToTest)
-            {
-                if (item != NackValue[i])
-                    return false;
-                i++;
-            }
-            return true;
-        }
-        private void oneMsDumbRead()
-        {
-            try
-            {
-                byte[] data = new byte[3];
-                theControlBoard.receiveBytesFromRobot(1, ref data, 1);
-            }
-            catch
-            {
             }
         }
         public static byte convertCharToHex(char readByte)
@@ -945,7 +840,6 @@ namespace SwarmRobotControlAndCommunication
             }
         }
         #endregion
-
 
     }
 }

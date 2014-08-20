@@ -156,7 +156,7 @@ namespace SwarmRobotControlAndCommunication
 
         /// <summary>
         /// Transfer a number of bytes from the control board to targets.
-        /// Only data is transmitted. Data length and delay time are not sent to the robot.
+        /// Only data is transmitted. numberOfTransmittedBytes and delay time are not sent to the robot.
         /// </summary>
         /// <param name="transmittedData">The transmitted data</param>
         /// <param name="numberOfTransmittedBytes">Data length (1 - 2^32)</param>
@@ -298,59 +298,100 @@ namespace SwarmRobotControlAndCommunication
         /// Receive data from target through the control board.
         /// The received data length is limited to 2^32.
         /// </summary>
+        /// <return> An exception if any errors occur or the number of received data is not enough</return>
         /// <param name="command">The command to specify what data should the target transmits to the PC</param>
-        /// <param name="numberOfReceivedData">The length of the expected data (also transmitted to the target)</param>
+        /// <param name="dataLength">The length of the expected data (also transmitted to the target)</param>
         /// <param name="data">The buffer to hold the received data</param>
         /// <param name="waitTime">The waiting time for a packet to be received</param>
-        public void receiveBytesFromRobot(byte command, UInt32 numberOfReceivedBytes, ref byte[] data, UInt32 waitTime)
+        public void receiveBytesFromRobot(byte command, UInt32 dataLength, ref byte[] data, UInt32 waitTime)
         {
-                byte[] outputBuffer = new Byte[65];
-                byte[] inputBuffer = new Byte[65];
-                UInt32 length = 0;
-                UInt32 dataLength = numberOfReceivedBytes;
-                UInt32 pointer = 0;
             try
             {
-                if(numberOfReceivedBytes < 1)
+                if (dataLength < 1)
                     throw new Exception("Data length must be larger than 1");
 
-                outputBuffer[0] = 0;
-                outputBuffer[1] = RECEIVE_DATA_FROM_ROBOT_WITH_COMMAND;
-                outputBuffer[2] = command;
-                outputBuffer[3] = (byte)((numberOfReceivedBytes >> 24) & 0x0FF);
-                outputBuffer[4] = (byte)((numberOfReceivedBytes >> 16) & 0x0FF);
-                outputBuffer[5] = (byte)((numberOfReceivedBytes >> 8) & 0x0FF);
-                outputBuffer[6] = (byte)(numberOfReceivedBytes & 0x0FF);
-                outputBuffer[7] = (byte)((waitTime >> 24) & 0x0FF);
-                outputBuffer[8] = (byte)((waitTime >> 16) & 0x0FF);
-                outputBuffer[9] = (byte)((waitTime >> 8) & 0x0FF);
-                outputBuffer[10] = (byte)(waitTime & 0x0FF);
-    
-                sendDataToControlBoard(outputBuffer);
-                outputBuffer[1] = RECEIVE_DATA_FROM_ROBOT_CONTINUE;
-                while (true)
+                setupControlBoardBeforeReceivingData(command, RECEIVE_DATA_FROM_ROBOT_WITH_COMMAND, dataLength, waitTime);
+                startReceivingData(ref dataLength, ref data);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Received data: " + ex.Message + "\n" +
+                                    "Number of data left: " + dataLength.ToString());
+            }
+        }
+        private void setupControlBoardBeforeReceivingData(byte command, byte receiveMode, UInt32 numberOfReceivedBytes, UInt32 waitTime)
+        {
+            byte[] outputBuffer = new Byte[65];
+
+            outputBuffer[0] = 0;
+            outputBuffer[1] = receiveMode;
+            outputBuffer[2] = command;
+            outputBuffer[3] = (byte)((numberOfReceivedBytes >> 24) & 0x0FF);
+            outputBuffer[4] = (byte)((numberOfReceivedBytes >> 16) & 0x0FF);
+            outputBuffer[5] = (byte)((numberOfReceivedBytes >> 8) & 0x0FF);
+            outputBuffer[6] = (byte)(numberOfReceivedBytes & 0x0FF);
+            outputBuffer[7] = (byte)((waitTime >> 24) & 0x0FF);
+            outputBuffer[8] = (byte)((waitTime >> 16) & 0x0FF);
+            outputBuffer[9] = (byte)((waitTime >> 8) & 0x0FF);
+            outputBuffer[10] = (byte)(waitTime & 0x0FF);
+            sendDataToControlBoard(outputBuffer);
+        }
+        private void startReceivingData(ref UInt32 numberOfReceivedBytes, ref byte[] data)
+        {
+            UInt32 length = 0;
+            byte[] outputBuffer = new Byte[65];
+            byte[] inputBuffer = new Byte[65];
+            UInt32 pointer = 0;
+
+            outputBuffer[1] = RECEIVE_DATA_FROM_ROBOT_CONTINUE;
+            while (true)
+            {
+                inputBuffer = readDataFromControlBoard();
+
+                checkIfReceivedDataFromRobot(inputBuffer);
+
+                if (numberOfReceivedBytes > MAX_NUM_BYTE_RECEIVED)
+                    length = MAX_NUM_BYTE_RECEIVED;
+                else
+                    length = numberOfReceivedBytes;
+
+                for (UInt32 j = 1; j <= length; j++)
                 {
-                    inputBuffer = readDataFromControlBoard();
-                        
-                    checkIfReceivedDataFromRobot(inputBuffer);
-
-                    if (dataLength > MAX_NUM_BYTE_RECEIVED)
-                        length = MAX_NUM_BYTE_RECEIVED;
-                    else
-                        length = dataLength;
-
-                    for (UInt32 j = 1; j <= length; j++)
-                    {
-                        data[pointer] = inputBuffer[j];
-                        pointer++;
-                    }
-
-                    dataLength -= length;
-                    if (dataLength <= 0)
-                        break;
-
-                    sendDataToControlBoard(outputBuffer);
+                    data[pointer] = inputBuffer[j];
+                    pointer++;
                 }
+
+                numberOfReceivedBytes -= length;
+                if (numberOfReceivedBytes <= 0)
+                    break;
+
+                sendDataToControlBoard(outputBuffer);
+            }
+        }
+        void checkIfReceivedDataFromRobot(byte[] inputBuffer)
+        {
+            if (inputBuffer[33] == RECEIVE_DATA_FROM_ROBOT_ERROR)
+                throw new Exception("Did not receive data from robot");
+        }
+
+        /// <summary>
+        /// Receive data from target through the control board 
+        /// without transmitting command and data length to other devices.
+        /// The received data length is limited to 2^32.
+        /// </summary>
+        /// <return> An exception if any errors occur or the number of received data is not enough</return>
+        /// <param name="dataLength">The length of the expected data (NOT transmitted to the target)</param>
+        /// <param name="data">The buffer to hold the received data</param>
+        /// <param name="waitTime">The waiting time for a packet to be received</param>
+        public void receiveBytesFromRobot(UInt32 dataLength, ref byte[] data, UInt32 waitTime)
+        {
+            try
+            {
+                if (dataLength < 1)
+                    throw new Exception("Data length must be larger than 1");
+
+                setupControlBoardBeforeReceivingData(0, RECEIVE_DATA_FROM_ROBOT, dataLength, waitTime);
+                startReceivingData(ref dataLength, ref data);
             }
             catch (Exception ex)
             {
@@ -360,79 +401,48 @@ namespace SwarmRobotControlAndCommunication
         }
 
         /// <summary>
-        /// Receive data from target through the control board 
+        /// Try receiving data from target through the control board 
         /// without transmitting command and data length to other devices.
-        /// The received data length is limited to 2^32.
+        /// The received data length is limited to 32 bytes.
         /// </summary>
-        /// <param name="numberOfReceivedData">The length of the expected data (NOT transmitted to the target)</param>
+        /// <return> False if no data is received. Otherwise, return True </return>
+        /// <param name="dataLength">The length of the expected data (NOT transmitted to the target)</param>
         /// <param name="data">The buffer to hold the received data</param>
         /// <param name="waitTime">The waiting time for a packet to be received</param>
-        public void receiveBytesFromRobot(UInt32 numberOfReceivedBytes, ref byte[] data, UInt32 waitTime)
+        public bool tryReceiveBytesFromRobot(UInt32 dataLength, ref byte[] data, UInt32 waitTime)
         {
+            UInt32 length = 0;
             byte[] outputBuffer = new Byte[65];
             byte[] inputBuffer = new Byte[65];
-            UInt32 length = 0;
-            UInt32 dataLength = numberOfReceivedBytes;
             UInt32 pointer = 0;
+
             try
             {
-                if (numberOfReceivedBytes < 1)
+                if (dataLength < 1)
                     throw new Exception("Data length must be larger than 1");
-
-
-                outputBuffer[0] = 0;
-                outputBuffer[1] = RECEIVE_DATA_FROM_ROBOT;
-
-                outputBuffer[2] = 0;    // Reserved, this byte only use for command mode.
-
-                outputBuffer[3] = (byte)((numberOfReceivedBytes >> 24) & 0x0FF);
-                outputBuffer[4] = (byte)((numberOfReceivedBytes >> 16) & 0x0FF);
-                outputBuffer[5] = (byte)((numberOfReceivedBytes >> 8) & 0x0FF);
-                outputBuffer[6] = (byte)(numberOfReceivedBytes & 0x0FF);
-
-                outputBuffer[7] = (byte)((waitTime >> 24) & 0x0FF);
-                outputBuffer[8] = (byte)((waitTime >> 16) & 0x0FF);
-                outputBuffer[9] = (byte)((waitTime >> 8) & 0x0FF);
-                outputBuffer[10] = (byte)(waitTime & 0x0FF);
-
-                sendDataToControlBoard(outputBuffer);
-
-
-                outputBuffer[1] = RECEIVE_DATA_FROM_ROBOT_CONTINUE;
-                while (true)
+                if (dataLength > MAX_NUM_BYTE_RECEIVED)
                 {
-                    inputBuffer = readDataFromControlBoard();
-
-                    checkIfReceivedDataFromRobot(inputBuffer);
-
-                    if (dataLength > MAX_NUM_BYTE_RECEIVED)
-                        length = MAX_NUM_BYTE_RECEIVED;
-                    else
-                        length = dataLength;
-
-                    for (UInt32 j = 1; j <= length; j++)
-                    {
-                        data[pointer] = inputBuffer[j];
-                        pointer++;
-                    }
-
-                    dataLength -= length;
-                    if (dataLength <= 0)
-                        break;
-
-                    sendDataToControlBoard(outputBuffer);
+                    String message = String.Format("Data length must be smaller than {0}", MAX_NUM_BYTE_RECEIVED);
+                    throw new Exception(message);
                 }
+
+                setupControlBoardBeforeReceivingData(0, RECEIVE_DATA_FROM_ROBOT, dataLength, waitTime);
+                inputBuffer = readDataFromControlBoard();
+
+                if (inputBuffer[33] == RECEIVE_DATA_FROM_ROBOT_ERROR)
+                    return false;
+
+                for (UInt32 j = 1; j <= length; j++)
+                {
+                    data[pointer] = inputBuffer[j];
+                    pointer++;
+                }
+                return true;
             }
             catch (Exception ex)
             {
-                throw new Exception("Received data: " + ex.Message + "\n" +
-                                    "Number of data left: " + dataLength.ToString());
+                throw new Exception("Try receiving data: " + ex.Message);
             }
-        }
-        void checkIfReceivedDataFromRobot(byte[] inputBuffer)
-        {
-            if (inputBuffer[33] == RECEIVE_DATA_FROM_ROBOT_ERROR)
-                throw new Exception("Did not receive data from robot");
         }
 
         /// <summary>

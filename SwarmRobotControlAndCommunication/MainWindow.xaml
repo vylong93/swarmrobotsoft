@@ -376,7 +376,6 @@
                             <ComboBoxItem Content="Start Sampling Mics Signals"/>
                             <ComboBoxItem Content="Test Speaker"/>
                             <ComboBoxItem Content="Change Motors Speed"/>
-                            <ComboBoxItem Content="Get Battery Voltage"/>
                             <ComboBoxItem Content="Read EEPROM"/>
                         </ComboBox>
                     </StackPanel>
