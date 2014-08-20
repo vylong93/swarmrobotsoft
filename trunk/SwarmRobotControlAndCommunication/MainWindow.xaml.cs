@@ -686,10 +686,6 @@ namespace SwarmRobotControlAndCommunication
                     case "Test Speaker":
                         theControlBoard.transmitBytesToRobot(COMMAND_TEST_SPEAKER);
                         break;
-
-                    case "Read EEPROM":
-                        readEeprom();
-                        break;
                     default:
                         throw new Exception("Send Command: Can not recognise command!");
                 } 
@@ -791,6 +787,10 @@ namespace SwarmRobotControlAndCommunication
             Byte[] receivedData = new Byte[length];
             int adcData;
             float BatteryVoltage;
+
+            theControlBoard.transmitBytesToRobot(COMMAND_SAMPLE_BATTERY_LEVEL);
+            Thread.Sleep(1);
+
             try
             {
                 theControlBoard.receiveBytesFromRobot(COMMAND_BATTERY_MEASUREMENT, length, ref receivedData, 1000);
@@ -844,11 +844,31 @@ namespace SwarmRobotControlAndCommunication
             theControlBoard.transmitBytesToRobot(COMMAND_STOP_MOTOR2);
         }
 
-        private void readEeprom()
+        private void setAddressEeprom()
+        {
+            Byte[] transmittedData = new Byte[5]; // <set address command>< address>
+            Int32 readAddress;
+
+            transmittedData[0] = COMMAND_SET_ADDRESS_EEROM;
+
+            readAddress = Convert.ToInt32(this.EepromAddressTextBox.Text);
+            transmittedData[1] = (Byte)(readAddress >> 24);
+            transmittedData[2] = (Byte)(readAddress >> 16);
+            transmittedData[3] = (Byte)(readAddress >> 8);
+            transmittedData[4] = (Byte)(readAddress & 0xFF);
+
+            theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
+        }
+
+        private void readEepromButton_Click(object sender, RoutedEventArgs e)
         {
             uint length = 4;
             Byte[] receivedData = new Byte[length];
             UInt32 receivedWord;
+
+            setAddressEeprom();
+            Thread.Sleep(1);
+
             try
             {
                 theControlBoard.receiveBytesFromRobot(COMMAND_READ_EEPROM, length, ref receivedData, 1000);
@@ -866,6 +886,9 @@ namespace SwarmRobotControlAndCommunication
             Byte[] transmittedData = new Byte[9]; // <Write EEPROM command><write address><Word>
             Int32 writeAddress;
             Int32 writeWord;
+
+            setAddressEeprom();
+            Thread.Sleep(1);
 
             transmittedData[0] = COMMAND_WRITE_EEPROM;
 
@@ -885,22 +908,6 @@ namespace SwarmRobotControlAndCommunication
         }
 
         #endregion
-
-        private void setAddressEepromButton_Click(object sender, RoutedEventArgs e)
-        {
-            Byte[] transmittedData = new Byte[5]; // <set address command>< address>
-            Int32 readAddress;
-
-            transmittedData[0] = COMMAND_SET_ADDRESS_EEROM;
-
-            readAddress = Convert.ToInt32(this.EepromAddressTextBox.Text);
-            transmittedData[1] = (Byte)(readAddress >> 24);
-            transmittedData[2] = (Byte)(readAddress >> 16);
-            transmittedData[3] = (Byte)(readAddress >> 8);
-            transmittedData[4] = (Byte)(readAddress & 0xFF);
-
-            theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
-        }
     }
 
     #region IValueConverter Members
