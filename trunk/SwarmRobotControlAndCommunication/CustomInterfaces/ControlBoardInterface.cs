@@ -56,7 +56,7 @@ namespace SwarmRobotControlAndCommunication.CustomInterfaces
 
         /// <summary>
         /// Transfer a number of bytes from the control board to targets.
-        /// Only data is transmitted. Data length and delay time are not sent to the robot.
+        /// Only data is transmitted. numberOfTransmittedBytes and delay time are not sent to the robot.
         /// </summary>
         /// <param name="transmittedData">The transmitted data</param>
         /// <param name="numberOfTransmittedBytes">Data length (1 - 2^32)</param>
@@ -75,20 +75,33 @@ namespace SwarmRobotControlAndCommunication.CustomInterfaces
         /// Receive data from target through the control board.
         /// The received data length is limited to 2^32.
         /// </summary>
+        /// <return> An exception if any errors occur or the number of received data is not enough</return>
         /// <param name="command">The command to specify what data should the target transmits to the PC</param>
-        /// <param name="numberOfReceivedData">The length of the expected data (also transmitted to the target)</param>
+        /// <param name="dataLength">The length of the expected data (also transmitted to the target)</param>
         /// <param name="data">The buffer to hold the received data</param>
         /// <param name="waitTime">The waiting time for a packet to be received</param>
-        void receiveBytesFromRobot(byte command, UInt32 numberOfReceivedBytes, ref byte[] data, UInt32 waitTime);
+        void receiveBytesFromRobot(byte command, UInt32 dataLength, ref byte[] data, UInt32 waitTime);
 
         /// <summary>
         /// Receive data from target through the control board 
         /// without transmitting command and data length to other devices.
         /// The received data length is limited to 2^32.
         /// </summary>
-        /// <param name="numberOfReceivedData">The length of the expected data (NOT transmitted to the target)</param>
+        /// <return> An exception if any errors occur or the number of received data is not enough</return>
+        /// <param name="dataLength">The length of the expected data (NOT transmitted to the target)</param>
         /// <param name="data">The buffer to hold the received data</param>
         /// <param name="waitTime">The waiting time for a packet to be received</param>
-        void receiveBytesFromRobot(UInt32 numberOfReceivedBytes, ref byte[] data, UInt32 waitTime);
+        void receiveBytesFromRobot(UInt32 dataLength, ref byte[] data, UInt32 waitTime);
+
+        /// <summary>
+        /// Try receiving data from target through the control board 
+        /// without transmitting command and data length to other devices.
+        /// The received data length is limited to 32 bytes.
+        /// </summary>
+        /// <return> False if no data is received. Otherwise, return True </return>
+        /// <param name="dataLength">The length of the expected data (NOT transmitted to the target)</param>
+        /// <param name="data">The buffer to hold the received data</param>
+        /// <param name="waitTime">The waiting time for a packet to be received</param>
+        bool tryReceiveBytesFromRobot(UInt32 dataLength, ref byte[] data, UInt32 waitTime);
     }
 }

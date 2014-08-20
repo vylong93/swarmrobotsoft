@@ -267,7 +267,7 @@ namespace SwarmRobotControlAndCommunication
         }
         #endregion
 
-        #region Control Tab
+        #region Control & Program Tab
 
         private void sleepButton_Click(object sender, RoutedEventArgs e)
         {
@@ -356,11 +356,15 @@ namespace SwarmRobotControlAndCommunication
         /// </summary>
         private async Task startProgramProcedureAsync(Button buttonClicked, String originalContent)
         {
+            MessageBoxResult result = MessageBoxResult.Yes;
             try
             {
                 if ((string)buttonClicked.Content == "Stop")
                 {
-                    cancelProgramProcess.Cancel();
+                    result = MessageBox.Show("Stop the current programming process?", 
+                                                          "Warning!", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                    if (result == MessageBoxResult.Yes)
+                        cancelProgramProcess.Cancel();
                 }
                 else
                 {
@@ -383,14 +387,17 @@ namespace SwarmRobotControlAndCommunication
             }
             finally
             {
-                this.Dispatcher.Invoke((Action)delegate
+                if (result == MessageBoxResult.Yes)
                 {
-                    buttonClicked.Content = originalContent;
-                    ellipseProgressEffect.Stop();
-                    this.progressProgramBar.Value = 0;
-                    setStatusBarAndButtonsAppearanceFromDeviceState();
+                    this.Dispatcher.Invoke((Action)delegate
+                    {
+                        buttonClicked.Content = originalContent;
+                        ellipseProgressEffect.Stop();
+                        this.progressProgramBar.Value = 0;
+                        setStatusBarAndButtonsAppearanceFromDeviceState();
+                    }
+                    );
                 }
-                );
             }
         }
         private void toggleAllButtonStatusExceptSelected(Button buttonClicked)
@@ -678,10 +685,6 @@ namespace SwarmRobotControlAndCommunication
 
                     case "Test Speaker":
                         theControlBoard.transmitBytesToRobot(COMMAND_TEST_SPEAKER);
-                        break;
-
-                    case "Get Battery Voltage":
-                        theControlBoard.transmitBytesToRobot(COMMAND_SAMPLE_BATTERY_LEVEL);
                         break;
 
                     case "Read EEPROM":
