@@ -376,13 +376,12 @@
                             <ComboBoxItem Content="Start Sampling Mics Signals"/>
                             <ComboBoxItem Content="Test Speaker"/>
                             <ComboBoxItem Content="Change Motors Speed"/>
-                            <ComboBoxItem Content="Read EEPROM"/>
                         </ComboBox>
                     </StackPanel>
                     <StackPanel x:Name="readWriteEEPROM" Grid.Column="0" Grid.Row="1" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
                         <Label Content="EEPROM Address" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Width="102"/>
                         <TextBox x:Name="EepromAddressTextBox" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="511" local:TextBoxHelpers.MinValue="0" Text="511" Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" Width="30" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                        <Button x:Name="setAddressEepromButton" Content="Set" HorizontalAlignment="Left" Margin="2,0,2,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc2StackPanel}" Width="45" Click="setAddressEepromButton_Click"/>
+                        <Button x:Name="readEepromButton" Content="Read" HorizontalAlignment="Left" Margin="2,0,2,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc2StackPanel}" Width="45" Click="readEepromButton_Click"/>
                         <TextBox x:Name="EepromContentTextBox" Text="123456789"  Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" Width="75" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
                         <Button x:Name="writeEepromButton" Content="Write" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc2StackPanel}" Width="45" Click="writeEepromButton_Click"/>
                     </StackPanel>
