@@ -73,7 +73,12 @@ namespace SwarmRobotControlAndCommunication
             /// <summary>
             /// The extended address record type according to INTEL HEX
             /// </summary>
-            private const byte RECORD_EXTENDED_ADDRESS = 0x04;
+            private const byte RECORD_EXTENDED_SEGMENT_ADDRESS = 0x02;
+
+            /// <summary>
+            /// The extended address record type according to INTEL HEX
+            /// </summary>
+            private const byte RECORD_EXTENDED_LINEAR_ADDRESS = 0x04;
 
             /// <summary>
             /// Used to create the buffer to store one line of data
@@ -99,7 +104,8 @@ namespace SwarmRobotControlAndCommunication
         #endregion
 
         #region Variables for bootloader commands
-            private UInt32 extendedAddress;
+            private UInt32 extendedSegmentAddress;
+            private UInt32 extendedLinearAddress;
             private UInt32 endLineAddess;
             private UInt32 endLineByteCount;
             private bool notAllOfNextLineDataIsSentFlag;
@@ -136,7 +142,8 @@ namespace SwarmRobotControlAndCommunication
 
         public TivaBootLoader(ControlBoardInterface controlBoard, UInt32 flashSizeInKB)
         {
-            extendedAddress = 0;
+            extendedSegmentAddress = 0;
+            extendedLinearAddress = 0;
             notAllOfNextLineDataIsSentFlag = false;
             currentHexLinePointer = 0;
             startAddressCurrentProgramBlock = APP_START_ADDRESS;
@@ -235,7 +242,6 @@ namespace SwarmRobotControlAndCommunication
             {
                 while (true)
                 {
-
                     IntelHexFormat currentLine = new IntelHexFormat();
 
                     UInt32[] lineAddress = new UInt32[2];
@@ -255,12 +261,31 @@ namespace SwarmRobotControlAndCommunication
 
                     currentLine.checkSum = getOneByte(ref intelHexFile);
 
-                    if (currentLine.recordType == RECORD_EXTENDED_ADDRESS)
+                    if (currentLine.recordType == RECORD_EXTENDED_SEGMENT_ADDRESS)
                     {
-                        extendedAddress = currentLine.data[0];
-                        extendedAddress <<= 8;
-                        extendedAddress |= currentLine.data[1];
-                        extendedAddress <<= 16;
+                        extendedSegmentAddress = currentLine.data[0];
+                        extendedSegmentAddress <<= 8;
+                        extendedSegmentAddress |= currentLine.data[1];
+                        // Make sure the address is only contained in the 4 highest bits
+                        if ((extendedSegmentAddress < 0x1000) || (extendedSegmentAddress > 0xF000))
+                        {
+                            String msg = String.Format("Invalid extended segment address: 0x{0}", extendedSegmentAddress.ToString("X4"));
+                            throw new Exception(msg);
+                        }
+                        extendedSegmentAddress <<= 4;
+
+                        // Move to the next line since this line
+                        // only contains the upper 16 bits.
+                        while (intelHexFile.ReadByte() != ':') ;
+                        continue;
+                    }
+
+                    if (currentLine.recordType == RECORD_EXTENDED_LINEAR_ADDRESS)
+                    {
+                        extendedLinearAddress = currentLine.data[0];
+                        extendedLinearAddress <<= 8;
+                        extendedLinearAddress |= currentLine.data[1];
+                        extendedLinearAddress <<= 16;
                         // Move to the next line since this line
                         // only contains the upper 16 bits.
                         while (intelHexFile.ReadByte() != ':') ;
@@ -271,8 +296,8 @@ namespace SwarmRobotControlAndCommunication
                     currentLine.address = lineAddress[0];
                     currentLine.address <<= 8;
                     currentLine.address |= lineAddress[1];
-                    currentLine.address |= extendedAddress;
-
+                    currentLine.address |= extendedLinearAddress;
+                    currentLine.address += extendedSegmentAddress;
                     return currentLine;
                 }
             }
@@ -295,9 +320,8 @@ namespace SwarmRobotControlAndCommunication
         }
         private void checkRecordType(uint recordType)
         {
-            if ( (recordType == RECORD_DATA) || (recordType == 0x01) ||
-                 (recordType == RECORD_EXTENDED_ADDRESS) || (recordType == 0x03)
-               )
+            if ((recordType == RECORD_DATA) || (recordType == 0x01)
+                || (recordType == 0x03) || (recordType == 0x05) )
                 return;
 
             string errorMessage = String.Format("Unknown record type\n" +
@@ -398,7 +422,7 @@ namespace SwarmRobotControlAndCommunication
         /// </summary>
         private void resetBootLoaderVariables()
         {
-            extendedAddress = 0;
+            extendedLinearAddress = 0;
             notAllOfNextLineDataIsSentFlag = false;
             currentHexLinePointer = 0;
             startAddressCurrentProgramBlock = APP_START_ADDRESS;
@@ -539,7 +563,9 @@ namespace SwarmRobotControlAndCommunication
                     movePointerToTheNextLine();
                     nextHexLine = readOneLineOfHexFile(ref hexFile);
                     currentHexLinePointer++;
-                    
+
+                    // Record 0x02 and 0x04 is processed in readOneLineOfHexFile()
+                    // This condition is to skip 0x03 and 0x05 record types
                     if (nextHexLine.recordType == RECORD_DATA)
                         break;
                 }
