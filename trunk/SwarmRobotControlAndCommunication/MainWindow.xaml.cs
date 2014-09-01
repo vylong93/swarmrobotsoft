@@ -39,8 +39,8 @@ namespace SwarmRobotControlAndCommunication
     {
         #region Constants
             //--------------------Control board-----------------------------
-            private const string DEFAULT_TX_ADDRESS = "BEADDE";
-            private const string DEFAULT_RX_ADDRESS = "C1AC0E";
+            private const string DEFAULT_TX_ADDRESS = "BEADFF";
+            private const string DEFAULT_RX_ADDRESS = "BEADFF";
             //-------------------------------------------------Control board
 
             //------------Commands to control all Robots---------------------
@@ -57,7 +57,8 @@ namespace SwarmRobotControlAndCommunication
             private const byte COMMAND_CHANGE_MOTOR_SPEED   = 0xC4;
             private const byte COMMAND_TEST_RF_CD           = 0xC5;
             private const byte COMMAND_TEST_SPEAKER         = 0xC8;
-            private const byte COMMAND_SAMPLE_BATTERY_LEVEL = 0xC9;
+
+
             private const byte COMMAND_READ_ADC1            = 0xA0;
             private const byte COMMAND_READ_ADC2            = 0xA1;
             private const byte COMMAND_DISTANCE_SENSING     = 0xA2;
@@ -615,7 +616,8 @@ namespace SwarmRobotControlAndCommunication
             this.rfChannelTextBox.Text = "0";
             this.rfAirRateComboBox.SelectedIndex = 0;
             this.TXPowerComboBox.SelectedIndex = 3;
-            this.LNACheckBox.IsChecked = true;
+
+            this.LNACheckBox.IsChecked = false;
             this.rfCRCComboBox.SelectedIndex = 2;
         }
         #endregion
@@ -686,7 +688,8 @@ namespace SwarmRobotControlAndCommunication
                     case "Test Speaker":
                         theControlBoard.transmitBytesToRobot(COMMAND_TEST_SPEAKER);
                         break;
-                    default:
+					
+					default:
                         throw new Exception("Send Command: Can not recognise command!");
                 } 
             }
@@ -760,7 +763,7 @@ namespace SwarmRobotControlAndCommunication
                     tBox.Text += ", ";
                 }
 
-                OxyplotWindow oxyplotWindow = new OxyplotWindow(adcData, "Sampling Data");
+                OxyplotWindow oxyplotWindow = new OxyplotWindow(adcData, "Sampling Data", OxyplotWindow.PolylineMonoY);
                 oxyplotWindow.Show();
             }
             catch (Exception ex)
@@ -769,17 +772,8 @@ namespace SwarmRobotControlAndCommunication
             }
         }
 
-        private void testDistacneSensingButton_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                theControlBoard.transmitBytesToRobot(COMMAND_DISTANCE_SENSING);
-            }
-            catch (Exception ex)
-            {
-                defaultExceptionHandle(ex);
-            }
-        }
+
+
 
         private void readBatteryVoltageButton_Click(object sender, RoutedEventArgs e)
         {
@@ -787,9 +781,6 @@ namespace SwarmRobotControlAndCommunication
             Byte[] receivedData = new Byte[length];
             int adcData;
             float BatteryVoltage;
-
-            theControlBoard.transmitBytesToRobot(COMMAND_SAMPLE_BATTERY_LEVEL);
-            Thread.Sleep(1);
 
             try
             {
@@ -843,6 +834,7 @@ namespace SwarmRobotControlAndCommunication
         {
             theControlBoard.transmitBytesToRobot(COMMAND_STOP_MOTOR2);
         }
+
 
         private void setAddressEeprom()
         {
@@ -908,6 +900,7 @@ namespace SwarmRobotControlAndCommunication
         }
 
         #endregion
+
     }
 
     #region IValueConverter Members
