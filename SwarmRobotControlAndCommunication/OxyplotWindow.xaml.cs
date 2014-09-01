@@ -30,14 +30,27 @@ namespace SwarmRobotControlAndCommunication
         public PlotModel MyModel { get; private set; }
         private PlotWindowModel viewModel;
 
-        public OxyplotWindow(UInt32[] data, String Title)
+        public delegate PlotModel delegatePolyPlot(UInt32[] data, string Title);
+        public delegate PlotModel delegateScatterPointPlot(float[] dataX, float[] dataY, string Title);
+
+        public OxyplotWindow(float[] dataX, float[] dataY, String Title, delegateScatterPointPlot plot)
         {
             InitializeComponent();
 
             //Binding Data Manually
             viewModel = new PlotWindowModel();
             DataContext = viewModel;
-            viewModel.PlotModel = PolylineAnnotation(data, Title);
+             viewModel.PlotModel = plot(dataX, dataY, Title);
+        }
+
+        public OxyplotWindow(UInt32[] data, String Title, delegatePolyPlot plot)
+        {
+            InitializeComponent();
+
+            //Binding Data Manually
+            viewModel = new PlotWindowModel();
+            DataContext = viewModel;
+            viewModel.PlotModel = plot(data, Title);
         }
 
         private Button closeButtonPlotWindow = new Button();
@@ -164,7 +177,7 @@ namespace SwarmRobotControlAndCommunication
         }
 
         //[Example("PolylineAnnotation")]
-        public static PlotModel PolylineAnnotation(UInt32[] data, string Title)
+        public static PlotModel PolylineMonoY(UInt32[] data, string Title)
         {
             var plotModel1 = new PlotModel();
             plotModel1.Title = Title;
@@ -184,6 +197,83 @@ namespace SwarmRobotControlAndCommunication
                 polylineAnnotation1.Points.Add(new DataPoint((double)i, (double)data[i]));
             }
             plotModel1.Annotations.Add(polylineAnnotation1);
+            return plotModel1;
+        }
+
+        //
+        public static PlotModel ScatterPointPlot(float[] dataX, float[] dataY, string Title) 
+        {
+            var plotModel1 = new PlotModel();
+            plotModel1.Title = Title;
+            var linearAxis1 = new LinearAxis();
+            linearAxis1.Maximum = dataX.Max() + 10;
+            linearAxis1.Minimum = 0;
+            linearAxis1.Position = AxisPosition.Bottom;
+            linearAxis1.MajorGridlineStyle = LineStyle.Solid;
+            linearAxis1.MinorGridlineStyle = LineStyle.Dot;
+            plotModel1.Axes.Add(linearAxis1);
+
+            var linearAxis2 = new LinearAxis();
+            linearAxis2.Maximum = dataY.Max() + dataX.Min();
+            linearAxis2.Minimum = 0;
+            linearAxis2.MajorGridlineStyle = LineStyle.Solid;
+            linearAxis2.MinorGridlineStyle = LineStyle.Dot;
+            plotModel1.Axes.Add(linearAxis2);
+
+            var scatterSeries = new ScatterSeries();
+            scatterSeries.MarkerStrokeThickness = 1;
+            scatterSeries.MarkerStroke = OxyColor.FromRgb(255, 60, 60);
+            scatterSeries.MarkerSize = 4;
+            scatterSeries.MarkerType = MarkerType.Star;
+
+            if (dataX.Length != dataY.Length)
+                throw new Exception("Invalid length of X and Y!");
+
+            for (int i = 0; i < dataY.Length; i++)
+            {
+                scatterSeries.Points.Add(new ScatterPoint(dataX[i], dataY[i]));
+            }
+
+            plotModel1.Series.Add(scatterSeries);
+
+            //var polylineAnnotation1 = new PolylineAnnotation();
+
+            //uint[] data = { 35, 65, 85, 115, 145, 175, 225 };
+            //for (uint i = 0; i < data.Length; i++)
+            //{
+            //    polylineAnnotation1.Points.Add(new DataPoint((double)(i + 1) * 10, (double)data[i]));
+            //}
+            //plotModel1.Annotations.Add(polylineAnnotation1);
+
+            Int32 n = dataX.Length;
+
+            float sumX = 0;
+            foreach (float item in dataX)
+                sumX += (float)item;
+
+            float sumX2 = 0;
+            foreach (float item in dataX)
+                sumX2 += (float)(item * item);
+
+            float sumY = 0;
+            foreach (float item in dataY)
+                sumY += (float)item;
+
+            float sumXY = 0;
+            for (int i = 0; i < dataX.Length; i++)
+                sumXY += ((float)dataX[i] * (float)dataY[i]);
+
+            float detA = (n * sumX2) - (sumX * sumX);
+            float detAIntercept = (sumY * sumX2) - (sumXY * sumX);
+            float detASlope = (n * sumXY) - (sumX * sumY);
+
+
+            var lineAnnotation1 = new LineAnnotation();
+            lineAnnotation1.Intercept = detAIntercept / detA; // b
+            lineAnnotation1.Slope = detASlope / detA; // a
+            lineAnnotation1.Text = "Intercept(" + lineAnnotation1.Intercept.ToString() + "); Slope(" + lineAnnotation1.Slope.ToString() + ")";
+            plotModel1.Annotations.Add(lineAnnotation1);
+
             return plotModel1;
         }
 

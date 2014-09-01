@@ -383,7 +383,7 @@
                         <TextBox x:Name="EepromAddressTextBox" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="511" local:TextBoxHelpers.MinValue="0" Text="511" Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" Width="30" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
                         <Button x:Name="readEepromButton" Content="Read" HorizontalAlignment="Left" Margin="2,0,2,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc2StackPanel}" Width="45" Click="readEepromButton_Click"/>
                         <TextBox x:Name="EepromContentTextBox" Text="123456789"  Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" Width="75" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                        <Button x:Name="writeEepromButton" Content="Write" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc2StackPanel}" Width="45" Click="writeEepromButton_Click"/>
+                        <Button x:Name="writeEepromButton" Content="Write" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Top" Height="{Binding Height, ElementName=readAdc2StackPanel}" Width="45" Click="writeEepromButton_Click"/>
                     </StackPanel>
                     <StackPanel x:Name="motor1SpeedStackPanel" Grid.Column="0" Grid.Row="2" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="24" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
                         <Label Content="Motor 1:    Speed" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Width="102" Height="24"/>
@@ -412,7 +412,7 @@
                         <Button x:Name="readBatteryVoltageButton" Content="Get Batt Voltage" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc2StackPanel}" Width="100" Click="readBatteryVoltageButton_Click"/>
                         <TextBox x:Name="readBatteryVoltageTextBox" Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" IsReadOnly="True" Width="200" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
                     </StackPanel>
-                    <Button x:Name="testDistacneSensingButton" Grid.Row="7" Content="Test Distacne Sensing" HorizontalAlignment="Center" Margin="78,7,76.8,5.8" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc1StackPanel}" Width="150" Click="testDistacneSensingButton_Click"/>
+                    <Button x:Name="reservedButton" Grid.Row="7" Content="Reserved" HorizontalAlignment="Center" Margin="78,7,76.8,5.8" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc1StackPanel}" Width="150"/>
                 </Grid>
             </TabItem>
         </TabControl>
