@@ -423,6 +423,7 @@ namespace SwarmRobotControlAndCommunication
         private void resetBootLoaderVariables()
         {
             extendedLinearAddress = 0;
+            extendedSegmentAddress = 0;
             notAllOfNextLineDataIsSentFlag = false;
             currentHexLinePointer = 0;
             startAddressCurrentProgramBlock = APP_START_ADDRESS;

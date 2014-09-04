@@ -58,18 +58,21 @@ namespace SwarmRobotControlAndCommunication
             private const byte COMMAND_TEST_RF_CD           = 0xC5;
             private const byte COMMAND_TEST_SPEAKER         = 0xC8;
 
-
             private const byte COMMAND_READ_ADC1            = 0xA0;
             private const byte COMMAND_READ_ADC2            = 0xA1;
             private const byte COMMAND_DISTANCE_SENSING     = 0xA2;
             private const byte COMMAND_BATTERY_MEASUREMENT  = 0xA3;
-            
+            private const byte COMMAND_STOP_MOTOR1          = 0xA4;
+            private const byte COMMAND_STOP_MOTOR2          = 0xA5;
+            private const byte COMMAND_READ_NEIGHBORS_TABLE = 0xA6;
+            private const byte COMMAND_READ_ONEHOP_TABLE    = 0xA7;
+            private const byte COMMAND_SET_TABLE_POSITION   = 0xA8;
+
             private const byte COMMAND_READ_EEPROM          = 0xE0;
             private const byte COMMAND_WRITE_EEPROM         = 0xE1;
             private const byte COMMAND_SET_ADDRESS_EEROM    = 0xE2;
 
-            private const byte COMMAND_STOP_MOTOR1          = 0xA4;
-            private const byte COMMAND_STOP_MOTOR2          = 0xA5;
+            private const byte COMMAND_MEASURE_DISTANCE     = 0xB0;
 
             private const byte MOTOR_FORWARD_DIRECTION      = 0x00;
             private const byte MOTOR_REVERSE_DIRECTION      = 0x01;
@@ -617,7 +620,7 @@ namespace SwarmRobotControlAndCommunication
             this.rfAirRateComboBox.SelectedIndex = 0;
             this.TXPowerComboBox.SelectedIndex = 3;
 
-            this.LNACheckBox.IsChecked = false;
+            this.LNACheckBox.IsChecked = true;
             this.rfCRCComboBox.SelectedIndex = 2;
         }
         #endregion
@@ -688,7 +691,15 @@ namespace SwarmRobotControlAndCommunication
                     case "Test Speaker":
                         theControlBoard.transmitBytesToRobot(COMMAND_TEST_SPEAKER);
                         break;
-					
+                    
+                    case "Read OneHop table":
+
+                        break;
+
+                    case "Read Neighbors table":
+                        readNeighborsTable();
+                        break;
+
 					default:
                         throw new Exception("Send Command: Can not recognise command!");
                 } 
@@ -697,6 +708,50 @@ namespace SwarmRobotControlAndCommunication
             {
                 defaultExceptionHandle(ex);
             }
+        }
+
+        private void readOneHopTable() 
+        {
+            // COMMAND_READ_ONEHOP_TABLE
+        }
+
+        private void readNeighborsTable() 
+        {
+            uint length = 8;
+            Byte[] receivedData = new Byte[length];
+
+            int[] ID = new int[10];
+            float[] distance = new float[10];
+
+            for (int i = 0; i < 10; i++)
+            {
+                Thread.Sleep(10);
+                setTableReadPosition((byte)i);
+                Thread.Sleep(10);
+
+                try
+                {
+                    theControlBoard.receiveBytesFromRobot(COMMAND_READ_NEIGHBORS_TABLE, length, ref receivedData, 1000);
+                    ID[i] = (receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3];
+                    distance[i] = (float)(((receivedData[4] << 24) | (receivedData[5] << 16) | (receivedData[6] << 8) | receivedData[7]) / 32768.0);
+                }
+                catch (Exception ex)
+                {
+                    defaultExceptionHandle(ex);
+                }
+            }
+            //TODO: display table ID::distance
+            length = 8;
+        }
+
+        private void setTableReadPosition(byte position)
+        {
+            Byte[] transmittedData = new Byte[2]; // <set table position command><position>
+
+            transmittedData[0] = COMMAND_SET_TABLE_POSITION;
+            transmittedData[1] = position;
+
+            theControlBoard.transmitBytesToRobot(transmittedData, 2, 1);
         }
 
         private void testReceivedData(byte Command)
@@ -772,9 +827,6 @@ namespace SwarmRobotControlAndCommunication
             }
         }
 
-
-
-
         private void readBatteryVoltageButton_Click(object sender, RoutedEventArgs e)
         {
             uint length = 2;
@@ -834,7 +886,6 @@ namespace SwarmRobotControlAndCommunication
         {
             theControlBoard.transmitBytesToRobot(COMMAND_STOP_MOTOR2);
         }
-
 
         private void setAddressEeprom()
         {
@@ -897,6 +948,11 @@ namespace SwarmRobotControlAndCommunication
             transmittedData[8] = (Byte)(writeWord & 0xFF);
 
             theControlBoard.transmitBytesToRobot(transmittedData, 9, 1);
+        }
+
+        private void measureDistanceButton_Click(object sender, RoutedEventArgs e)
+        {
+            theControlBoard.transmitBytesToRobot(COMMAND_MEASURE_DISTANCE);
         }
 
         #endregion
