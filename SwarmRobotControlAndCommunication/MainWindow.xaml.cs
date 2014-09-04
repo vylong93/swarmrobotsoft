@@ -719,10 +719,11 @@ namespace SwarmRobotControlAndCommunication
         {
             uint length = 8;
             Byte[] receivedData = new Byte[length];
-
+            String title = "Robot [" + this.TXAdrrTextBox.Text + "] neighbors table";
+            String table = "Neighbors Table of Robot [0x" + this.TXAdrrTextBox.Text + "]:\n";
             int[] ID = new int[10];
             float[] distance = new float[10];
-
+            double distanceInCm = 0;
             for (int i = 0; i < 10; i++)
             {
                 Thread.Sleep(10);
@@ -734,14 +735,18 @@ namespace SwarmRobotControlAndCommunication
                     theControlBoard.receiveBytesFromRobot(COMMAND_READ_NEIGHBORS_TABLE, length, ref receivedData, 1000);
                     ID[i] = (receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3];
                     distance[i] = (float)(((receivedData[4] << 24) | (receivedData[5] << 16) | (receivedData[6] << 8) | receivedData[7]) / 32768.0);
+                    distanceInCm = (distance[i] - 63.6207) / 2.7455;
+                    if (ID[i] != 0 || distance[i] != 0)
+                    {
+                        table += String.Format("Robot [0x{0}] :: {1}\t= {2} cm\n", ID[i].ToString("X6"), distance[i].ToString("G6"), distanceInCm.ToString("G6"));
+                    }
                 }
                 catch (Exception ex)
                 {
-                    defaultExceptionHandle(ex);
                 }
             }
-            //TODO: display table ID::distance
-            length = 8;
+  
+            MessageBox.Show(table, title, MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void setTableReadPosition(byte position)
