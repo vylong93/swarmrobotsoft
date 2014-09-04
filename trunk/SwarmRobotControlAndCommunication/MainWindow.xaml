@@ -376,6 +376,8 @@
                             <ComboBoxItem Content="Start Sampling Mics Signals"/>
                             <ComboBoxItem Content="Test Speaker"/>
                             <ComboBoxItem Content="Change Motors Speed"/>
+                            <ComboBoxItem Content="Read Neighbors table"/>
+                            <ComboBoxItem Content="Read OneHop table"/>
                         </ComboBox>
                     </StackPanel>
                     <StackPanel x:Name="readWriteEEPROM" Grid.Column="0" Grid.Row="1" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
@@ -412,7 +414,7 @@
                         <Button x:Name="readBatteryVoltageButton" Content="Get Batt Voltage" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc2StackPanel}" Width="100" Click="readBatteryVoltageButton_Click"/>
                         <TextBox x:Name="readBatteryVoltageTextBox" Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" IsReadOnly="True" Width="200" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
                     </StackPanel>
-                    <Button x:Name="reservedButton" Grid.Row="7" Content="Reserved" HorizontalAlignment="Center" Margin="78,7,76.8,5.8" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc1StackPanel}" Width="150"/>
+                    <Button x:Name="measureDistanceButton" Grid.Row="7" Content="Start Measure Distance" HorizontalAlignment="Center" Margin="78,7,76.8,5.8" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc1StackPanel}" Width="150" Click="measureDistanceButton_Click"/>
                 </Grid>
             </TabItem>
         </TabControl>
