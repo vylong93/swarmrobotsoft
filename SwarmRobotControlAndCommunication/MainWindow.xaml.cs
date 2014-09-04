@@ -67,6 +67,7 @@ namespace SwarmRobotControlAndCommunication
             private const byte COMMAND_READ_NEIGHBORS_TABLE = 0xA6;
             private const byte COMMAND_READ_ONEHOP_TABLE    = 0xA7;
             private const byte COMMAND_SET_TABLE_POSITION   = 0xA8;
+            private const byte COMMAND_SET_ONE_HOP_POSITION = 0xA9;
 
             private const byte COMMAND_READ_EEPROM          = 0xE0;
             private const byte COMMAND_WRITE_EEPROM         = 0xE1;
@@ -693,7 +694,7 @@ namespace SwarmRobotControlAndCommunication
                         break;
                     
                     case "Read OneHop table":
-
+                        readOneHopTable();
                         break;
 
                     case "Read Neighbors table":
@@ -712,7 +713,92 @@ namespace SwarmRobotControlAndCommunication
 
         private void readOneHopTable() 
         {
-            // COMMAND_READ_ONEHOP_TABLE
+            uint length = 12;
+            Byte[] receivedData = new Byte[length];
+
+            String[] table = new String[10];
+            String title = "Robot [" + this.TXAdrrTextBox.Text + "] one hop neighbors table";
+            String msg = "One Hop Neighbors Table of Robot [0x" + this.TXAdrrTextBox.Text + "]:\n";
+
+            int[] firstID = new int[10];
+            int[] ID = new int[100];
+            float[] distance = new float[100];
+            double distanceInCm = 0;
+
+            for (int i = 0; i < 10; i++)
+            {
+                setOneHopTableReadPosition((byte)i); // set One Hop table line
+                Thread.Sleep(10);
+                table[i] = "XX";
+                for (int j = 0; j < 10; j++)
+                {
+                    setTableReadPosition((byte)j); // set One Hop Table [i] . line [j]
+                    Thread.Sleep(10);
+                    try
+                    {
+                        theControlBoard.receiveBytesFromRobot(COMMAND_READ_ONEHOP_TABLE, length, ref receivedData, 1000);
+                        firstID[i] = (receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3];
+                        ID[i * 10 + j] = (receivedData[4] << 24) | (receivedData[5] << 16) | (receivedData[6] << 8) | receivedData[7];
+                        distance[i * 10 + j] = (float)(((receivedData[8] << 24) | (receivedData[9] << 16) | (receivedData[10] << 8) | receivedData[11]) / 32768.0);
+                        distanceInCm = (distance[i * 10 + j] - 63.6207) / 2.7455;
+                        if (table[i].Equals("XX"))
+                        {
+                            table[i] = "first Hop ID = 0x" + firstID[i].ToString("X6") + ":\n";
+                        }
+                        
+                        if (ID[i * 10 + j] != 0 || distance[i * 10 + j] != 0)
+                        {
+                            table[i] += String.Format("Robot [0x{0}] :: {1}\t= {2} cm\n", ID[i * 10 + j].ToString("X6"), distance[i * 10 + j].ToString("G6"), distanceInCm.ToString("G6"));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                    }
+                }
+                table[i] += "\n";
+                msg += table[i];
+            }
+
+            String currentTime = System.DateTime.Now.ToString();
+
+            DirectoryInfo fileDir = new DirectoryInfo(".");
+            fileDir = fileDir.CreateSubdirectory("Output");
+            String fileName = currentTime + "-" + title + ".txt";
+            fileName = fileName.Replace('/', '-');
+            fileName = fileName.Replace(':', '_');
+
+            String fileFullPath = fileDir.FullName + "\\" + fileName;
+
+            File.WriteAllText(@fileFullPath, msg);
+
+            MessageBox.Show("One Hop Neighbors Table of Robot [0x" + this.TXAdrrTextBox.Text + "] have save to\n" + fileFullPath, title, MessageBoxButton.OK, MessageBoxImage.Information);
+
+            string textEditor1 = @"D:\\Program Files\\Notepad++\\notepad++.exe";
+            string textEditor2 = @"C:\\Program Files\\Notepad++\\notepad++.exe";
+
+            if (File.Exists(textEditor1))
+            {
+                Process.Start(textEditor1, fileFullPath);
+            }
+            else if (File.Exists(textEditor2))
+            {
+                Process.Start(textEditor2, fileFullPath);
+            }
+            else
+            {
+                Process.Start(@"notepad.exe", fileFullPath);
+            }
+           
+        }
+
+        private void setOneHopTableReadPosition(byte position)
+        {
+            Byte[] transmittedData = new Byte[2]; // <set one hop table position command><position>
+
+            transmittedData[0] = COMMAND_SET_ONE_HOP_POSITION;
+            transmittedData[1] = position;
+
+            theControlBoard.transmitBytesToRobot(transmittedData, 2, 1);
         }
 
         private void readNeighborsTable() 
