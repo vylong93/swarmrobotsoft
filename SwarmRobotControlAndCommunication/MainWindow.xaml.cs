@@ -68,6 +68,7 @@ namespace SwarmRobotControlAndCommunication
             private const byte COMMAND_READ_ONEHOP_TABLE    = 0xA7;
             private const byte COMMAND_SET_TABLE_POSITION   = 0xA8;
             private const byte COMMAND_SET_ONE_HOP_POSITION = 0xA9;
+            private const byte COMMAND_READ_LOCS_TABLE      = 0xE3;
 
             private const byte COMMAND_READ_EEPROM          = 0xE0;
             private const byte COMMAND_WRITE_EEPROM         = 0xE1;
@@ -106,6 +107,7 @@ namespace SwarmRobotControlAndCommunication
 
             this.TXAdrrTextBox.Text = DEFAULT_TX_ADDRESS;
             this.Pipe0AddressTextBox.Text = DEFAULT_RX_ADDRESS;
+            this.TXAdrrTextBoxDebug.Text = DEFAULT_TX_ADDRESS;
         }
 
         private void usbEvent_receiver(object o, EventArgs e)
@@ -495,11 +497,11 @@ namespace SwarmRobotControlAndCommunication
         #endregion
 
         #region RF Configure Tab
-        private void configureRF_Click(object sender, RoutedEventArgs e)
+        private void configureRF(string TX_ADDRstring)
         {
             try
-            {   
-                const byte RF24_ADDRESS_WIDTH= 3;
+            {
+                const byte RF24_ADDRESS_WIDTH = 3;
 
                 byte crcByte = 0;
                 byte crcEnable = 0x08;
@@ -517,15 +519,15 @@ namespace SwarmRobotControlAndCommunication
                         break;
                     default:
                         throw new Exception("Unrecognised CRC format");
-                } 
-           
-                byte channel = Convert.ToByte(this.rfChannelTextBox.Text); 
-                if((channel > 125) || (channel < 0))
+                }
+
+                byte channel = Convert.ToByte(this.rfChannelTextBox.Text);
+                if ((channel > 125) || (channel < 0))
                     throw new Exception("The chosen channel is out of range");
 
                 byte airDataRate = 0x00;
                 if (this.rfAirRateComboBox.SelectionBoxItem.ToString() == "2 Mbps")
-                    airDataRate  = 0x08;                                             
+                    airDataRate = 0x08;
 
                 byte power = 0x00;
                 switch (this.TXPowerComboBox.SelectionBoxItem.ToString())
@@ -548,20 +550,20 @@ namespace SwarmRobotControlAndCommunication
 
                 byte lnaGainEnable = 0x00;
                 if ((bool)this.LNACheckBox.IsChecked)
-                    lnaGainEnable |= 0x01;                                              
-                 
+                    lnaGainEnable |= 0x01;
+
                 byte[] rfTXAddress = new byte[3];
-                string TX_ADDRstring = this.TXAdrrTextBox.Text;
+                //string TX_ADDRstring = this.TXAdrrTextBox.Text;
                 if (TX_ADDRstring.Length != (2 * RF24_ADDRESS_WIDTH))
                 {
-                    string msg = String.Format("TX address must have {0} characters!", 2*RF24_ADDRESS_WIDTH);
+                    string msg = String.Format("TX address must have {0} characters!", 2 * RF24_ADDRESS_WIDTH);
                     throw new Exception(msg);
                 }
                 Int32 address = 0;
                 for (int i = 0; i < 6; i++)
                 {
                     address <<= 4;
-                    address += TivaBootLoader.convertCharToHex(TX_ADDRstring[i]);        
+                    address += TivaBootLoader.convertCharToHex(TX_ADDRstring[i]);
                 }
                 rfTXAddress[0] = (byte)address;
                 rfTXAddress[1] = (byte)(address >> 8);
@@ -583,7 +585,7 @@ namespace SwarmRobotControlAndCommunication
                 rfRXAddress[1] = (byte)(address >> 8);
                 rfRXAddress[2] = (byte)(address >> 16);
 
-                byte[] setupData = new byte[7 + 2*RF24_ADDRESS_WIDTH];
+                byte[] setupData = new byte[7 + 2 * RF24_ADDRESS_WIDTH];
                 setupData[0] = crcByte;
                 setupData[1] = RF24_ADDRESS_WIDTH;
                 setupData[2] = channel;
@@ -603,6 +605,10 @@ namespace SwarmRobotControlAndCommunication
             {
                 defaultExceptionHandle(new Exception("Configure RF: " + ex.Message + ex.StackTrace));
             }
+        }
+        private void configureRF_Click(object sender, RoutedEventArgs e)
+        {
+            configureRF(this.TXAdrrTextBox.Text);
         }
         private void TXAdrrTextBox_KeyDown(object sender, KeyEventArgs e)
         {
@@ -692,14 +698,6 @@ namespace SwarmRobotControlAndCommunication
                     case "Test Speaker":
                         theControlBoard.transmitBytesToRobot(COMMAND_TEST_SPEAKER);
                         break;
-                    
-                    case "Read OneHop table":
-                        readOneHopTable();
-                        break;
-
-                    case "Read Neighbors table":
-                        readNeighborsTable();
-                        break;
 
 					default:
                         throw new Exception("Send Command: Can not recognise command!");
@@ -709,140 +707,6 @@ namespace SwarmRobotControlAndCommunication
             {
                 defaultExceptionHandle(ex);
             }
-        }
-
-        private void readOneHopTable() 
-        {
-            uint length = 12;
-            Byte[] receivedData = new Byte[length];
-
-            String[] table = new String[10];
-            String title = "Robot [" + this.TXAdrrTextBox.Text + "] one hop neighbors table";
-            String msg = "One Hop Neighbors Table of Robot [0x" + this.TXAdrrTextBox.Text + "]:\n";
-
-            int[] firstID = new int[10];
-            int[] ID = new int[100];
-            float[] distance = new float[100];
-            double distanceInCm = 0;
-
-            for (int i = 0; i < 10; i++)
-            {
-                setOneHopTableReadPosition((byte)i); // set One Hop table line
-                Thread.Sleep(10);
-                table[i] = "XX";
-                for (int j = 0; j < 10; j++)
-                {
-                    setTableReadPosition((byte)j); // set One Hop Table [i] . line [j]
-                    Thread.Sleep(10);
-                    try
-                    {
-                        theControlBoard.receiveBytesFromRobot(COMMAND_READ_ONEHOP_TABLE, length, ref receivedData, 1000);
-                        firstID[i] = (receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3];
-                        ID[i * 10 + j] = (receivedData[4] << 24) | (receivedData[5] << 16) | (receivedData[6] << 8) | receivedData[7];
-                        distance[i * 10 + j] = (float)(((receivedData[8] << 24) | (receivedData[9] << 16) | (receivedData[10] << 8) | receivedData[11]) / 32768.0);
-                        distanceInCm = (distance[i * 10 + j] - 63.6207) / 2.7455;
-                        if (table[i].Equals("XX"))
-                        {
-                            table[i] = "first Hop ID = 0x" + firstID[i].ToString("X6") + ":\n";
-                        }
-                        
-                        if (ID[i * 10 + j] != 0 || distance[i * 10 + j] != 0)
-                        {
-                            table[i] += String.Format("Robot [0x{0}] :: {1}\t= {2} cm\n", ID[i * 10 + j].ToString("X6"), distance[i * 10 + j].ToString("G6"), distanceInCm.ToString("G6"));
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                    }
-                }
-                table[i] += "\n";
-                msg += table[i];
-            }
-
-            String currentTime = System.DateTime.Now.ToString();
-
-            DirectoryInfo fileDir = new DirectoryInfo(".");
-            fileDir = fileDir.CreateSubdirectory("Output");
-            String fileName = currentTime + "-" + title + ".txt";
-            fileName = fileName.Replace('/', '-');
-            fileName = fileName.Replace(':', '_');
-
-            String fileFullPath = fileDir.FullName + "\\" + fileName;
-
-            File.WriteAllText(@fileFullPath, msg);
-
-            MessageBox.Show("One Hop Neighbors Table of Robot [0x" + this.TXAdrrTextBox.Text + "] have save to\n" + fileFullPath, title, MessageBoxButton.OK, MessageBoxImage.Information);
-
-            string textEditor1 = @"D:\\Program Files\\Notepad++\\notepad++.exe";
-            string textEditor2 = @"C:\\Program Files\\Notepad++\\notepad++.exe";
-
-            if (File.Exists(textEditor1))
-            {
-                Process.Start(textEditor1, fileFullPath);
-            }
-            else if (File.Exists(textEditor2))
-            {
-                Process.Start(textEditor2, fileFullPath);
-            }
-            else
-            {
-                Process.Start(@"notepad.exe", fileFullPath);
-            }
-           
-        }
-
-        private void setOneHopTableReadPosition(byte position)
-        {
-            Byte[] transmittedData = new Byte[2]; // <set one hop table position command><position>
-
-            transmittedData[0] = COMMAND_SET_ONE_HOP_POSITION;
-            transmittedData[1] = position;
-
-            theControlBoard.transmitBytesToRobot(transmittedData, 2, 1);
-        }
-
-        private void readNeighborsTable() 
-        {
-            uint length = 8;
-            Byte[] receivedData = new Byte[length];
-            String title = "Robot [" + this.TXAdrrTextBox.Text + "] neighbors table";
-            String table = "Neighbors Table of Robot [0x" + this.TXAdrrTextBox.Text + "]:\n";
-            int[] ID = new int[10];
-            float[] distance = new float[10];
-            double distanceInCm = 0;
-            for (int i = 0; i < 10; i++)
-            {
-                Thread.Sleep(10);
-                setTableReadPosition((byte)i);
-                Thread.Sleep(10);
-
-                try
-                {
-                    theControlBoard.receiveBytesFromRobot(COMMAND_READ_NEIGHBORS_TABLE, length, ref receivedData, 1000);
-                    ID[i] = (receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3];
-                    distance[i] = (float)(((receivedData[4] << 24) | (receivedData[5] << 16) | (receivedData[6] << 8) | receivedData[7]) / 32768.0);
-                    distanceInCm = (distance[i] - 63.6207) / 2.7455;
-                    if (ID[i] != 0 || distance[i] != 0)
-                    {
-                        table += String.Format("Robot [0x{0}] :: {1}\t= {2} cm\n", ID[i].ToString("X6"), distance[i].ToString("G6"), distanceInCm.ToString("G6"));
-                    }
-                }
-                catch (Exception ex)
-                {
-                }
-            }
-  
-            MessageBox.Show(table, title, MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        private void setTableReadPosition(byte position)
-        {
-            Byte[] transmittedData = new Byte[2]; // <set table position command><position>
-
-            transmittedData[0] = COMMAND_SET_TABLE_POSITION;
-            transmittedData[1] = position;
-
-            theControlBoard.transmitBytesToRobot(transmittedData, 2, 1);
         }
 
         private void testReceivedData(byte Command)
@@ -1041,12 +905,226 @@ namespace SwarmRobotControlAndCommunication
             theControlBoard.transmitBytesToRobot(transmittedData, 9, 1);
         }
 
+        #endregion
+
+        #region Debug Tab
+
+        private void configureRFDebug_Click(object sender, RoutedEventArgs e)
+        {
+            configureRF(this.TXAdrrTextBoxDebug.Text);
+        }
+
+        private void ReadOneHopNeighborButton_Click(object sender, RoutedEventArgs e)
+        {
+            uint length = 10;
+            Byte[] receivedData = new Byte[length];
+
+            String[] table = new String[10];
+            String title = "Robot [" + this.TXAdrrTextBoxDebug.Text + "] one hop neighbors table";
+            String msg = "One Hop Neighbors Table of Robot [0x" + this.TXAdrrTextBoxDebug.Text + "]:\n";
+
+            int[] firstID = new int[10];
+            int[] ID = new int[100];
+            int[] distance = new int[100];
+            double distanceInCm = 0;
+
+            for (int i = 0; i < 10; i++)
+            {
+                setOneHopTableReadPosition((byte)i); // set One Hop table line
+                Thread.Sleep(10);
+                table[i] = "XX";
+                for (int j = 0; j < 10; j++)
+                {
+                    setTableReadPosition((byte)j); // set One Hop Table [i] . line [j]
+                    Thread.Sleep(10);
+                    try
+                    {
+                        theControlBoard.receiveBytesFromRobot(COMMAND_READ_ONEHOP_TABLE, length, ref receivedData, 1000);
+                        firstID[i] = (receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3];
+                        ID[i * 10 + j] = (receivedData[4] << 24) | (receivedData[5] << 16) | (receivedData[6] << 8) | receivedData[7];
+                        //distance[i * 10 + j] = (float)(((receivedData[8] << 24) | (receivedData[9] << 16) | (receivedData[10] << 8) | receivedData[11]) / 32768.0);
+                        distance[i * 10 + j] = (receivedData[8] << 8) | (receivedData[9]);
+                        distanceInCm = ((distance[i * 10 + j] / 256.0) - 63.6207) / 2.7455;
+                        if (table[i].Equals("XX"))
+                        {
+                            table[i] = "first Hop ID = 0x" + firstID[i].ToString("X6") + ":\n";
+                        }
+
+                        if (ID[i * 10 + j] != 0 || distance[i * 10 + j] != 0)
+                        {
+                            table[i] += String.Format("Robot [0x{0}] :: {1}\t= {2} cm\n", ID[i * 10 + j].ToString("X6"), distance[i * 10 + j].ToString("G6"), distanceInCm.ToString("G6"));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                    }
+                }
+                table[i] += "\n";
+                msg += table[i];
+            }
+
+            String currentTime = System.DateTime.Now.ToString();
+
+            DirectoryInfo fileDir = new DirectoryInfo(".");
+            fileDir = fileDir.CreateSubdirectory("Output");
+            String fileName = currentTime + "-" + title + ".txt";
+            fileName = fileName.Replace('/', '-');
+            fileName = fileName.Replace(':', '_');
+
+            String fileFullPath = fileDir.FullName + "\\" + fileName;
+
+            File.WriteAllText(@fileFullPath, msg);
+
+            MessageBox.Show("One Hop Neighbors Table of Robot [0x" + this.TXAdrrTextBox.Text + "] have save to\n" + fileFullPath, title, MessageBoxButton.OK, MessageBoxImage.Information);
+
+            string textEditor1 = @"D:\\Program Files\\Notepad++\\notepad++.exe";
+            string textEditor2 = @"C:\\Program Files\\Notepad++\\notepad++.exe";
+
+            if (File.Exists(textEditor1))
+            {
+                Process.Start(textEditor1, fileFullPath);
+            }
+            else if (File.Exists(textEditor2))
+            {
+                Process.Start(textEditor2, fileFullPath);
+            }
+            else
+            {
+                Process.Start(@"notepad.exe", fileFullPath);
+            }
+        }
+
+        private void setOneHopTableReadPosition(byte position)
+        {
+            Byte[] transmittedData = new Byte[2]; // <set one hop table position command><position>
+
+            transmittedData[0] = COMMAND_SET_ONE_HOP_POSITION;
+            transmittedData[1] = position;
+
+            theControlBoard.transmitBytesToRobot(transmittedData, 2, 1);
+        }
+
+        private void ReadNeighborButton_Click(object sender, RoutedEventArgs e)
+        {
+            uint length = 6;
+            Byte[] receivedData = new Byte[length];
+            String title = "Robot [" + this.TXAdrrTextBoxDebug.Text + "] neighbors table";
+            String table = "Neighbors Table of Robot [0x" + this.TXAdrrTextBoxDebug.Text + "]:\n";
+            int[] ID = new int[10];
+            int[] distance = new int[10];
+            double distanceInCm = 0;
+            for (int i = 0; i < 10; i++)
+            {
+                Thread.Sleep(10);
+                setTableReadPosition((byte)i);
+                Thread.Sleep(10);
+
+                try
+                {
+                    theControlBoard.receiveBytesFromRobot(COMMAND_READ_NEIGHBORS_TABLE, length, ref receivedData, 1000);
+                    ID[i] = (receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3];
+                    //distance[i] = (float)(((receivedData[4] << 24) | (receivedData[5] << 16) | (receivedData[6] << 8) | receivedData[7]) / 32768.0);
+                    distance[i] = (receivedData[4] << 8) | (receivedData[5]);
+                    distanceInCm = ((distance[i] / 256.0) - 63.6207) / 2.7455;
+                    if (ID[i] != 0 || distance[i] != 0)
+                    {
+                        table += String.Format("Robot [0x{0}] :: {1}\t= {2} cm\n", ID[i].ToString("X6"), distance[i].ToString("G6"), distanceInCm.ToString("G6"));
+                    }
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+
+            MessageBox.Show(table, title, MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void setTableReadPosition(byte position)
+        {
+            Byte[] transmittedData = new Byte[2]; // <set table position command><position>
+
+            transmittedData[0] = COMMAND_SET_TABLE_POSITION;
+            transmittedData[1] = position;
+
+            theControlBoard.transmitBytesToRobot(transmittedData, 2, 1);
+        }
+
         private void measureDistanceButton_Click(object sender, RoutedEventArgs e)
         {
             theControlBoard.transmitBytesToRobot(COMMAND_MEASURE_DISTANCE);
         }
 
+        private void DrawMapButton_Click(object sender, RoutedEventArgs e)
+        {
+            uint length = 12;
+            Byte[] receivedData = new Byte[length];
+            String msg = "Coordination Table of Robot [0x" + this.TXAdrrTextBoxDebug.Text + "]:\n";
+            String title = "Robot [" + this.TXAdrrTextBoxDebug.Text + "] Coordination Table";
+
+            uint dataCounter = 0;
+
+            uint[] id = new uint[10];
+
+            float[] dataX = new float[10];
+            float[] dataY = new float[10];
+
+            for (int i = 0; i < 10; i++)
+            {
+                Thread.Sleep(10);
+                setTableReadPosition((byte)i);
+                Thread.Sleep(10);
+
+                try
+                {
+                    theControlBoard.receiveBytesFromRobot(COMMAND_READ_LOCS_TABLE, length, ref receivedData, 1000);
+                    id[i] = (uint)((receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3]);
+                    dataX[i] = (float)(((receivedData[4] << 24) | (receivedData[5] << 16) | (receivedData[6] << 8) | receivedData[7]) / 32768.0);
+                    dataY[i] = (float)(((receivedData[8] << 24) | (receivedData[9] << 16) | (receivedData[10] << 8) | receivedData[11]) / 32768.0);
+                    msg += String.Format("Robot [0x{0}] ({1}cm;\t{2}cm)\n", id[i].ToString("X6"), dataX[i].ToString("G6"), dataY[i].ToString("G6"));
+
+                    if (id[i] != 0)
+                        dataCounter++;
+
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+
+            UInt32[] Plot_id = new UInt32[dataCounter];
+            float[] Plot_dataX = new float[dataCounter];
+            float[] Plot_dataY = new float[dataCounter];
+
+            for (int i = 0; i < dataCounter; i++)
+            {
+                Plot_id[i] = id[i];
+                Plot_dataX[i] = dataX[i];
+                Plot_dataY[i] = dataY[i];
+            }
+
+            String currentTime = System.DateTime.Now.ToString();
+
+            DirectoryInfo fileDir = new DirectoryInfo(".");
+            fileDir = fileDir.CreateSubdirectory("Output");
+            String fileName = currentTime + "-" + title + ".txt";
+            fileName = fileName.Replace('/', '-');
+            fileName = fileName.Replace(':', '_');
+
+            String fileFullPath = fileDir.FullName + "\\" + fileName;
+
+            File.WriteAllText(@fileFullPath, msg);
+
+
+            OxyplotWindow oxyplotWindow = new OxyplotWindow(Plot_id, Plot_dataX, Plot_dataY, title, OxyplotWindow.ScatterPointAndLinePlot);
+
+            oxyplotWindow.Show();
+
+        }
+
         #endregion
+
+
+
 
     }
 
