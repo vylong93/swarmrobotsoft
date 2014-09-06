@@ -32,6 +32,17 @@ namespace SwarmRobotControlAndCommunication
 
         public delegate PlotModel delegatePolyPlot(UInt32[] data, string Title);
         public delegate PlotModel delegateScatterPointPlot(float[] dataX, float[] dataY, string Title);
+        public delegate PlotModel delegateScatterPointAndLinePlot(UInt32[] id, float[] dataX, float[] dataY, string Title);
+
+        public OxyplotWindow(UInt32[] id, float[] dataX, float[] dataY, String Title, delegateScatterPointAndLinePlot plot)
+        {
+            InitializeComponent();
+
+            //Binding Data Manually
+            viewModel = new PlotWindowModel();
+            DataContext = viewModel;
+            viewModel.PlotModel = plot(id, dataX, dataY, Title);
+        }
 
         public OxyplotWindow(float[] dataX, float[] dataY, String Title, delegateScatterPointPlot plot)
         {
@@ -200,7 +211,6 @@ namespace SwarmRobotControlAndCommunication
             return plotModel1;
         }
 
-        //
         public static PlotModel ScatterPointPlot(float[] dataX, float[] dataY, string Title) 
         {
             var plotModel1 = new PlotModel();
@@ -277,5 +287,91 @@ namespace SwarmRobotControlAndCommunication
             return plotModel1;
         }
 
+        public static PlotModel ScatterPointAndLinePlot(UInt32[] id, float[] dataX, float[] dataY, string Title)
+        {
+            List<OxyPlot.OxyColor> randomColor = new List<OxyPlot.OxyColor>();
+            randomColor.Add(OxyColors.Red);
+            randomColor.Add(OxyColors.Blue);
+            randomColor.Add(OxyColors.Brown);
+            randomColor.Add(OxyColors.DarkSeaGreen);
+            randomColor.Add(OxyColors.Violet);
+            randomColor.Add(OxyColors.DarkViolet);
+            randomColor.Add(OxyColors.DarkCyan);
+            randomColor.Add(OxyColors.Navy);
+            randomColor.Add(OxyColors.Olive);
+            randomColor.Add(OxyColors.DimGray);
+
+            var plotModel1 = new PlotModel();
+            plotModel1.PlotAreaBorderThickness = new OxyThickness(0, 0, 0, 0);
+            plotModel1.PlotMargins = new OxyThickness(10, 10, 10, 10);
+            plotModel1.Title = Title;
+
+            var linearAxis1 = new LinearAxis();
+            linearAxis1.Maximum = 70;
+            linearAxis1.Minimum = -70;
+            linearAxis1.PositionAtZeroCrossing = true;
+            linearAxis1.TickStyle = TickStyle.Crossing;
+            //linearAxis1.Position = AxisPosition.Bottom;
+            //linearAxis1.MajorGridlineStyle = LineStyle.Solid;
+            //linearAxis1.MinorGridlineStyle = LineStyle.Dot;
+            plotModel1.Axes.Add(linearAxis1);
+
+            var linearAxis2 = new LinearAxis();
+            linearAxis2.Maximum = 70;
+            linearAxis2.Minimum = -70;
+            linearAxis2.PositionAtZeroCrossing = true;
+            linearAxis2.TickStyle = TickStyle.Crossing;
+            linearAxis2.Position = AxisPosition.Bottom;
+            //linearAxis2.MajorGridlineStyle = LineStyle.Solid;
+            //linearAxis2.MinorGridlineStyle = LineStyle.Dot;
+            plotModel1.Axes.Add(linearAxis2);
+
+            if (dataX.Length != dataY.Length)
+                throw new Exception("Invalid length of X and Y!");
+
+            for (int i = 0; i < dataX.Length; i++)
+            {
+                var pointAnnotation1 = new PointAnnotation();
+                pointAnnotation1.X = dataX[i];
+                pointAnnotation1.Y = dataY[i];
+
+                //pointAnnotation1.Fill = OxyColors.Orange;
+                //pointAnnotation1.Stroke = OxyColors.IndianRed;
+
+                pointAnnotation1.Fill = OxyColors.Cyan;
+                pointAnnotation1.Stroke = OxyColors.DarkBlue;
+
+                //pointAnnotation1.Fill = OxyColors.DarkBlue;
+                //pointAnnotation1.Stroke = OxyColors.Cyan;
+                pointAnnotation1.StrokeThickness = 3;
+                pointAnnotation1.Size = 10;
+                pointAnnotation1.Text = "0x" + id[i].ToString("X6");
+                plotModel1.Annotations.Add(pointAnnotation1);
+            }
+
+            for (int i = 1; i < dataX.Length; i++)
+            {
+                var arrowAnnotation2 = new ArrowAnnotation();
+                arrowAnnotation2.EndPoint = new DataPoint(dataX[i], dataY[i]);
+                //arrowAnnotation2.Text = "0x" + id[i].ToString("X6");
+                //arrowAnnotation2.TextPosition = new DataPoint(dataX[i], dataY[i]);
+                //arrowAnnotation2.TextHorizontalAlignment = OxyPlot.HorizontalAlignment.Left;
+                //arrowAnnotation2.TextVerticalAlignment = OxyPlot.VerticalAlignment.Bottom;
+                arrowAnnotation2.Color = randomColor[i % randomColor.Count];
+                plotModel1.Annotations.Add(arrowAnnotation2);
+            }
+
+            //var arrowAnnotation3 = new ArrowAnnotation();
+            //arrowAnnotation3.Color = OxyColors.Red;
+            //arrowAnnotation3.EndPoint = new DataPoint(10, -3);
+            //arrowAnnotation3.HeadLength = 14;
+            //arrowAnnotation3.HeadWidth = 6;
+            //arrowAnnotation3.Veeness = 4;
+            //arrowAnnotation3.Text = "HeadLength = 20, HeadWidth = 10, Veeness = 4";
+            //plotModel1.Annotations.Add(arrowAnnotation3);
+
+
+            return plotModel1;
+        }
     }
 }

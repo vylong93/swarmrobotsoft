@@ -164,7 +164,7 @@
                 </Grid>
             </TabItem>
             <TabItem x:Name="spiTab"
-                     Header="SPI Config"
+                     Header="SPI"
                      Margin="{Binding Margin, ElementName=controlTab}" RenderTransformOrigin="0.5,0.5">
                 <Grid Name="gridSPIConfig">
                     <Grid.ColumnDefinitions>
@@ -217,7 +217,7 @@
                 </Grid>
             </TabItem>
             <TabItem x:Name="rfTab" 
-                     Header="RF Config" 
+                     Header="RF24" 
                      Margin="{Binding Margin, ElementName=controlTab}">
                 <Grid Name="gridRFConfig" HorizontalAlignment="Center" VerticalAlignment="Top">
                     <Grid.RowDefinitions>
@@ -376,8 +376,6 @@
                             <ComboBoxItem Content="Start Sampling Mics Signals"/>
                             <ComboBoxItem Content="Test Speaker"/>
                             <ComboBoxItem Content="Change Motors Speed"/>
-                            <ComboBoxItem Content="Read Neighbors table"/>
-                            <ComboBoxItem Content="Read OneHop table"/>
                         </ComboBox>
                     </StackPanel>
                     <StackPanel x:Name="readWriteEEPROM" Grid.Column="0" Grid.Row="1" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
@@ -401,7 +399,7 @@
                         <CheckBox x:Name="motor2ReverseCheckBox" IsChecked="False" Margin="0,3,5,3" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         <Button x:Name="stopMotor2Button" Content="Stop Motor 2" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc1StackPanel}" Width="100" Click="stopMotor2Button_Click"/>
                     </StackPanel>
-                  
+
                     <StackPanel x:Name="readAdc1StackPanel" Grid.Column="0" Grid.Row="4" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="24" Orientation="Horizontal">
                         <Button x:Name="readAdc1Button" Content="Read ADC 1" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc1StackPanel}" Width="100" Click="readAdc1Button_Click"/>
                         <TextBox x:Name="readAdc1TextBox" Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" IsReadOnly="True" Width="200" Height="{Binding Height, ElementName=readAdc1StackPanel}" VerticalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="True" UseLayoutRounding="True" Cursor=""/>
@@ -414,7 +412,45 @@
                         <Button x:Name="readBatteryVoltageButton" Content="Get Batt Voltage" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc2StackPanel}" Width="100" Click="readBatteryVoltageButton_Click"/>
                         <TextBox x:Name="readBatteryVoltageTextBox" Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" IsReadOnly="True" Width="200" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
                     </StackPanel>
-                    <Button x:Name="measureDistanceButton" Grid.Row="7" Content="Start Measure Distance" HorizontalAlignment="Center" Margin="78,7,76.8,5.8" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc1StackPanel}" Width="150" Click="measureDistanceButton_Click"/>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Debug" Margin="{Binding Margin, ElementName=controlTab}">
+                <Grid HorizontalAlignment="Left" Height="238.4" VerticalAlignment="Top" Width="304.8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="29*"/>
+                        <ColumnDefinition Width="32*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="36"/>
+                        <RowDefinition Height="28"/>
+                        <RowDefinition Height="36.8"/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel x:Name="TxAddressPanel1" Grid.Row="0" Grid.Column="0" 
+                        Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1.8,0" Grid.ColumnSpan="2">
+                        <Label Content="Robot ID: " 
+                               HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,1" Width="69"/>
+                        <TextBox x:Name="TXAdrrTextBoxDebug"
+                        	HorizontalAlignment="Center" VerticalContentAlignment="Center" FlowDirection="LeftToRight" 
+                        	VerticalAlignment="Center" TextWrapping="Wrap" Width="90" 
+                        	Height="20"  Padding="0" Margin="0,8"  Style="{StaticResource PathTextbox}" KeyDown="TXAdrrTextBox_KeyDown"/>
+                        <Button x:Name="ConfigureRF" Content="Set TX Address" Grid.Column="1" Grid.Row="4" 
+                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="135" HorizontalAlignment="Left" Click="configureRFDebug_Click"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="1" Grid.Column="0" 
+                        Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1.8,0" Grid.ColumnSpan="2">
+                        <Button x:Name="ReadOneHopNeighborButton" Content="Read One Hop Neighbors" Grid.Column="1" Grid.Row="4" 
+                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="155" HorizontalAlignment="Left" Click="ReadOneHopNeighborButton_Click"/>
+                        <Button x:Name="ReadNeighborButton" Content="Read Neighbors" Grid.Column="1" Grid.Row="4" 
+                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="135" HorizontalAlignment="Left" Click="ReadNeighborButton_Click"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="2" Grid.Column="0" 
+                        Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1.8,0" Grid.ColumnSpan="2">
+                        <Button x:Name="measureDistanceButton" Content="Start Measuring Distance" HorizontalAlignment="Center" Margin="4,7,0,5.8" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc1StackPanel}" Width="155" Click="measureDistanceButton_Click"/>
+                        <Button x:Name="DrawMapButton" Content="Draw Coordination" Grid.Column="1" Grid.Row="4" 
+                            Margin="4.2,7,0,5.8" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="135" HorizontalAlignment="Left" Click="DrawMapButton_Click"/>
+                    </StackPanel>
                 </Grid>
             </TabItem>
         </TabControl>
