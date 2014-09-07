@@ -931,12 +931,12 @@ namespace SwarmRobotControlAndCommunication
             for (int i = 0; i < 10; i++)
             {
                 setOneHopTableReadPosition((byte)i); // set One Hop table line
-                Thread.Sleep(10);
+                Thread.Sleep(20);
                 table[i] = "XX";
                 for (int j = 0; j < 10; j++)
                 {
                     setTableReadPosition((byte)j); // set One Hop Table [i] . line [j]
-                    Thread.Sleep(10);
+                    Thread.Sleep(20);
                     try
                     {
                         theControlBoard.receiveBytesFromRobot(COMMAND_READ_ONEHOP_TABLE, length, ref receivedData, 1000);
@@ -1015,9 +1015,9 @@ namespace SwarmRobotControlAndCommunication
             double distanceInCm = 0;
             for (int i = 0; i < 10; i++)
             {
-                Thread.Sleep(10);
+                Thread.Sleep(20);
                 setTableReadPosition((byte)i);
-                Thread.Sleep(10);
+                Thread.Sleep(20);
 
                 try
                 {
@@ -1070,16 +1070,16 @@ namespace SwarmRobotControlAndCommunication
 
             for (int i = 0; i < 10; i++)
             {
-                Thread.Sleep(10);
+                Thread.Sleep(20);
                 setTableReadPosition((byte)i);
-                Thread.Sleep(10);
+                Thread.Sleep(20);
 
                 try
                 {
                     theControlBoard.receiveBytesFromRobot(COMMAND_READ_LOCS_TABLE, length, ref receivedData, 1000);
                     id[i] = (uint)((receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3]);
-                    dataX[i] = (float)(((receivedData[4] << 24) | (receivedData[5] << 16) | (receivedData[6] << 8) | receivedData[7]) / 32768.0);
-                    dataY[i] = (float)(((receivedData[8] << 24) | (receivedData[9] << 16) | (receivedData[10] << 8) | receivedData[11]) / 32768.0);
+                    dataX[i] = (float)((Int32)((receivedData[4] << 24) | (receivedData[5] << 16) | (receivedData[6] << 8) | receivedData[7]) / 32768.0);
+                    dataY[i] = (float)((Int32)((receivedData[8] << 24) | (receivedData[9] << 16) | (receivedData[10] << 8) | receivedData[11]) / 32768.0);
                     msg += String.Format("Robot [0x{0}] ({1}cm;\t{2}cm)\n", id[i].ToString("X6"), dataX[i].ToString("G6"), dataY[i].ToString("G6"));
 
                     if (id[i] != 0)
