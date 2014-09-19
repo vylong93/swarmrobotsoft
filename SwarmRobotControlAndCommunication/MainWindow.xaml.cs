@@ -942,9 +942,8 @@ namespace SwarmRobotControlAndCommunication
                         theControlBoard.receiveBytesFromRobot(COMMAND_READ_ONEHOP_TABLE, length, ref receivedData, 1000);
                         firstID[i] = (receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3];
                         ID[i * 10 + j] = (receivedData[4] << 24) | (receivedData[5] << 16) | (receivedData[6] << 8) | receivedData[7];
-                        //distance[i * 10 + j] = (float)(((receivedData[8] << 24) | (receivedData[9] << 16) | (receivedData[10] << 8) | receivedData[11]) / 32768.0);
                         distance[i * 10 + j] = (receivedData[8] << 8) | (receivedData[9]);
-                        distanceInCm = ((distance[i * 10 + j] / 256.0) - 63.6207) / 2.7455;
+                        distanceInCm = distance[i * 10 + j] / 256.0;
                         if (table[i].Equals("XX"))
                         {
                             table[i] = "first Hop ID = 0x" + firstID[i].ToString("X6") + ":\n";
@@ -952,7 +951,7 @@ namespace SwarmRobotControlAndCommunication
 
                         if (ID[i * 10 + j] != 0 || distance[i * 10 + j] != 0)
                         {
-                            table[i] += String.Format("Robot [0x{0}] :: {1}\t= {2} cm\n", ID[i * 10 + j].ToString("X6"), distance[i * 10 + j].ToString("G6"), distanceInCm.ToString("G6"));
+                            table[i] += String.Format("Robot [0x{0}] :: {1} cm\n", ID[i * 10 + j].ToString("X6"), distanceInCm.ToString("G6"));
                         }
                     }
                     catch (Exception ex)
@@ -1023,12 +1022,11 @@ namespace SwarmRobotControlAndCommunication
                 {
                     theControlBoard.receiveBytesFromRobot(COMMAND_READ_NEIGHBORS_TABLE, length, ref receivedData, 1000);
                     ID[i] = (receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3];
-                    //distance[i] = (float)(((receivedData[4] << 24) | (receivedData[5] << 16) | (receivedData[6] << 8) | receivedData[7]) / 32768.0);
                     distance[i] = (receivedData[4] << 8) | (receivedData[5]);
-                    distanceInCm = ((distance[i] / 256.0) - 63.6207) / 2.7455;
+                    distanceInCm = distance[i] / 256.0;
                     if (ID[i] != 0 || distance[i] != 0)
                     {
-                        table += String.Format("Robot [0x{0}] :: {1}\t= {2} cm\n", ID[i].ToString("X6"), distance[i].ToString("G6"), distanceInCm.ToString("G6"));
+                        table += String.Format("Robot [0x{0}] :: {1} cm\n", ID[i].ToString("X6"), distanceInCm.ToString("G6"));
                     }
                 }
                 catch (Exception ex)
@@ -1114,6 +1112,9 @@ namespace SwarmRobotControlAndCommunication
 
             File.WriteAllText(@fileFullPath, msg);
 
+            //UInt32[] Plot_id = {0xBEAD05, 0xBEAD01, 0xBEAD02, 0xBEAD03, 0xBEAD04, 0xBEAD06};
+            //float[] Plot_dataX = { 0, 32.7711f, 25.0594f, 4.0069f, 16.7647f, 18.6777f};
+            //float[] Plot_dataY = { 0, 0, 19.2015f, 18.8506f, 7.81726f, -12.8368f};
 
             OxyplotWindow oxyplotWindow = new OxyplotWindow(Plot_id, Plot_dataX, Plot_dataY, title, OxyplotWindow.ScatterPointAndLinePlot);
 
@@ -1122,10 +1123,6 @@ namespace SwarmRobotControlAndCommunication
         }
 
         #endregion
-
-
-
-
     }
 
     #region IValueConverter Members
