@@ -75,6 +75,7 @@ namespace SwarmRobotControlAndCommunication
             private const byte COMMAND_SET_ADDRESS_EEROM    = 0xE2;
 
             private const byte COMMAND_MEASURE_DISTANCE     = 0xB0;
+            private const byte COMMAND_READ_VECTOR          = 0xB1;
 
             private const byte MOTOR_FORWARD_DIRECTION      = 0x00;
             private const byte MOTOR_REVERSE_DIRECTION      = 0x01;
@@ -933,30 +934,32 @@ namespace SwarmRobotControlAndCommunication
                 setOneHopTableReadPosition((byte)i); // set One Hop table line
                 Thread.Sleep(20);
                 table[i] = "XX";
-                for (int j = 0; j < 10; j++)
+                try
                 {
-                    setTableReadPosition((byte)j); // set One Hop Table [i] . line [j]
-                    Thread.Sleep(20);
-                    try
+                    for (int j = 0; j < 10; j++)
                     {
-                        theControlBoard.receiveBytesFromRobot(COMMAND_READ_ONEHOP_TABLE, length, ref receivedData, 1000);
-                        firstID[i] = (receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3];
-                        ID[i * 10 + j] = (receivedData[4] << 24) | (receivedData[5] << 16) | (receivedData[6] << 8) | receivedData[7];
-                        distance[i * 10 + j] = (receivedData[8] << 8) | (receivedData[9]);
-                        distanceInCm = distance[i * 10 + j] / 256.0;
-                        if (table[i].Equals("XX"))
-                        {
-                            table[i] = "first Hop ID = 0x" + firstID[i].ToString("X6") + ":\n";
-                        }
+                        setTableReadPosition((byte)j); // set One Hop Table [i] . line [j]
+                        Thread.Sleep(20);
 
-                        if (ID[i * 10 + j] != 0 || distance[i * 10 + j] != 0)
-                        {
-                            table[i] += String.Format("Robot [0x{0}] :: {1} cm\n", ID[i * 10 + j].ToString("X6"), distanceInCm.ToString("G6"));
+                            theControlBoard.receiveBytesFromRobot(COMMAND_READ_ONEHOP_TABLE, length, ref receivedData, 1000);
+                            firstID[i] = (receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3];
+                            ID[i * 10 + j] = (receivedData[4] << 24) | (receivedData[5] << 16) | (receivedData[6] << 8) | receivedData[7];
+                            distance[i * 10 + j] = (receivedData[8] << 8) | (receivedData[9]);
+                            distanceInCm = distance[i * 10 + j] / 256.0;
+                            if (table[i].Equals("XX"))
+                            {
+                                table[i] = "first Hop ID = 0x" + firstID[i].ToString("X6") + ":\n";
+                            }
+
+                            if (ID[i * 10 + j] != 0 || distance[i * 10 + j] != 0)
+                            {
+                                table[i] += String.Format("Robot [0x{0}] :: {1} cm\n", ID[i * 10 + j].ToString("X6"), distanceInCm.ToString("G6"));
+                            }
                         }
                     }
-                    catch (Exception ex)
-                    {
-                    }
+                catch (Exception ex)
+                {
+                    defaultExceptionHandle(ex);
                 }
                 table[i] += "\n";
                 msg += table[i];
@@ -1012,26 +1015,29 @@ namespace SwarmRobotControlAndCommunication
             int[] ID = new int[10];
             int[] distance = new int[10];
             double distanceInCm = 0;
-            for (int i = 0; i < 10; i++)
+            try
             {
-                Thread.Sleep(20);
-                setTableReadPosition((byte)i);
-                Thread.Sleep(20);
+                for (int i = 0; i < 10; i++)
+                {
+                    Thread.Sleep(20);
+                    setTableReadPosition((byte)i);
+                    Thread.Sleep(20);
 
-                try
-                {
-                    theControlBoard.receiveBytesFromRobot(COMMAND_READ_NEIGHBORS_TABLE, length, ref receivedData, 1000);
-                    ID[i] = (receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3];
-                    distance[i] = (receivedData[4] << 8) | (receivedData[5]);
-                    distanceInCm = distance[i] / 256.0;
-                    if (ID[i] != 0 || distance[i] != 0)
-                    {
-                        table += String.Format("Robot [0x{0}] :: {1} cm\n", ID[i].ToString("X6"), distanceInCm.ToString("G6"));
+
+                        theControlBoard.receiveBytesFromRobot(COMMAND_READ_NEIGHBORS_TABLE, length, ref receivedData, 1000);
+                        ID[i] = (receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3];
+                        distance[i] = (receivedData[4] << 8) | (receivedData[5]);
+                        distanceInCm = distance[i] / 256.0;
+                        if (ID[i] != 0 || distance[i] != 0)
+                        {
+                            table += String.Format("Robot [0x{0}] :: {1} cm\n", ID[i].ToString("X6"), distanceInCm.ToString("G6"));
+                        }
                     }
+
                 }
-                catch (Exception ex)
-                {
-                }
+            catch (Exception ex)
+            {
+                defaultExceptionHandle(ex);
             }
 
             MessageBox.Show(table, title, MessageBoxButton.OK, MessageBoxImage.Information);
@@ -1052,6 +1058,82 @@ namespace SwarmRobotControlAndCommunication
             theControlBoard.transmitBytesToRobot(COMMAND_MEASURE_DISTANCE);
         }
 
+        private void scanRobotsVectorButton_Click(object sender, RoutedEventArgs e)
+        {
+            uint length = 8;
+            Byte[] receivedData = new Byte[length];
+
+            UInt32[] Plot_id = {0xBEAD01, 0xBEAD02, 0xBEAD03, 0xBEAD04, 0xBEAD05, 0xBEAD06};
+
+            List<float> xAxis = new List<float>();
+            List<float> yAxis = new List<float>();
+            List<UInt32> ui32ID = new List<UInt32>();
+
+            float temp;
+            UInt32[] listID;
+            float[] Plot_dataX;
+            float[] Plot_dataY;
+            for (int i = 0; i < 6; i++)
+            {
+                configureRF(Plot_id[i].ToString("X6"));
+
+                Thread.Sleep(100);
+
+                try
+                {
+                    theControlBoard.receiveBytesFromRobot(COMMAND_READ_VECTOR, length, ref receivedData, 1000);
+                    temp = (float)(((receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3]) / 65536.0);
+                    xAxis.Add(temp);
+                    temp = (float)(((receivedData[4] << 24) | (receivedData[5] << 16) | (receivedData[6] << 8) | receivedData[7]) / 65536.0);
+                    yAxis.Add(temp);
+                    ui32ID.Add(Plot_id[i]);
+                }
+                catch (Exception ex)
+                {
+                }
+               
+
+            }
+
+            configureRF("BEADFF");
+
+            Plot_dataX = new float[xAxis.Count];
+            Plot_dataY = new float[yAxis.Count];
+            listID = new UInt32[ui32ID.Count];
+
+            
+            xAxis.CopyTo(Plot_dataX);
+            yAxis.CopyTo(Plot_dataY);
+            ui32ID.CopyTo(listID);
+
+            UInt32 tempID;
+
+            for (int i = 0; i < ui32ID.Count; i++) 
+            {
+                if (Plot_dataX[i] == 0 && Plot_dataY[i] == 0)
+                {
+                    tempID = ui32ID[0];
+                    ui32ID[0] = ui32ID[i];
+                    ui32ID[i] = tempID;
+
+                    temp = Plot_dataX[0];
+                    Plot_dataX[0] = Plot_dataX[i];
+                    Plot_dataX[i] = temp;
+
+                    temp = Plot_dataY[0];
+                    Plot_dataY[0] = Plot_dataY[i];
+                    Plot_dataY[i] = temp;
+
+                    break;
+                }
+            }
+
+            OxyplotWindow oxyplotWindow = new OxyplotWindow(listID, Plot_dataX, Plot_dataY, "Robots Real Coordinates", OxyplotWindow.ScatterPointAndLinePlot);
+
+            oxyplotWindow.Show();
+        }
+
+
         private void DrawMapButton_Click(object sender, RoutedEventArgs e)
         {
             uint length = 12;
@@ -1065,28 +1147,30 @@ namespace SwarmRobotControlAndCommunication
 
             float[] dataX = new float[10];
             float[] dataY = new float[10];
-
-            for (int i = 0; i < 10; i++)
+            try
             {
-                Thread.Sleep(20);
-                setTableReadPosition((byte)i);
-                Thread.Sleep(20);
-
-                try
+                for (int i = 0; i < 10; i++)
                 {
-                    theControlBoard.receiveBytesFromRobot(COMMAND_READ_LOCS_TABLE, length, ref receivedData, 1000);
-                    id[i] = (uint)((receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3]);
-                    dataX[i] = (float)((Int32)((receivedData[4] << 24) | (receivedData[5] << 16) | (receivedData[6] << 8) | receivedData[7]) / 32768.0);
-                    dataY[i] = (float)((Int32)((receivedData[8] << 24) | (receivedData[9] << 16) | (receivedData[10] << 8) | receivedData[11]) / 32768.0);
-                    msg += String.Format("Robot [0x{0}] ({1}cm;\t{2}cm)\n", id[i].ToString("X6"), dataX[i].ToString("G6"), dataY[i].ToString("G6"));
+                    Thread.Sleep(20);
+                    setTableReadPosition((byte)i);
+                    Thread.Sleep(20);
 
-                    if (id[i] != 0)
-                        dataCounter++;
+
+                        theControlBoard.receiveBytesFromRobot(COMMAND_READ_LOCS_TABLE, length, ref receivedData, 1000);
+                        id[i] = (uint)((receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3]);
+                        dataX[i] = (float)((Int32)((receivedData[4] << 24) | (receivedData[5] << 16) | (receivedData[6] << 8) | receivedData[7]) / 32768.0);
+                        dataY[i] = (float)((Int32)((receivedData[8] << 24) | (receivedData[9] << 16) | (receivedData[10] << 8) | receivedData[11]) / 32768.0);
+                        msg += String.Format("Robot [0x{0}] ({1}cm;\t{2}cm)\n", id[i].ToString("X6"), dataX[i].ToString("G6"), dataY[i].ToString("G6"));
+
+                        if (id[i] != 0)
+                            dataCounter++;
+
+                    }
 
                 }
-                catch (Exception ex)
-                {
-                }
+            catch (Exception ex)
+            {
+                defaultExceptionHandle(ex);
             }
 
             UInt32[] Plot_id = new UInt32[dataCounter];
