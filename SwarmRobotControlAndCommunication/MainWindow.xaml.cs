@@ -53,7 +53,7 @@ namespace SwarmRobotControlAndCommunication
             private const byte COMMAND_TEST_RF_RECEIVE      = 0xC6;
             private const byte COMMAND_TOGGLE_LEDS          = 0xC1;
             private const byte COMMAND_SAMPLE_MICS_SIGNALS  = 0xC2;
-            private const byte COMMAND_TEST_MOTORS_MODES    = 0xC3;
+            private const byte COMMAND_SET_RUNNING_STATUS   = 0xC3;
             private const byte COMMAND_CHANGE_MOTOR_SPEED   = 0xC4;
             private const byte COMMAND_TEST_RF_CD           = 0xC5;
             private const byte COMMAND_TEST_SPEAKER         = 0xC8;
@@ -659,35 +659,23 @@ namespace SwarmRobotControlAndCommunication
                     case "Start Sampling Mics Signals":
                         theControlBoard.transmitBytesToRobot(COMMAND_SAMPLE_MICS_SIGNALS);
                         break;
-                    
-                    case "Test All Motor Modes":
-                        theControlBoard.transmitBytesToRobot(COMMAND_TEST_MOTORS_MODES);
-                        break;
 
                     case "Change Motors Speed":
                         transmittedData[0] = COMMAND_CHANGE_MOTOR_SPEED;
 
                         if (motor1ReverseCheckBox.IsChecked == true)
-                        {
                             transmittedData[1] = MOTOR_REVERSE_DIRECTION;
-                            transmittedData[2] = (byte)(100 - Convert.ToByte(this.motor1SpeedTextBox.Text));
-                        }
                         else 
-                        {
                             transmittedData[1] = MOTOR_FORWARD_DIRECTION;
-                            transmittedData[2] = Convert.ToByte(this.motor1SpeedTextBox.Text);
-                        }
+
+                        transmittedData[2] = Convert.ToByte(this.motor1SpeedTextBox.Text);
 
                         if (motor2ReverseCheckBox.IsChecked == true)
-                        {
                             transmittedData[3] = MOTOR_REVERSE_DIRECTION;
-                            transmittedData[4] = (byte)(100 - Convert.ToByte(this.motor2SpeedTextBox.Text));
-                        }
                         else 
-                        {
                             transmittedData[3] = MOTOR_FORWARD_DIRECTION; 
-                            transmittedData[4] = Convert.ToByte(this.motor2SpeedTextBox.Text);
-                        }
+
+                        transmittedData[4] = Convert.ToByte(this.motor2SpeedTextBox.Text);
 
                         theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
                         break;
@@ -705,6 +693,56 @@ namespace SwarmRobotControlAndCommunication
                 } 
             }
             catch(Exception ex)
+            {
+                defaultExceptionHandle(ex);
+            }
+        }
+
+        private void sendRunningStatusButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                uint length = 4;
+                Byte[] transmittedData = new Byte[length];
+
+                transmittedData[0] = COMMAND_SET_RUNNING_STATUS;
+
+                string status = this.runningStatusSelectBox.Text;
+
+                switch (status)
+                {
+                    case "Shutdown":
+                        transmittedData[1] = 0;
+                        break;
+
+                    case "Go Straight":
+                        transmittedData[1] = 1;
+                        break;
+
+                    case "Go Backward":
+                        transmittedData[1] = 2;
+                        break;
+
+                    case "Spin Clockwise":
+                        transmittedData[1] = 3;
+                        break;
+
+                    case "Spin Counter Clockwise":
+                        transmittedData[1] = 4;
+                        break;
+
+                    default:
+                        throw new Exception("Send Status: Can not recognise status!");
+                }
+
+                transmittedData[2] = Convert.ToByte(this.motor1SpeedTextBox.Text);
+
+                transmittedData[3] = Convert.ToByte(this.motor2SpeedTextBox.Text);
+
+                theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
+
+            }
+            catch (Exception ex)
             {
                 defaultExceptionHandle(ex);
             }
@@ -1091,8 +1129,6 @@ namespace SwarmRobotControlAndCommunication
                 catch (Exception ex)
                 {
                 }
-               
-
             }
 
             configureRF("BEADFF");

@@ -100,7 +100,7 @@ namespace SwarmRobotControlAndCommunication
             /// <summary>
             /// The waitting time for a NACK signal to be received (unit: ms).
             /// </summary>
-            private const byte DATA_FRAME_NACK_WAIT_TIME = 12; // unit = 1ms
+            private const byte DATA_FRAME_NACK_WAIT_TIME = 10; // unit = 1ms
         #endregion
 
         #region Variables for bootloader commands
