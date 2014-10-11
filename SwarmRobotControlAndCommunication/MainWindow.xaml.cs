@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -698,56 +699,6 @@ namespace SwarmRobotControlAndCommunication
             }
         }
 
-        private void sendRunningStatusButton_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                uint length = 4;
-                Byte[] transmittedData = new Byte[length];
-
-                transmittedData[0] = COMMAND_SET_RUNNING_STATUS;
-
-                string status = this.runningStatusSelectBox.Text;
-
-                switch (status)
-                {
-                    case "Shutdown":
-                        transmittedData[1] = 0;
-                        break;
-
-                    case "Go Straight":
-                        transmittedData[1] = 1;
-                        break;
-
-                    case "Go Backward":
-                        transmittedData[1] = 2;
-                        break;
-
-                    case "Spin Clockwise":
-                        transmittedData[1] = 3;
-                        break;
-
-                    case "Spin Counter Clockwise":
-                        transmittedData[1] = 4;
-                        break;
-
-                    default:
-                        throw new Exception("Send Status: Can not recognise status!");
-                }
-
-                transmittedData[2] = Convert.ToByte(this.motor1SpeedTextBox.Text);
-
-                transmittedData[3] = Convert.ToByte(this.motor2SpeedTextBox.Text);
-
-                theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
-
-            }
-            catch (Exception ex)
-            {
-                defaultExceptionHandle(ex);
-            }
-        }
-
         private void testReceivedData(byte Command)
         {
             uint length = 600;
@@ -953,6 +904,140 @@ namespace SwarmRobotControlAndCommunication
             configureRF(this.TXAdrrTextBoxDebug.Text);
         }
 
+        private void setOneHopTableReadPosition(byte position)
+        {
+            Byte[] transmittedData = new Byte[2]; // <set one hop table position command><position>
+
+            transmittedData[0] = COMMAND_SET_ONE_HOP_POSITION;
+            transmittedData[1] = position;
+
+            theControlBoard.transmitBytesToRobot(transmittedData, 2, 1);
+        }
+
+        private void setTableReadPosition(byte position)
+        {
+            Byte[] transmittedData = new Byte[2]; // <set table position command><position>
+
+            transmittedData[0] = COMMAND_SET_TABLE_POSITION;
+            transmittedData[1] = position;
+
+            theControlBoard.transmitBytesToRobot(transmittedData, 2, 1);
+        }
+
+        private void measureDistanceButton_Click(object sender, RoutedEventArgs e)
+        {
+            theControlBoard.transmitBytesToRobot(COMMAND_MEASURE_DISTANCE);
+        }
+
+        private void scanRobotsVectorButton_Click(object sender, RoutedEventArgs e)
+        {
+            uint length = 8;
+            Byte[] receivedData = new Byte[length];
+
+            UInt32[] Plot_id = { 0xBEAD01, 0xBEAD02, 0xBEAD03, 0xBEAD04, 0xBEAD05, 0xBEAD06 };
+
+            List<float> xAxis = new List<float>();
+            List<float> yAxis = new List<float>();
+            List<UInt32> ui32ID = new List<UInt32>();
+
+            float temp;
+            UInt32[] listID;
+            float[] Plot_dataX;
+            float[] Plot_dataY;
+            for (int i = 0; i < 6; i++)
+            {
+                configureRF(Plot_id[i].ToString("X6"));
+
+                Thread.Sleep(100);
+
+                try
+                {
+                    theControlBoard.receiveBytesFromRobot(COMMAND_READ_VECTOR, length, ref receivedData, 1000);
+                    temp = (float)(((receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3]) / 65536.0);
+                    xAxis.Add(temp);
+                    temp = (float)(((receivedData[4] << 24) | (receivedData[5] << 16) | (receivedData[6] << 8) | receivedData[7]) / 65536.0);
+                    yAxis.Add(temp);
+                    ui32ID.Add(Plot_id[i]);
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+
+            configureRF("BEADFF");
+
+            Plot_dataX = new float[xAxis.Count];
+            Plot_dataY = new float[yAxis.Count];
+            listID = new UInt32[ui32ID.Count];
+
+
+            xAxis.CopyTo(Plot_dataX);
+            yAxis.CopyTo(Plot_dataY);
+            ui32ID.CopyTo(listID);
+
+            UInt32 tempID;
+
+            for (int i = 0; i < ui32ID.Count; i++)
+            {
+                if (Plot_dataX[i] == 0 && Plot_dataY[i] == 0)
+                {
+                    tempID = ui32ID[0];
+                    ui32ID[0] = ui32ID[i];
+                    ui32ID[i] = tempID;
+
+                    temp = Plot_dataX[0];
+                    Plot_dataX[0] = Plot_dataX[i];
+                    Plot_dataX[i] = temp;
+
+                    temp = Plot_dataY[0];
+                    Plot_dataY[0] = Plot_dataY[i];
+                    Plot_dataY[i] = temp;
+
+                    break;
+                }
+            }
+
+            OxyplotWindow oxyplotWindow = new OxyplotWindow(listID, Plot_dataX, Plot_dataY, "Robots Real Coordinates", OxyplotWindow.ScatterPointAndLinePlot);
+
+            oxyplotWindow.Show();
+        }
+
+        private void ReadNeighborButton_Click(object sender, RoutedEventArgs e)
+        {
+            uint length = 6;
+            Byte[] receivedData = new Byte[length];
+            String title = "Robot [" + this.TXAdrrTextBoxDebug.Text + "] neighbors table";
+            String table = "Neighbors Table of Robot [0x" + this.TXAdrrTextBoxDebug.Text + "]:\n";
+            int[] ID = new int[10];
+            int[] distance = new int[10];
+            double distanceInCm = 0;
+            try
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    Thread.Sleep(20);
+                    setTableReadPosition((byte)i);
+                    Thread.Sleep(20);
+
+                    theControlBoard.receiveBytesFromRobot(COMMAND_READ_NEIGHBORS_TABLE, length, ref receivedData, 1000);
+                    ID[i] = (receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3];
+                    distance[i] = (receivedData[4] << 8) | (receivedData[5]);
+                    distanceInCm = distance[i] / 256.0;
+                    if (ID[i] != 0 || distance[i] != 0)
+                    {
+                        table += String.Format("Robot [0x{0}] :: {1} cm\n", ID[i].ToString("X6"), distanceInCm.ToString("G6"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                defaultExceptionHandle(ex);
+            }
+
+            MessageBox.Show(table, title, MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+
         private void ReadOneHopNeighborButton_Click(object sender, RoutedEventArgs e)
         {
             uint length = 10;
@@ -1003,17 +1088,7 @@ namespace SwarmRobotControlAndCommunication
                 msg += table[i];
             }
 
-            String currentTime = System.DateTime.Now.ToString();
-
-            DirectoryInfo fileDir = new DirectoryInfo(".");
-            fileDir = fileDir.CreateSubdirectory("Output");
-            String fileName = currentTime + "-" + title + ".txt";
-            fileName = fileName.Replace('/', '-');
-            fileName = fileName.Replace(':', '_');
-
-            String fileFullPath = fileDir.FullName + "\\" + fileName;
-
-            File.WriteAllText(@fileFullPath, msg);
+            String fileFullPath = exportTextFile("Output OneHop", "OneHop " + this.TXAdrrTextBoxDebug.Text + ".txt", msg);
 
             MessageBox.Show("One Hop Neighbors Table of Robot [0x" + this.TXAdrrTextBox.Text + "] have save to\n" + fileFullPath, title, MessageBoxButton.OK, MessageBoxImage.Information);
 
@@ -1033,142 +1108,6 @@ namespace SwarmRobotControlAndCommunication
                 Process.Start(@"notepad.exe", fileFullPath);
             }
         }
-
-        private void setOneHopTableReadPosition(byte position)
-        {
-            Byte[] transmittedData = new Byte[2]; // <set one hop table position command><position>
-
-            transmittedData[0] = COMMAND_SET_ONE_HOP_POSITION;
-            transmittedData[1] = position;
-
-            theControlBoard.transmitBytesToRobot(transmittedData, 2, 1);
-        }
-
-        private void ReadNeighborButton_Click(object sender, RoutedEventArgs e)
-        {
-            uint length = 6;
-            Byte[] receivedData = new Byte[length];
-            String title = "Robot [" + this.TXAdrrTextBoxDebug.Text + "] neighbors table";
-            String table = "Neighbors Table of Robot [0x" + this.TXAdrrTextBoxDebug.Text + "]:\n";
-            int[] ID = new int[10];
-            int[] distance = new int[10];
-            double distanceInCm = 0;
-            try
-            {
-                for (int i = 0; i < 10; i++)
-                {
-                    Thread.Sleep(20);
-                    setTableReadPosition((byte)i);
-                    Thread.Sleep(20);
-
-
-                        theControlBoard.receiveBytesFromRobot(COMMAND_READ_NEIGHBORS_TABLE, length, ref receivedData, 1000);
-                        ID[i] = (receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3];
-                        distance[i] = (receivedData[4] << 8) | (receivedData[5]);
-                        distanceInCm = distance[i] / 256.0;
-                        if (ID[i] != 0 || distance[i] != 0)
-                        {
-                            table += String.Format("Robot [0x{0}] :: {1} cm\n", ID[i].ToString("X6"), distanceInCm.ToString("G6"));
-                        }
-                    }
-
-                }
-            catch (Exception ex)
-            {
-                defaultExceptionHandle(ex);
-            }
-
-            MessageBox.Show(table, title, MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        private void setTableReadPosition(byte position)
-        {
-            Byte[] transmittedData = new Byte[2]; // <set table position command><position>
-
-            transmittedData[0] = COMMAND_SET_TABLE_POSITION;
-            transmittedData[1] = position;
-
-            theControlBoard.transmitBytesToRobot(transmittedData, 2, 1);
-        }
-
-        private void measureDistanceButton_Click(object sender, RoutedEventArgs e)
-        {
-            theControlBoard.transmitBytesToRobot(COMMAND_MEASURE_DISTANCE);
-        }
-
-        private void scanRobotsVectorButton_Click(object sender, RoutedEventArgs e)
-        {
-            uint length = 8;
-            Byte[] receivedData = new Byte[length];
-
-            UInt32[] Plot_id = {0xBEAD01, 0xBEAD02, 0xBEAD03, 0xBEAD04, 0xBEAD05, 0xBEAD06};
-
-            List<float> xAxis = new List<float>();
-            List<float> yAxis = new List<float>();
-            List<UInt32> ui32ID = new List<UInt32>();
-
-            float temp;
-            UInt32[] listID;
-            float[] Plot_dataX;
-            float[] Plot_dataY;
-            for (int i = 0; i < 6; i++)
-            {
-                configureRF(Plot_id[i].ToString("X6"));
-
-                Thread.Sleep(100);
-
-                try
-                {
-                    theControlBoard.receiveBytesFromRobot(COMMAND_READ_VECTOR, length, ref receivedData, 1000);
-                    temp = (float)(((receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3]) / 65536.0);
-                    xAxis.Add(temp);
-                    temp = (float)(((receivedData[4] << 24) | (receivedData[5] << 16) | (receivedData[6] << 8) | receivedData[7]) / 65536.0);
-                    yAxis.Add(temp);
-                    ui32ID.Add(Plot_id[i]);
-                }
-                catch (Exception ex)
-                {
-                }
-            }
-
-            configureRF("BEADFF");
-
-            Plot_dataX = new float[xAxis.Count];
-            Plot_dataY = new float[yAxis.Count];
-            listID = new UInt32[ui32ID.Count];
-
-            
-            xAxis.CopyTo(Plot_dataX);
-            yAxis.CopyTo(Plot_dataY);
-            ui32ID.CopyTo(listID);
-
-            UInt32 tempID;
-
-            for (int i = 0; i < ui32ID.Count; i++) 
-            {
-                if (Plot_dataX[i] == 0 && Plot_dataY[i] == 0)
-                {
-                    tempID = ui32ID[0];
-                    ui32ID[0] = ui32ID[i];
-                    ui32ID[i] = tempID;
-
-                    temp = Plot_dataX[0];
-                    Plot_dataX[0] = Plot_dataX[i];
-                    Plot_dataX[i] = temp;
-
-                    temp = Plot_dataY[0];
-                    Plot_dataY[0] = Plot_dataY[i];
-                    Plot_dataY[i] = temp;
-
-                    break;
-                }
-            }
-
-            OxyplotWindow oxyplotWindow = new OxyplotWindow(listID, Plot_dataX, Plot_dataY, "Robots Real Coordinates", OxyplotWindow.ScatterPointAndLinePlot);
-
-            oxyplotWindow.Show();
-        }
-
 
         private void DrawMapButton_Click(object sender, RoutedEventArgs e)
         {
@@ -1191,15 +1130,14 @@ namespace SwarmRobotControlAndCommunication
                     setTableReadPosition((byte)i);
                     Thread.Sleep(20);
 
+                    theControlBoard.receiveBytesFromRobot(COMMAND_READ_LOCS_TABLE, length, ref receivedData, 1000);
+                    id[i] = (uint)((receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3]);
+                    dataX[i] = (float)((Int32)((receivedData[4] << 24) | (receivedData[5] << 16) | (receivedData[6] << 8) | receivedData[7]) / 65536.0);
+                    dataY[i] = (float)((Int32)((receivedData[8] << 24) | (receivedData[9] << 16) | (receivedData[10] << 8) | receivedData[11]) / 65536.0);
+                    msg += String.Format("Robot:0x{0} ({1}; {2})\n", id[i].ToString("X6"), dataX[i].ToString("G6"), dataY[i].ToString("G6"));
 
-                        theControlBoard.receiveBytesFromRobot(COMMAND_READ_LOCS_TABLE, length, ref receivedData, 1000);
-                        id[i] = (uint)((receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3]);
-                        dataX[i] = (float)((Int32)((receivedData[4] << 24) | (receivedData[5] << 16) | (receivedData[6] << 8) | receivedData[7]) / 32768.0);
-                        dataY[i] = (float)((Int32)((receivedData[8] << 24) | (receivedData[9] << 16) | (receivedData[10] << 8) | receivedData[11]) / 32768.0);
-                        msg += String.Format("Robot [0x{0}] ({1}cm;\t{2}cm)\n", id[i].ToString("X6"), dataX[i].ToString("G6"), dataY[i].ToString("G6"));
-
-                        if (id[i] != 0)
-                            dataCounter++;
+                    if (id[i] != 0)
+                        dataCounter++;
 
                     }
 
@@ -1220,26 +1158,85 @@ namespace SwarmRobotControlAndCommunication
                 Plot_dataY[i] = dataY[i];
             }
 
-            String currentTime = System.DateTime.Now.ToString();
-
-            DirectoryInfo fileDir = new DirectoryInfo(".");
-            fileDir = fileDir.CreateSubdirectory("Output");
-            String fileName = currentTime + "-" + title + ".txt";
-            fileName = fileName.Replace('/', '-');
-            fileName = fileName.Replace(':', '_');
-
-            String fileFullPath = fileDir.FullName + "\\" + fileName;
-
-            File.WriteAllText(@fileFullPath, msg);
-
-            //UInt32[] Plot_id = {0xBEAD05, 0xBEAD01, 0xBEAD02, 0xBEAD03, 0xBEAD04, 0xBEAD06};
-            //float[] Plot_dataX = { 0, 32.7711f, 25.0594f, 4.0069f, 16.7647f, 18.6777f};
-            //float[] Plot_dataY = { 0, 0, 19.2015f, 18.8506f, 7.81726f, -12.8368f};
+            exportTextFile("Output Coordinates", "Coordinates " + this.TXAdrrTextBoxDebug.Text + ".txt", msg);
 
             OxyplotWindow oxyplotWindow = new OxyplotWindow(Plot_id, Plot_dataX, Plot_dataY, title, OxyplotWindow.ScatterPointAndLinePlot);
 
             oxyplotWindow.Show();
+        }
 
+        private String exportTextFile(String folderHeaderText, String fileFullName, String content)
+        {
+            DirectoryInfo fileDir = new DirectoryInfo(".");
+
+            fileDir = fileDir.CreateSubdirectory(folderHeaderText + " " + String.Format("{0:yyyy'-'MM'-'dd}", System.DateTime.Now.Date));
+
+            String fileName = String.Format("{0:hh'-'mm'-'ss tt}", System.DateTime.Now) + " " + fileFullName;
+
+            String fileFullPath = fileDir.FullName + "\\" + fileName;
+
+            File.WriteAllText(@fileFullPath, content);
+
+            return fileFullPath;
+        }
+
+        private void DrawFromFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            bool isValidFile = false;
+            OpenFileDialog dlg = new OpenFileDialog();
+            dlg.Title = "Select your file";
+            dlg.Filter = "Text files (*.TXT)|*.TXT" + "|All files (*.*)|*.*";
+
+            // Process open file dialog box results 
+            if (dlg.ShowDialog() == true)
+            {
+                string pathToFile = dlg.FileName;
+
+                System.IO.StreamReader file = new System.IO.StreamReader(@pathToFile);
+
+                string title; 
+                if ((title = file.ReadLine()) == null)
+                    return;
+
+                List<float> xAxis = new List<float>();
+                List<float> yAxis = new List<float>();
+                List<UInt32> ui32ID = new List<UInt32>();
+
+                string line;
+                while ((line = file.ReadLine()) != null)
+                {
+                    Match match = Regex.Match(line, @"^Robot:(0x[A-Fa-f0-9]+)\s\W([+-]?[0-9]*(?:\.[0-9]+)?);\s([+-]?[0-9]*(?:\.[0-9]+)?)\W$", RegexOptions.IgnoreCase);
+
+                    if (match.Success)
+                    {
+                        if (!match.Groups[1].Value.Equals("0x000000"))
+                        {
+                            ui32ID.Add(UInt32.Parse(match.Groups[1].Value.Substring(2), System.Globalization.NumberStyles.HexNumber));
+                            xAxis.Add(float.Parse(match.Groups[2].Value));
+                            yAxis.Add(float.Parse(match.Groups[3].Value));
+
+                            isValidFile = true;
+                        }
+                    }
+                }
+
+                file.Close();
+
+                if (isValidFile)
+                {
+                    float[] Plot_dataX = new float[xAxis.Count];
+                    float[] Plot_dataY = new float[yAxis.Count];
+                    UInt32[] listID = new UInt32[ui32ID.Count];
+
+                    xAxis.CopyTo(Plot_dataX);
+                    yAxis.CopyTo(Plot_dataY);
+                    ui32ID.CopyTo(listID);
+
+                    OxyplotWindow oxyplotWindow = new OxyplotWindow(listID, Plot_dataX, Plot_dataY, title, OxyplotWindow.ScatterPointAndLinePlot);
+
+                    oxyplotWindow.Show();
+                }
+            }
         }
 
         #endregion
