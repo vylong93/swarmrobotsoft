@@ -975,28 +975,6 @@ namespace SwarmRobotControlAndCommunication
             yAxis.CopyTo(Plot_dataY);
             ui32ID.CopyTo(listID);
 
-            UInt32 tempID;
-
-            for (int i = 0; i < ui32ID.Count; i++)
-            {
-                if (Plot_dataX[i] == 0 && Plot_dataY[i] == 0)
-                {
-                    tempID = ui32ID[0];
-                    ui32ID[0] = ui32ID[i];
-                    ui32ID[i] = tempID;
-
-                    temp = Plot_dataX[0];
-                    Plot_dataX[0] = Plot_dataX[i];
-                    Plot_dataX[i] = temp;
-
-                    temp = Plot_dataY[0];
-                    Plot_dataY[0] = Plot_dataY[i];
-                    Plot_dataY[i] = temp;
-
-                    break;
-                }
-            }
-
             OxyplotWindow oxyplotWindow = new OxyplotWindow(listID, Plot_dataX, Plot_dataY, "Robots Real Coordinates", OxyplotWindow.ScatterPointAndLinePlot);
 
             oxyplotWindow.Show();
