@@ -349,8 +349,11 @@ namespace SwarmRobotControlAndCommunication
                 plotModel1.Annotations.Add(pointAnnotation1);
             }
 
-            for (int i = 1; i < dataX.Length; i++)
+            for (int i = 0; i < dataX.Length; i++)
             {
+                if (dataX[i] == 0 && dataY[i] == 0)
+                    continue;
+
                 var arrowAnnotation2 = new ArrowAnnotation();
                 arrowAnnotation2.EndPoint = new DataPoint(dataX[i], dataY[i]);
                 //arrowAnnotation2.Text = "0x" + id[i].ToString("X6");
