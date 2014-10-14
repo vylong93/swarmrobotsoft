@@ -100,7 +100,8 @@ namespace SwarmRobotControlAndCommunication
             /// <summary>
             /// The waitting time for a NACK signal to be received (unit: ms).
             /// </summary>
-            private const byte DATA_FRAME_NACK_WAIT_TIME = 10; // unit = 1ms
+            private const byte DATA_FRAME_NACK_WAIT_TIME = 12; // unit = 1ms
+            //private const byte PROGRAM_RESERVED_PACKET_STEP = 1;
         #endregion
 
         #region Variables for bootloader commands
@@ -742,7 +743,13 @@ namespace SwarmRobotControlAndCommunication
                             // or we reach the first data frame. 
                             // This is a roundabout way so we don't need "error" devices to send back 
                             // their current flash address.
+                            
                             currentDataFramePointer--;
+                            //if (currentDataFramePointer < PROGRAM_RESERVED_PACKET_STEP)   
+                            //    currentDataFramePointer = 0;
+                            //else
+                            //    currentDataFramePointer = currentDataFramePointer - PROGRAM_RESERVED_PACKET_STEP;
+
                             programOneByteFrameToFlash(arrayDataFrame[currentDataFramePointer].byteCount,
                                                     arrayDataFrame[currentDataFramePointer].startAddress,
                                                     arrayDataFrame[currentDataFramePointer].data,
