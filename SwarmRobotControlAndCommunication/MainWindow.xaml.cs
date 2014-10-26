@@ -74,6 +74,11 @@ namespace SwarmRobotControlAndCommunication
 
             private const byte COMMAND_MEASURE_DISTANCE     = 0xB0;
             private const byte COMMAND_READ_VECTOR          = 0xB1;
+            private const byte COMMAND_SET_LOCAL_LOOP_STOP  = 0xB2;
+            private const byte COMMAND_SET_STEPSIZE         = 0xB3;
+            private const byte COMMAND_SET_STOP1            = 0xB4;
+            private const byte COMMAND_SET_STOP2            = 0xB5;
+            private const byte COMMAND_ROTATE_CLOCKWISE     = 0xB6;
 
             private const byte MOTOR_FORWARD_DIRECTION      = 0x00;
             private const byte MOTOR_REVERSE_DIRECTION      = 0x01;
@@ -926,15 +931,20 @@ namespace SwarmRobotControlAndCommunication
             {
                 configureRF(Plot_id[i].ToString("X6"));
 
-                Thread.Sleep(100);
+                Thread.Sleep(50);
+                theControlBoard.transmitBytesToRobot(COMMAND_TOGGLE_LEDS);
+                Thread.Sleep(50);
 
                 try
                 {
                     theControlBoard.receiveBytesFromRobot(COMMAND_READ_VECTOR, length, ref receivedData, 1000);
-                    temp = (float)(((receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3]) / 65536.0);
+
+                    temp = (float)((Int32)((receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3]) / 65536.0);
                     xAxis.Add(temp);
-                    temp = (float)(((receivedData[4] << 24) | (receivedData[5] << 16) | (receivedData[6] << 8) | receivedData[7]) / 65536.0);
+                    
+                    temp = (float)((Int32)((receivedData[4] << 24) | (receivedData[5] << 16) | (receivedData[6] << 8) | receivedData[7]) / 65536.0);
                     yAxis.Add(temp);
+                    
                     ui32ID.Add(Plot_id[i]);
                 }
                 catch (Exception ex)
@@ -1280,6 +1290,119 @@ namespace SwarmRobotControlAndCommunication
 
                     oxyplotWindow.Show();
                 }
+            }
+        }
+
+        private void setLocalLoopButton_Click(object sender, RoutedEventArgs e) 
+        {
+            Byte[] transmittedData = new Byte[5]; // <set stop loop command><value>
+            
+            transmittedData[0] = COMMAND_SET_LOCAL_LOOP_STOP;
+
+            Int32 value = Convert.ToInt32(this.LocalLoopTextBox.Text);
+            transmittedData[1] = (Byte)(value >> 24);
+            transmittedData[2] = (Byte)(value >> 16);
+            transmittedData[3] = (Byte)(value >> 8);
+            transmittedData[4] = (Byte)(value & 0xFF);
+
+            theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
+        }
+
+        private void setStepSizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            Byte[] transmittedData = new Byte[5]; // <set step size command><value>
+
+            transmittedData[0] = COMMAND_SET_STEPSIZE;
+
+            float valueF;
+
+            if (float.TryParse(this.StepSizeTextBox.Text, out valueF))
+            {
+                Int32 value = (Int32)(valueF * 65536 + 0.5);
+
+                transmittedData[1] = (Byte)(value >> 24);
+                transmittedData[2] = (Byte)(value >> 16);
+                transmittedData[3] = (Byte)(value >> 8);
+                transmittedData[4] = (Byte)(value & 0xFF);
+
+                theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
+            }
+            else
+            {
+                MessageBox.Show("Unvalid stepsize!");
+            }
+        }
+
+        private void setStop1Button_Click(object sender, RoutedEventArgs e)
+        {
+            Byte[] transmittedData = new Byte[5]; // <set stop 1 command><value>
+
+            transmittedData[0] = COMMAND_SET_STOP1;
+
+            float valueF;
+
+            if (float.TryParse(this.stop1TextBox.Text, out valueF))
+            {
+                Int32 value = (Int32)(valueF * 65536 + 0.5);
+
+                transmittedData[1] = (Byte)(value >> 24);
+                transmittedData[2] = (Byte)(value >> 16);
+                transmittedData[3] = (Byte)(value >> 8);
+                transmittedData[4] = (Byte)(value & 0xFF);
+
+                theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
+            }
+            else
+            {
+                MessageBox.Show("Unvalid stop 1!");
+            } 
+        }
+
+        private void setStop2Button_Click(object sender, RoutedEventArgs e)
+        {
+            Byte[] transmittedData = new Byte[5]; // <set stop 2 command><value>
+
+            transmittedData[0] = COMMAND_SET_STOP2;
+
+            float valueF;
+
+            if (float.TryParse(this.stop2TextBox.Text, out valueF))
+            {
+                Int32 value = (Int32)(valueF * 65536 + 0.5);
+
+                transmittedData[1] = (Byte)(value >> 24);
+                transmittedData[2] = (Byte)(value >> 16);
+                transmittedData[3] = (Byte)(value >> 8);
+                transmittedData[4] = (Byte)(value & 0xFF);
+
+                theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
+            }
+            else
+            {
+                MessageBox.Show("Unvalid stop 2!");
+            }
+        }
+
+        private void rotateClockwiseButton_Click(object sender, RoutedEventArgs e)
+        {
+            Byte[] transmittedData = new Byte[5]; // <send rotate command><value>
+
+            transmittedData[0] = COMMAND_ROTATE_CLOCKWISE;
+
+            UInt32 ui32Value;
+
+            if (UInt32.TryParse(this.rotatePeriodTextBox.Text, out ui32Value))
+            {
+                transmittedData[1] = (Byte)(ui32Value >> 24);
+                transmittedData[2] = (Byte)(ui32Value >> 16);
+                transmittedData[3] = (Byte)(ui32Value >> 8);
+                transmittedData[4] = (Byte)(ui32Value & 0xFF);
+
+                theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
+            }
+            else
+            {
+                MessageBox.Show("Unvalid rotate clockwise period!");
             }
         }
 
