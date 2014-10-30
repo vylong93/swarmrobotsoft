@@ -389,7 +389,7 @@
                         <TextBox x:Name="motor1SpeedTextBox"  local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="99" local:TextBoxHelpers.MinValue="1" Text="20" Style="{DynamicResource PathTextbox}" Width="30" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
                         <Label Content="Reverse" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Width="50" Height="24"/>
                         <CheckBox x:Name="motor1ReverseCheckBox" IsChecked="False" Margin="0,3,5,3" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        <Button x:Name="stopMotor1Button" Content="Stop Motor 1" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc1StackPanel}" Width="100" Click="stopMotor1Button_Click"/>                 
+                        <Button x:Name="stopMotor1Button" Content="Stop Motor 1" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc1StackPanel}" Width="100" Click="stopMotor1Button_Click"/>
                     </StackPanel>
                     <StackPanel x:Name="motor2SpeedStackPanel" Grid.Column="0" Grid.Row="3" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="24" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
                         <Label Content="Motor 2:    Speed" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Width="102" Height="24"/>
@@ -426,64 +426,70 @@
                         <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
+                        <RowDefinition Height="28"/>
                         <RowDefinition Height="36.8"/>
                         <RowDefinition/>
                     </Grid.RowDefinitions>
+                    <StackPanel x:Name="DebugComandPanel" Grid.Row="0" Grid.Column="0" Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1.8,0" Grid.ColumnSpan="2">
+                        <ComboBox x:Name="debugCommandSelectBox" Width="193" Margin="5,6,0,6" SelectedIndex="0">
+                            <ComboBoxItem Content="Start Measuring Distance"/>
+                            <ComboBoxItem Content="Scan Robots Vector"/>
+                            <ComboBoxItem Content="Read Neighbors Table"/>
+                            <ComboBoxItem Content="Read One Hop Neighbors Table"/>
+                            <ComboBoxItem Content="Draw Coordination Table"/>
+                            <ComboBoxItem Content="Draw Coordination From File..."/>
+                            <ComboBoxItem Content="Calculate Average Vector From Files..."/>
+                        </ComboBox>
+                        <Button x:Name="sendDebugCommandButton" Margin="0,5,0,0" Content="Send Command" HorizontalAlignment="Left" VerticalAlignment="Top" Height="26" Width="100" Click="sendDebugCommandButton_Click"/>
+                    </StackPanel>
 
-                    <StackPanel x:Name="TxAddressPanel1" Grid.Row="0" Grid.Column="0" 
+                    <StackPanel x:Name="TxAddressPanel1" Grid.Row="1" Grid.Column="0" 
                         Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1.8,0" Grid.ColumnSpan="2">
                         <Label Content="Robot ID: " 
                                HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,1" Width="69"/>
                         <TextBox x:Name="TXAdrrTextBoxDebug"
                         	HorizontalAlignment="Center" VerticalContentAlignment="Center" FlowDirection="LeftToRight" 
                         	VerticalAlignment="Center" TextWrapping="Wrap" Width="90" 
-                        	Height="20"  Padding="0" Margin="0,8"  Style="{StaticResource PathTextbox}" KeyDown="TXAdrrTextBox_KeyDown"/>
+                        	Height="20"  Padding="0" Margin="0,0"  Style="{StaticResource PathTextbox}" KeyDown="TXAdrrTextBox_KeyDown"/>
                         <Button x:Name="ConfigureRF" Content="Set TX Address" Grid.Column="1" Grid.Row="4" 
                             Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="135" HorizontalAlignment="Left" Click="configureRFDebug_Click"/>
                     </StackPanel>
-                    <StackPanel Grid.Row="1" Grid.Column="0" 
-                        Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1.8,0" Grid.ColumnSpan="2">
-                        <Button x:Name="ReadOneHopNeighborButton" Content="Read One Hop Neighbors" Grid.Column="1" Grid.Row="4" 
-                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="155" HorizontalAlignment="Left" Click="ReadOneHopNeighborButton_Click"/>
-                        <Button x:Name="ReadNeighborButton" Content="Read Neighbors" Grid.Column="1" Grid.Row="4" 
-                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="135" HorizontalAlignment="Left" Click="ReadNeighborButton_Click"/>
-                    </StackPanel>
+
                     <StackPanel Grid.Row="2" Grid.Column="0" 
-                        Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1.8,0" Grid.ColumnSpan="2">
-                        <Button x:Name="measureDistanceButton" Content="Start Measuring Distance" HorizontalAlignment="Center" Margin="4.2,1,0,1" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc1StackPanel}" Width="155" Click="measureDistanceButton_Click"/>
-                        <Button x:Name="DrawMapButton" Content="Draw Coordination" Grid.Column="1" Grid.Row="4" 
-                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="135" HorizontalAlignment="Left" Click="DrawMapButton_Click"/>
-                    </StackPanel>
-                    <StackPanel Grid.Row="3" Grid.Column="0" 
-                        Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1.8,0" Grid.ColumnSpan="2">
-                        <Button x:Name="getVectorButton" Content="Scan Robots Vector" HorizontalAlignment="Center" Margin="4.2,1,0,1" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc1StackPanel}" Width="155" Click="scanRobotsVectorButton_Click"/>
-                        <Button x:Name="DrawFromFileButton" Content="... Draw From File" Grid.Column="1" Grid.Row="4" 
-                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="135" HorizontalAlignment="Left" Click="DrawFromFileButton_Click"/>
-                    </StackPanel>
-                    <StackPanel Grid.Row="4" Grid.Column="0" 
-                        Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1.8,0" Grid.ColumnSpan="2">
-                        <Button x:Name="calAvrFromFileButton" Content="Cal AVR From File..." HorizontalAlignment="Center" Margin="4.2,1,0,1" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc1StackPanel}" Width="155" Click="calAvrFromFileButton_Click"/>
-                        <Button x:Name="setLocalLoopButton" Content="Set Stop Loop" Grid.Column="1" Grid.Row="4" 
-                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="100" HorizontalAlignment="Left" Click="setLocalLoopButton_Click"/>    
-                        <TextBox x:Name="LocalLoopTextBox" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="2000000000" local:TextBoxHelpers.MinValue="1" Text="2" Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" Width="34" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                    </StackPanel>
-                    <StackPanel Grid.Row="5" Grid.Column="0" 
                         Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1.8,0" Grid.ColumnSpan="2">
                         <Button x:Name="setStepSizeButton" Content="Set Step Size" Grid.Column="1" Grid.Row="4" 
                             Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="120" HorizontalAlignment="Left" Click="setStepSizeButton_Click"/>
-                        <TextBox x:Name="StepSizeTextBox" Width="35" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                        <Button x:Name="setStop1Button" Content="Set Stop 1" Grid.Column="1" Grid.Row="4" 
-                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="100" HorizontalAlignment="Left" Click="setStop1Button_Click"/>
-                        <TextBox x:Name="stop1TextBox" Width="35" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
+                        <TextBox x:Name="StepSizeTextBox" Text="0.2" Width="35" Style="{DynamicResource PathTextbox}" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
+                        <Button x:Name="setLocalLoopButton" Content="Set Stop Loop" Grid.Column="1" Grid.Row="4" 
+                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="100" HorizontalAlignment="Left" Click="setLocalLoopButton_Click"/>
+                        <TextBox x:Name="LocalLoopTextBox" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="2000000000" local:TextBoxHelpers.MinValue="1" Text="2" Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" Width="34" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
                     </StackPanel>
-                    <StackPanel Grid.Row="6" Grid.Column="0" 
+                    <StackPanel Grid.Row="3" Grid.Column="0" 
                         Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1.8,0" Grid.ColumnSpan="2">
                         <Button x:Name="setStop2Button" Content="Set Stop 2" Grid.Column="1" Grid.Row="4" 
                             Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="120" HorizontalAlignment="Left" Click="setStop2Button_Click"/>
-                        <TextBox x:Name="stop2TextBox" Width="35" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
+                        <TextBox x:Name="stop2TextBox" Text="0.9" Width="35" Style="{DynamicResource PathTextbox}" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
+                        <Button x:Name="setStop1Button" Content="Set Stop 1" Grid.Column="1" Grid.Row="4" 
+                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="100" HorizontalAlignment="Left" Click="setStop1Button_Click"/>
+                        <TextBox x:Name="stop1TextBox" Text="0.3" Width="35" Style="{DynamicResource PathTextbox}" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="4" Grid.Column="0" 
+                        Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1.8,0" Grid.ColumnSpan="2">
+                        <Button x:Name="rotateAngleButton" Content="Rotate Angle Degree" Grid.Column="1" Grid.Row="4" 
+                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="120" HorizontalAlignment="Left" Click="rotateAngleButton_Click"/>
+                        <TextBox x:Name="rotateAngleTextBox" Text="90" Style="{DynamicResource PathTextbox}" Width="35" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
                         <Button x:Name="rotateClockwiseButton" Content="Rotate Clockwise" Grid.Column="1" Grid.Row="4" 
                             Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="100" HorizontalAlignment="Left" Click="rotateClockwiseButton_Click"/>
-                        <TextBox x:Name="rotatePeriodTextBox" local:TextBoxHelpers.IsNumeric="True" Width="35" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
+                        <TextBox x:Name="rotatePeriodTextBox" Text="700" Style="{DynamicResource PathTextbox}" local:TextBoxHelpers.IsNumeric="True" Width="35" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="5" Grid.Column="0" 
+                        Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1.8,0" Grid.ColumnSpan="2">
+                        <Button x:Name="forwardDistanceButton" Content="Forward Distance" Grid.Column="1" Grid.Row="4" 
+                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="120" HorizontalAlignment="Left" Click="forwardDistanceButton_Click"/>
+                        <TextBox x:Name="forwardDistanceTextBox" Text="8.0" Style="{DynamicResource PathTextbox}" Width="35" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
+                        <Button x:Name="forwardPeriodButton" Content="Forward Period" Grid.Column="1" Grid.Row="4" 
+                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="100" HorizontalAlignment="Left" Click="forwardPeriodButton_Click"/>
+                        <TextBox x:Name="forwardPeriodTextBox" Text="700" Style="{DynamicResource PathTextbox}" local:TextBoxHelpers.IsNumeric="True" Width="35" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
