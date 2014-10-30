@@ -79,6 +79,9 @@ namespace SwarmRobotControlAndCommunication
             private const byte COMMAND_SET_STOP1            = 0xB4;
             private const byte COMMAND_SET_STOP2            = 0xB5;
             private const byte COMMAND_ROTATE_CLOCKWISE     = 0xB6;
+            private const byte COMMAND_ROTATE_CLOCKWISE_ANGLE     = 0xB7;
+            private const byte COMMAND_FORWARD_PERIOD       = 0xB8;
+            private const byte COMMAND_FORWARD_DISTANCE     = 0xB9;
 
             private const byte MOTOR_FORWARD_DIRECTION      = 0x00;
             private const byte MOTOR_REVERSE_DIRECTION      = 0x01;
@@ -901,18 +904,60 @@ namespace SwarmRobotControlAndCommunication
 
         #region Debug Tab
 
-        private void configureRFDebug_Click(object sender, RoutedEventArgs e)
+        private void sendDebugCommandButton_Click(object sender, RoutedEventArgs e)
         {
-            configureRF(this.TXAdrrTextBoxDebug.Text);
+            try
+            {
+                Byte[] transmittedData = new Byte[32];
+
+                string command = this.debugCommandSelectBox.Text;
+
+                switch (command)
+                {
+                    case "Start Measuring Distance":
+                        measureDistance();
+                        break;
+
+                    case "Scan Robots Vector":
+                        scanRobotsVector();
+                        break;
+
+                    case "Read Neighbors Table":
+                        ReadNeighbor();
+                        break;
+
+                    case "Read One Hop Neighbors Table":
+                        ReadOneHopNeighbor();
+                        break;
+
+                    case "Draw Coordination Table":
+                        DrawMap();
+                        break;
+
+                    case "Draw Coordination From File...":
+                        DrawFromFile();
+                        break;
+
+                    case "Calculate Average Vector From Files...":
+                        calAvrFromFile();
+                        break;
+
+                    default:
+                        throw new Exception("Send Debug Command: Can not recognise command!");
+                }
+            }
+            catch (Exception ex)
+            {
+                defaultExceptionHandle(ex);
+            }
         }
 
-        private void measureDistanceButton_Click(object sender, RoutedEventArgs e)
+        private void measureDistance()
         {
             theControlBoard.transmitBytesToRobot(COMMAND_MEASURE_DISTANCE);
         }
 
-
-        private void scanRobotsVectorButton_Click(object sender, RoutedEventArgs e)
+        private void scanRobotsVector()
         {
             uint length = 8;
             Byte[] receivedData = new Byte[length];
@@ -968,7 +1013,7 @@ namespace SwarmRobotControlAndCommunication
             oxyplotWindow.Show();
         }
 
-        private void ReadNeighborButton_Click(object sender, RoutedEventArgs e)
+        private void ReadNeighbor()
         {
             uint length = 60;
             Byte[] receivedData = new Byte[length];
@@ -1006,7 +1051,7 @@ namespace SwarmRobotControlAndCommunication
             MessageBox.Show(table, title, MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        private void ReadOneHopNeighborButton_Click(object sender, RoutedEventArgs e)
+        private void ReadOneHopNeighbor()
         {
             uint length = 640;
             Byte[] receivedData = new Byte[length];
@@ -1082,7 +1127,7 @@ namespace SwarmRobotControlAndCommunication
             }
         }
 
-        private void DrawMapButton_Click(object sender, RoutedEventArgs e)
+        private void DrawMap()
         {
             uint length = 120;
             Byte[] receivedData = new Byte[length];
@@ -1138,22 +1183,7 @@ namespace SwarmRobotControlAndCommunication
             oxyplotWindow.Show();
         }
 
-        private String exportTextFile(String folderHeaderText, String fileFullName, String content)
-        {
-            DirectoryInfo fileDir = new DirectoryInfo(".");
-
-            fileDir = fileDir.CreateSubdirectory(folderHeaderText + " " + String.Format("{0:yyyy'-'MM'-'dd}", System.DateTime.Now.Date));
-
-            String fileName = String.Format("{0:hh'-'mm'-'ss tt}", System.DateTime.Now) + " " + fileFullName;
-
-            String fileFullPath = fileDir.FullName + "\\" + fileName;
-
-            File.WriteAllText(@fileFullPath, content);
-
-            return fileFullPath;
-        }
-
-        private void DrawFromFileButton_Click(object sender, RoutedEventArgs e)
+        private void DrawFromFile()
         {
             bool isValidFile = false;
             OpenFileDialog dlg = new OpenFileDialog();
@@ -1212,7 +1242,7 @@ namespace SwarmRobotControlAndCommunication
             }
         }
 
-        private void calAvrFromFileButton_Click(object sender, RoutedEventArgs e)
+        private void calAvrFromFile()
         {
             List<float> xAxis = new List<float>();
             List<float> yAxis = new List<float>();
@@ -1291,6 +1321,28 @@ namespace SwarmRobotControlAndCommunication
                     oxyplotWindow.Show();
                 }
             }
+        }
+
+
+        private String exportTextFile(String folderHeaderText, String fileFullName, String content)
+        {
+            DirectoryInfo fileDir = new DirectoryInfo(".");
+
+            fileDir = fileDir.CreateSubdirectory(folderHeaderText + " " + String.Format("{0:yyyy'-'MM'-'dd}", System.DateTime.Now.Date));
+
+            String fileName = String.Format("{0:hh'-'mm'-'ss tt}", System.DateTime.Now) + " " + fileFullName;
+
+            String fileFullPath = fileDir.FullName + "\\" + fileName;
+
+            File.WriteAllText(@fileFullPath, content);
+
+            return fileFullPath;
+        }
+
+
+        private void configureRFDebug_Click(object sender, RoutedEventArgs e)
+        {
+            configureRF(this.TXAdrrTextBoxDebug.Text);
         }
 
         private void setLocalLoopButton_Click(object sender, RoutedEventArgs e) 
@@ -1385,7 +1437,8 @@ namespace SwarmRobotControlAndCommunication
 
         private void rotateClockwiseButton_Click(object sender, RoutedEventArgs e)
         {
-            Byte[] transmittedData = new Byte[5]; // <send rotate command><value>
+            uint length = 5;
+            Byte[] transmittedData = new Byte[length]; // <send rotate command><value>
 
             transmittedData[0] = COMMAND_ROTATE_CLOCKWISE;
 
@@ -1398,11 +1451,83 @@ namespace SwarmRobotControlAndCommunication
                 transmittedData[3] = (Byte)(ui32Value >> 8);
                 transmittedData[4] = (Byte)(ui32Value & 0xFF);
 
-                theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
+                theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
             }
             else
             {
                 MessageBox.Show("Unvalid rotate clockwise period!");
+            }
+        }
+
+        private void rotateAngleButton_Click(object sender, RoutedEventArgs e)
+        {
+            uint length = 3;
+            Byte[] transmittedData = new Byte[length]; // <send rotate angle command><value>
+
+            transmittedData[0] = COMMAND_ROTATE_CLOCKWISE_ANGLE;
+
+            Int16 i16Value;
+
+            if (Int16.TryParse(this.rotateAngleTextBox.Text, out i16Value))
+            {
+                transmittedData[1] = (Byte)(i16Value >> 8);
+                transmittedData[2] = (Byte)(i16Value & 0xFF);
+
+                theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
+            }
+            else
+            {
+                MessageBox.Show("Unvalid rotate clockwise angle!");
+            }
+        }
+
+        private void forwardPeriodButton_Click(object sender, RoutedEventArgs e)
+        {
+            uint length = 5;
+            Byte[] transmittedData = new Byte[length]; // <send forward period command><value>
+
+            transmittedData[0] = COMMAND_FORWARD_PERIOD;
+
+            UInt32 ui32Value;
+
+            if (UInt32.TryParse(this.forwardPeriodTextBox.Text, out ui32Value))
+            {
+                transmittedData[1] = (Byte)(ui32Value >> 24);
+                transmittedData[2] = (Byte)(ui32Value >> 16);
+                transmittedData[3] = (Byte)(ui32Value >> 8);
+                transmittedData[4] = (Byte)(ui32Value & 0xFF);
+
+                theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
+            }
+            else
+            {
+                MessageBox.Show("Unvalid forward period!");
+            }
+        }
+
+        private void forwardDistanceButton_Click(object sender, RoutedEventArgs e)
+        {
+            uint length = 5;
+            Byte[] transmittedData = new Byte[length]; // <send forward distance command><value>
+
+            transmittedData[0] = COMMAND_FORWARD_DISTANCE;
+
+            float values;
+
+            if (float.TryParse(this.forwardDistanceTextBox.Text, out values))
+            {
+                UInt32 ui32Values = (UInt32)(values * 65536 + 0.5);
+
+                transmittedData[1] = (Byte)(ui32Values >> 24);
+                transmittedData[2] = (Byte)(ui32Values >> 16);
+                transmittedData[3] = (Byte)(ui32Values >> 8);
+                transmittedData[4] = (Byte)(ui32Values & 0xFF);
+
+                theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
+            }
+            else
+            {
+                MessageBox.Show("Unvalid forward distance!");
             }
         }
 
