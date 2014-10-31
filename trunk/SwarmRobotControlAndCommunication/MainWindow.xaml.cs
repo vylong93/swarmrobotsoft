@@ -79,9 +79,11 @@ namespace SwarmRobotControlAndCommunication
             private const byte COMMAND_SET_STOP1            = 0xB4;
             private const byte COMMAND_SET_STOP2            = 0xB5;
             private const byte COMMAND_ROTATE_CLOCKWISE     = 0xB6;
-            private const byte COMMAND_ROTATE_CLOCKWISE_ANGLE     = 0xB7;
-            private const byte COMMAND_FORWARD_PERIOD       = 0xB8;
-            private const byte COMMAND_FORWARD_DISTANCE     = 0xB9;
+            private const byte COMMAND_ROTATE_CLOCKWISE_ANGLE   = 0xB7;
+            private const byte COMMAND_FORWARD_PERIOD           = 0xB8;
+            private const byte COMMAND_FORWARD_DISTANCE         = 0xB9;
+            private const byte COMMAND_SET_ROBOT_STATE          = 0xBA;
+            private const byte COMMAND_ROTATE_CORRECTION_ANGLE  = 0xBB;
 
             private const byte MOTOR_FORWARD_DIRECTION      = 0x00;
             private const byte MOTOR_REVERSE_DIRECTION      = 0x01;
@@ -942,6 +944,14 @@ namespace SwarmRobotControlAndCommunication
                         calAvrFromFile();
                         break;
 
+                    case "Goto Locomotion State":
+                        requestGotoLocomotionState();
+                        break;
+
+                    case "Rotate Correction Angle":
+                        requestRotateCorrectionAngle();
+                        break;
+
                     default:
                         throw new Exception("Send Debug Command: Can not recognise command!");
                 }
@@ -1323,6 +1333,27 @@ namespace SwarmRobotControlAndCommunication
             }
         }
 
+        private void requestGotoLocomotionState()
+        {
+            uint length = 2;
+            Byte[] transmittedData = new Byte[length];
+
+            transmittedData[0] = COMMAND_SET_ROBOT_STATE;
+
+            transmittedData[1] = 0x06;
+
+            theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
+        }
+
+        private void requestRotateCorrectionAngle() 
+        {
+            uint length = 1;
+            Byte[] transmittedData = new Byte[length];
+
+            transmittedData[0] = COMMAND_ROTATE_CORRECTION_ANGLE;
+
+            theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
+        }
 
         private String exportTextFile(String folderHeaderText, String fileFullName, String content)
         {
@@ -1516,12 +1547,12 @@ namespace SwarmRobotControlAndCommunication
 
             if (float.TryParse(this.forwardDistanceTextBox.Text, out values))
             {
-                UInt32 ui32Values = (UInt32)(values * 65536 + 0.5);
+                Int32 i32Values = (Int32)(values * 65536 + 0.5);
 
-                transmittedData[1] = (Byte)(ui32Values >> 24);
-                transmittedData[2] = (Byte)(ui32Values >> 16);
-                transmittedData[3] = (Byte)(ui32Values >> 8);
-                transmittedData[4] = (Byte)(ui32Values & 0xFF);
+                transmittedData[1] = (Byte)(i32Values >> 24);
+                transmittedData[2] = (Byte)(i32Values >> 16);
+                transmittedData[3] = (Byte)(i32Values >> 8);
+                transmittedData[4] = (Byte)(i32Values & 0xFF);
 
                 theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
             }
