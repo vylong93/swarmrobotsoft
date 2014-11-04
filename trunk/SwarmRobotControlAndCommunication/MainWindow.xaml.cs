@@ -957,6 +957,10 @@ namespace SwarmRobotControlAndCommunication
                         requestRotateCorrectionAngle();
                         break;
 
+                    case "Goto T Shape State":
+                        requestGotoTShapeState();
+                        break;
+
                     default:
                         throw new Exception("Send Debug Command: Can not recognise command!");
                 }
@@ -1409,6 +1413,18 @@ namespace SwarmRobotControlAndCommunication
             Byte[] transmittedData = new Byte[length];
 
             transmittedData[0] = COMMAND_ROTATE_CORRECTION_ANGLE;
+
+            theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
+        }
+
+        private void requestGotoTShapeState()
+        {
+            uint length = 2;
+            Byte[] transmittedData = new Byte[length];
+
+            transmittedData[0] = COMMAND_SET_ROBOT_STATE;
+
+            transmittedData[1] = 0x07;
 
             theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
         }

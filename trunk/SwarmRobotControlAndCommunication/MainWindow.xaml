@@ -442,6 +442,7 @@
                             <ComboBoxItem Content="Goto Locomotion State"/>
                             <ComboBoxItem Content="Scan Robots Oriented Angle"/>
                             <ComboBoxItem Content="Rotate Correction Angle"/>
+                            <ComboBoxItem Content="Goto T Shape State"/>
                         </ComboBox>
                         <Button x:Name="sendDebugCommandButton" Margin="0,5,0,0" Content="Send Command" HorizontalAlignment="Left" VerticalAlignment="Top" Height="26" Width="100" Click="sendDebugCommandButton_Click"/>
                     </StackPanel>
