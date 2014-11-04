@@ -84,6 +84,7 @@ namespace SwarmRobotControlAndCommunication
             private const byte COMMAND_FORWARD_DISTANCE         = 0xB9;
             private const byte COMMAND_SET_ROBOT_STATE          = 0xBA;
             private const byte COMMAND_ROTATE_CORRECTION_ANGLE  = 0xBB;
+            private const byte COMMAND_READ_CORRECTION_ANGLE    = 0xBC;
 
             private const byte MOTOR_FORWARD_DIRECTION      = 0x00;
             private const byte MOTOR_REVERSE_DIRECTION      = 0x01;
@@ -924,6 +925,10 @@ namespace SwarmRobotControlAndCommunication
                         scanRobotsVector();
                         break;
 
+                    case "Scan Robots Oriented Angle":
+                        scanCorrectionAngleAndOriented();
+                        break;
+
                     case "Read Neighbors Table":
                         ReadNeighbor();
                         break;
@@ -1021,6 +1026,59 @@ namespace SwarmRobotControlAndCommunication
             OxyplotWindow oxyplotWindow = new OxyplotWindow(listID, Plot_dataX, Plot_dataY, "Robots Real Coordinates", OxyplotWindow.ScatterPointAndLinePlot);
 
             oxyplotWindow.Show();
+        }
+
+        private void scanCorrectionAngleAndOriented()
+        {
+            uint length = 8;
+            Byte[] receivedData = new Byte[length];
+
+            UInt32[] Plot_id = { 0xBEAD01, 0xBEAD02, 0xBEAD03, 0xBEAD04, 0xBEAD05, 0xBEAD06 };
+
+            float correctionAngleInRadian;
+            bool oriented;
+
+            List<bool> lstOriented = new List<bool>();
+            List<float> lstAngle = new List<float>();
+
+            List<UInt32> ui32ID = new List<UInt32>();
+
+            for (int i = 0; i < 6; i++)
+            {
+                configureRF(Plot_id[i].ToString("X6"));
+
+                Thread.Sleep(50);
+                theControlBoard.transmitBytesToRobot(COMMAND_TOGGLE_LEDS);
+                Thread.Sleep(50);
+
+                try
+                {
+                    theControlBoard.receiveBytesFromRobot(COMMAND_READ_CORRECTION_ANGLE, length, ref receivedData, 1000);
+
+                    correctionAngleInRadian = (float)((Int32)((receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3]) / 65536.0);
+                    lstAngle.Add(correctionAngleInRadian);
+
+                    oriented = (receivedData[4] == 0x01);
+                    lstOriented.Add(oriented);
+
+                    ui32ID.Add(Plot_id[i]);
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+
+            configureRF("BEADFF");
+
+            String message = "Robots correction angle and oriented:\n";
+
+            for (int i = 0; i < ui32ID.Count; i++)
+            {
+                string orientedString = (lstOriented[i]) ? (" SAME ") : (" DIFFERENT ");
+                message += ui32ID[i].ToString("X6") + orientedString + lstAngle[i] + " (" + (lstAngle[i] * 180 / Math.PI) + " degree)\n";
+            }
+
+            MessageBox.Show(message, "Scan results", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void ReadNeighbor()
