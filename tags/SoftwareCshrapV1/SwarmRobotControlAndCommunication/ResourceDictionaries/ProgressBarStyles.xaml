@@ -1,0 +1,45 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--Progress Bar-->
+    <SolidColorBrush x:Key="ForegroundProgressBar" Color="Gray"/>
+    <SolidColorBrush x:Key="BackgroundProgressBar" Color="White"/>
+    <SolidColorBrush x:Key="BorderBrushProgressBar" Color="Black"/>
+    
+    <Style x:Key="StandardProgressBar" TargetType="{x:Type ProgressBar}">
+        <Setter Property="Visibility" Value="Visible"/>
+        <Setter Property="Foreground" Value="{StaticResource ForegroundProgressBar}"/>
+        <Setter Property="Background" Value="{StaticResource BackgroundProgressBar}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrushProgressBar}"/>
+        <Setter Property="Cursor" Value="Arrow"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ProgressBar}">
+                    <Grid x:Name="TemplateRoot" SnapsToDevicePixels="True">
+                        <Rectangle Fill="{TemplateBinding Background}" RadiusY="0" RadiusX="0"/>
+                        <Border CornerRadius="0" Margin="1"/>
+                        <Rectangle x:Name="PART_Track" Margin="1"/>
+                        <Decorator x:Name="PART_Indicator" HorizontalAlignment="Left" Margin="2">
+                            <Grid x:Name="Foreground">
+                                <Rectangle x:Name="Indicator" Fill="{TemplateBinding Foreground}"/>
+                            </Grid>
+                        </Decorator>
+                        <Border BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="0"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Orientation" Value="Vertical">
+                            <Setter Property="LayoutTransform" TargetName="TemplateRoot">
+                                <Setter.Value>
+                                    <RotateTransform Angle="-90"/>
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                        <Trigger Property="IsIndeterminate" Value="False">
+                            <Setter Property="Background"  Value="{StaticResource BackgroundProgressBar}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>
