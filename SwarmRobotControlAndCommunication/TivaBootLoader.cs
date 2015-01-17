@@ -38,12 +38,6 @@ namespace SwarmRobotControlAndCommunication
             private const uint APP_START_ADDRESS = 0x4000; 
 
             /// <summary>
-            /// The size of one block of bytes that will be written
-            /// into the  flash memory in each programming frame
-            /// </summary>
-            private const byte SIZE_ONE_PROGRAM_BLOCK = 16;
-
-            /// <summary>
             /// The size of flash memory that will be reased at one time
             /// </summary>
             private const uint SIZE_ONE_ERASED_BLOCK = 1024;
@@ -90,7 +84,7 @@ namespace SwarmRobotControlAndCommunication
             /// This is multiplied with transfer size in KB to determine
             /// the real wait time for mass erasing flash memory
             /// </summary>
-            private const byte WAIT_FOR_MASS_FLASH_ERASE = 5;
+            private const byte WAIT_FOR_MASS_FLASH_ERASE = 45; // 45 for entire flash, 5 for per kb
 
             /// <summary>
             /// Wait time between two packets of a data frame
@@ -98,10 +92,16 @@ namespace SwarmRobotControlAndCommunication
             private const byte WAIT_BETWEEN_PACKETS = 1;
 
             /// <summary>
+            /// The size of one block of bytes that will be written
+            /// into the  flash memory in each programming frame
+            /// </summary>
+            private const byte SIZE_ONE_PROGRAM_BLOCK = 32; // default (16 - 2 - 25000), (32 - 2 - 15000)
+
+            /// <summary>
             /// The waitting time for a NACK signal to be received (unit: ms).
             /// </summary>
-            private const byte DATA_FRAME_NACK_WAIT_TIME = 12; // unit = 1ms
-            //private const byte PROGRAM_RESERVED_PACKET_STEP = 1;
+            private const byte DATA_FRAME_NACK_WAIT_TIME = 2; //2 unit = 1ms, default 12
+            private const UInt32 ROBOT_NEXT_FRAME_WAIT_TIME = 15000; //25000 default 150000
         #endregion
 
         #region Variables for bootloader commands
@@ -479,7 +479,7 @@ namespace SwarmRobotControlAndCommunication
             nextHexLine = readOneLineOfHexFile(ref hexFile);
 
             byte checkSum = 0;
-            byte[] transmitData = new byte[1 + 4 + 1]; //<0xAA><tranferSize><checksum>
+            byte[] transmitData = new byte[1 + 4 + 4 + 1]; //<0xAA><tranferSize><robotWaitTime><checksum>
 
             transmitData[0] = (byte)(BOOTLOADER_START_COMMAND);
 
@@ -489,12 +489,22 @@ namespace SwarmRobotControlAndCommunication
             transmitData[3] = (byte)((transferSize >> 8) & 0xFF);
             transmitData[4] = (byte)(transferSize & 0xFF);
 
-            checkSum = (byte)(~(transmitData[0] + transmitData[1] + transmitData[2] + transmitData[3] + transmitData[4]) + 1);
-            transmitData[5] = checkSum;
+            transmitData[5] = (byte)((ROBOT_NEXT_FRAME_WAIT_TIME >> 24) & 0xFF);
+            transmitData[6] = (byte)((ROBOT_NEXT_FRAME_WAIT_TIME >> 16) & 0xFF);
+            transmitData[7] = (byte)((ROBOT_NEXT_FRAME_WAIT_TIME >> 8) & 0xFF);
+            transmitData[8] = (byte)(ROBOT_NEXT_FRAME_WAIT_TIME & 0xFF);
 
-            theControlBoard.transmitBytesToRobot(transmitData, 6, 1);
+            checkSum = (byte)(~(transmitData[0] + transmitData[1] 
+                + transmitData[2] + transmitData[3] + transmitData[4]
+                + transmitData[5] + transmitData[6] + transmitData[7] 
+                + transmitData[8]) + 1);
 
-            System.Threading.Thread.Sleep((int)(WAIT_FOR_MASS_FLASH_ERASE * transferSize / 1024));
+            transmitData[9] = checkSum;
+
+            theControlBoard.transmitBytesToRobot(transmitData, 10, 1);
+
+            //System.Threading.Thread.Sleep((int)(WAIT_FOR_MASS_FLASH_ERASE * transferSize / 1024));
+            System.Threading.Thread.Sleep(WAIT_FOR_MASS_FLASH_ERASE);
 
             currentHexLinePointer++;
         }        
@@ -514,7 +524,8 @@ namespace SwarmRobotControlAndCommunication
             transmitData[2] = (byte)((transferSize >> 8) & 0xFF);
             transmitData[3] = (byte)(transferSize & 0xFF);
             theControlBoard.transmitBytesToRobot(transmitData, 4, 1);
-            System.Threading.Thread.Sleep((int)(WAIT_FOR_MASS_FLASH_ERASE*transferSize/1024));
+            //System.Threading.Thread.Sleep((int)(WAIT_FOR_MASS_FLASH_ERASE*transferSize/1024));
+            System.Threading.Thread.Sleep(WAIT_FOR_MASS_FLASH_ERASE);
             //MessageBox.Show(transferSize.ToString());
             currentHexLinePointer++;
         }

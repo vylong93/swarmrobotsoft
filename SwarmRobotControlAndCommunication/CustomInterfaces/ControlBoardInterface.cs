@@ -50,6 +50,16 @@ namespace SwarmRobotControlAndCommunication.CustomInterfaces
         void configureUART(byte[] setupData);
 
         /// <summary>
+        /// Command to configure the communication protocol the control board
+        /// </summary>
+        void configureBootloadProtocol();
+
+        /// <summary>
+        /// Command to configure the communication protocol the control board
+        /// </summary>
+        void configureNormalProtocol();
+
+        /// <summary>
         /// Command to configure the transmission mode of the control board
         /// </summary>
         void setTransmissionMode(byte transmissionModeSelected);

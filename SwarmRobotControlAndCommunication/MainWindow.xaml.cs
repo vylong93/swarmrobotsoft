@@ -86,6 +86,9 @@ namespace SwarmRobotControlAndCommunication
             private const byte COMMAND_ROTATE_CORRECTION_ANGLE  = 0xBB;
             private const byte COMMAND_READ_CORRECTION_ANGLE    = 0xBC;
 
+            private const byte COMMAND_ROTATE_CORRECTION_ANGLE_DIFF = 0xBD;
+            private const byte COMMAND_ROTATE_CORRECTION_ANGLE_SAME = 0xBE;
+
             private const byte MOTOR_FORWARD_DIRECTION      = 0x00;
             private const byte MOTOR_REVERSE_DIRECTION      = 0x01;
             //---------------------------------Commands to control all Robots
@@ -394,6 +397,8 @@ namespace SwarmRobotControlAndCommunication
                     toggleAllButtonStatusExceptSelected(buttonClicked);
                     setStatusBarContentAndColor("Busy", Brushes.Indigo);
 
+                    theControlBoard.configureBootloadProtocol();
+
                     cancelProgramProcess = new CancellationTokenSource();
                     await programRobotsAsync(cancelProgramProcess);
                 }
@@ -415,6 +420,7 @@ namespace SwarmRobotControlAndCommunication
                     }
                     );
                 }
+                theControlBoard.configureNormalProtocol();
             }
         }
         private void toggleAllButtonStatusExceptSelected(Button buttonClicked)
@@ -961,6 +967,14 @@ namespace SwarmRobotControlAndCommunication
                         requestGotoTShapeState();
                         break;
 
+                    case "Rotate Correction Angle Different":
+                        requestRotateCorrectionAngleDifferent();
+                        break;
+
+                    case "Rotate Correction Angle Same":
+                        requestRotateCorrectionAngleSame();
+                        break;
+
                     default:
                         throw new Exception("Send Debug Command: Can not recognise command!");
                 }
@@ -1413,6 +1427,26 @@ namespace SwarmRobotControlAndCommunication
             Byte[] transmittedData = new Byte[length];
 
             transmittedData[0] = COMMAND_ROTATE_CORRECTION_ANGLE;
+
+            theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
+        }
+
+        private void requestRotateCorrectionAngleDifferent()
+        {
+            uint length = 1;
+            Byte[] transmittedData = new Byte[length];
+
+            transmittedData[0] = COMMAND_ROTATE_CORRECTION_ANGLE_DIFF;
+
+            theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
+        }
+
+        private void requestRotateCorrectionAngleSame()
+        {
+            uint length = 1;
+            Byte[] transmittedData = new Byte[length];
+
+            transmittedData[0] = COMMAND_ROTATE_CORRECTION_ANGLE_SAME;
 
             theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
         }
