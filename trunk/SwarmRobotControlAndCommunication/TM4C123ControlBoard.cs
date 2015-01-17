@@ -37,18 +37,22 @@ namespace SwarmRobotControlAndCommunication
         private const byte RECEIVE_DATA_FROM_ROBOT_WITH_COMMAND = 0x12;
         private const byte CONFIGURE_RF = 0x13;
         private const byte CONFIGURE_SPI = 0x14;
+        private const byte CONFIGURE_BOOTLOAD_PROTOCOL = 0x15;
+        private const byte CONFIGURE_NORMAL_PROTOCOL = 0x16;
         //----------------------------------------//Commands definitions
 
         //----------------------ACK definitions----------------------//
         private const byte CONFIGURE_RF_OK = 0x12;
         private const byte CONFIGURE_SPI_OK = 0x13;
+        private const byte CONFIGURE_BOOTLOAD_PROTOCOL_OK = 0x14;
+        private const byte CONFIGURE_NORMAL_PROTOCOL_OK = 0x15;
         private const byte TRANSMIT_DATA_TO_ROBOT_DONE = 0xAA;
         private const byte TRANSMIT_DATA_TO_ROBOT_FAILED = 0xFA;
         private const byte DELAY_AFTER_MAX_DATA_TRANSMITTED = 1;
-        private const byte MAX_NUM_BYTE_TRANSMITTED = 32;
+        private const byte MAX_NUM_BYTE_TRANSMITTED = 64;
         private const byte RECEIVE_DATA_FROM_ROBOT_ERROR = 0xEE;
         private const byte RECEIVE_DATA_FROM_ROBOT_CONTINUE = 0xAE;
-        private const byte MAX_NUM_BYTE_RECEIVED = 32;
+        private const byte MAX_NUM_BYTE_RECEIVED = 64;
 
         public string failedToSendData = "Can't send data to the control board";
         public string failedToReadData = "No respone from the control board";
@@ -97,6 +101,48 @@ namespace SwarmRobotControlAndCommunication
             catch (Exception ex)
             {
                 throw new Exception("Control Board configure SPI: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Command to configure the communication protocol the control board
+        /// </summary>
+        public void configureBootloadProtocol()
+        {
+            try
+            {
+                Byte[] outputBuffer = new Byte[USB_BUFFER_LENGTH];
+                outputBuffer[0] = 0;
+                outputBuffer[1] = CONFIGURE_BOOTLOAD_PROTOCOL;
+
+                sendDataToControlBoard(outputBuffer);
+
+                isOperationFinishOk(CONFIGURE_BOOTLOAD_PROTOCOL_OK);   
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Control Board configure bootload protocol: " + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Command to configure the communication protocol the control board
+        /// </summary>
+        public void configureNormalProtocol()
+        {
+            try
+            {
+                Byte[] outputBuffer = new Byte[USB_BUFFER_LENGTH];
+                outputBuffer[0] = 0;
+                outputBuffer[1] = CONFIGURE_NORMAL_PROTOCOL;
+
+                sendDataToControlBoard(outputBuffer);
+
+                isOperationFinishOk(CONFIGURE_NORMAL_PROTOCOL_OK);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Control Board configure normal protocol: " + ex.Message);
             }
         }
 
