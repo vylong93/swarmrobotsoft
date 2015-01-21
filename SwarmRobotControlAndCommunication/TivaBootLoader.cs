@@ -84,7 +84,7 @@ namespace SwarmRobotControlAndCommunication
             /// This is multiplied with transfer size in KB to determine
             /// the real wait time for mass erasing flash memory
             /// </summary>
-            private const byte WAIT_FOR_MASS_FLASH_ERASE = 100; // 128 for entire flash, 5 for per kb
+            private const byte WAIT_FOR_MASS_FLASH_ERASE = 100;
 
             /// <summary>
             /// Wait time between two packets of a data frame
@@ -95,14 +95,15 @@ namespace SwarmRobotControlAndCommunication
             /// The size of one block of bytes that will be written
             /// into the  flash memory in each programming frame
             /// </summary>
-            private const byte SIZE_ONE_PROGRAM_BLOCK = 32; // default (16 - 2 - 25000), (32 - 2 - 15000)
+            private const byte SIZE_ONE_PROGRAM_BLOCK = 32; 
 
             /// <summary>
             /// The waitting time for a NACK signal to be received (unit: ms).
             /// </summary>
-           private const byte DATA_FRAME_NACK_WAIT_TIME = 10; //2 unit = 1ms, default 12
-            private const UInt32 ROBOT_NEXT_FRAME_WAIT_TIME = 200000; //25000 default 150000
-            private const UInt32 NUMBER_OF_RESEND_PACKET = 10;
+           private const byte DATA_FRAME_NACK_WAIT_TIME = 10; // unit = 1ms
+            private const UInt32 ROBOT_NEXT_FRAME_WAIT_TIME = 255000; // Not use
+            private const UInt32 BACKWARD_STEP_FOR_RESEND_PACKET = 6;
+            private const UInt32 NUMBER_OF_RESEND_LAST_PACKET = 8;
         #endregion
 
         #region Variables for bootloader commands
@@ -752,49 +753,79 @@ namespace SwarmRobotControlAndCommunication
                     transmitBuffer[programPacketLength - 1] = (byte)(checkSum & 0xFF);
 
 
-                    theControlBoard.transmitBytesToRobot(transmitBuffer, programPacketLength, 0);
-
                     if ((endLineAddess + endLineByteCount) == (startAddress + byteCount))
-                        isReceivedSignal = theControlBoard.tryReceiveBytesFromRobot(1, ref nackSignal, 255);
-                    else
-                        isReceivedSignal = theControlBoard.tryReceiveBytesFromRobot(1, ref nackSignal, DATA_FRAME_NACK_WAIT_TIME);
-
-                    if (isReceivedSignal)
                     {
-                        if (currentDataFramePointer != 0)
-                        {// Re-written the previous data frame before writing this data frame
-                            // -> keep going back to previous data frames until a successfull write occurs
-                            // or we reach the first data frame. 
-                            // This is a roundabout way so we don't need "error" devices to send back 
-                            // their current flash address.
+                        for (int i = 0; i < NUMBER_OF_RESEND_LAST_PACKET; i++)
+                        {
+                            theControlBoard.transmitBytesToRobot(transmitBuffer, programPacketLength, 0);
 
-                            lastCurrentDataFramePointer = currentDataFramePointer;
+                            isReceivedSignal = theControlBoard.tryReceiveBytesFromRobot(1, ref nackSignal, DATA_FRAME_NACK_WAIT_TIME);
 
-                            //currentDataFramePointer--;
-
-                            if (currentDataFramePointer < NUMBER_OF_RESEND_PACKET)
-                                currentDataFramePointer = 0;
-                            else
-                                currentDataFramePointer -= NUMBER_OF_RESEND_PACKET;
-
-                            //if (currentDataFramePointer < PROGRAM_RESERVED_PACKET_STEP)   
-                            //    currentDataFramePointer = 0;
-                            //else
-                            //    currentDataFramePointer = currentDataFramePointer - PROGRAM_RESERVED_PACKET_STEP;
-
-                            while (currentDataFramePointer < lastCurrentDataFramePointer)
+                            if (isReceivedSignal)
                             {
-                                programOneByteFrameToFlash(arrayDataFrame[currentDataFramePointer].byteCount,
-                                                        arrayDataFrame[currentDataFramePointer].startAddress,
-                                                        arrayDataFrame[currentDataFramePointer].data,
-                                                        cancelToken);
+                                if (currentDataFramePointer != 0)
+                                {// Re-written the previous data frame before writing this data frame
+                                    // -> keep going back to previous data frames until a successfull write occurs
+                                    // or we reach the first data frame. 
+                                    // This is a roundabout way so we don't need "error" devices to send back 
+                                    // their current flash address.
+
+                                    lastCurrentDataFramePointer = currentDataFramePointer;
+
+                                    if (currentDataFramePointer < BACKWARD_STEP_FOR_RESEND_PACKET)
+                                        currentDataFramePointer = 0;
+                                    else
+                                        currentDataFramePointer -= BACKWARD_STEP_FOR_RESEND_PACKET;
+
+                                    while (currentDataFramePointer < lastCurrentDataFramePointer)
+                                    {
+                                        programOneByteFrameToFlash(arrayDataFrame[currentDataFramePointer].byteCount,
+                                                                arrayDataFrame[currentDataFramePointer].startAddress,
+                                                                arrayDataFrame[currentDataFramePointer].data,
+                                                                cancelToken);
+                                    }
+                                }
                             }
                         }
+                        return true;
                     }
                     else
                     {
-                        currentDataFramePointer++;
-                        return true;
+                        theControlBoard.transmitBytesToRobot(transmitBuffer, programPacketLength, 0);
+
+                        isReceivedSignal = theControlBoard.tryReceiveBytesFromRobot(1, ref nackSignal, DATA_FRAME_NACK_WAIT_TIME);
+
+
+                        if (isReceivedSignal)
+                        {
+                            if (currentDataFramePointer != 0)
+                            {// Re-written the previous data frame before writing this data frame
+                                // -> keep going back to previous data frames until a successfull write occurs
+                                // or we reach the first data frame. 
+                                // This is a roundabout way so we don't need "error" devices to send back 
+                                // their current flash address.
+
+                                lastCurrentDataFramePointer = currentDataFramePointer;
+
+                                if (currentDataFramePointer < BACKWARD_STEP_FOR_RESEND_PACKET)
+                                    currentDataFramePointer = 0;
+                                else
+                                    currentDataFramePointer -= BACKWARD_STEP_FOR_RESEND_PACKET;
+
+                                while (currentDataFramePointer < lastCurrentDataFramePointer)
+                                {
+                                    programOneByteFrameToFlash(arrayDataFrame[currentDataFramePointer].byteCount,
+                                                            arrayDataFrame[currentDataFramePointer].startAddress,
+                                                            arrayDataFrame[currentDataFramePointer].data,
+                                                            cancelToken);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            currentDataFramePointer++;
+                            return true;
+                        }
                     }
                }
                return false;
