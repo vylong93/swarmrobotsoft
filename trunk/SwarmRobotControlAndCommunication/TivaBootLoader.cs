@@ -84,7 +84,7 @@ namespace SwarmRobotControlAndCommunication
             /// This is multiplied with transfer size in KB to determine
             /// the real wait time for mass erasing flash memory
             /// </summary>
-            private const byte WAIT_FOR_MASS_FLASH_ERASE = 45; // 45 for entire flash, 5 for per kb
+            private const byte WAIT_FOR_MASS_FLASH_ERASE = 100; // 128 for entire flash, 5 for per kb
 
             /// <summary>
             /// Wait time between two packets of a data frame
@@ -100,8 +100,9 @@ namespace SwarmRobotControlAndCommunication
             /// <summary>
             /// The waitting time for a NACK signal to be received (unit: ms).
             /// </summary>
-            private const byte DATA_FRAME_NACK_WAIT_TIME = 2; //2 unit = 1ms, default 12
-            private const UInt32 ROBOT_NEXT_FRAME_WAIT_TIME = 15000; //25000 default 150000
+           private const byte DATA_FRAME_NACK_WAIT_TIME = 10; //2 unit = 1ms, default 12
+            private const UInt32 ROBOT_NEXT_FRAME_WAIT_TIME = 200000; //25000 default 150000
+            private const UInt32 NUMBER_OF_RESEND_PACKET = 10;
         #endregion
 
         #region Variables for bootloader commands
@@ -711,34 +712,46 @@ namespace SwarmRobotControlAndCommunication
         {
             try
             {
-                UInt16 checkSum = generateCheckSum(byteCount, startAddress, programData);
+                UInt16 checkSum;
                 bool isReceivedSignal = false;
                 byte[] nackSignal = new byte[3];
+                UInt32 lastCurrentDataFramePointer;
 
                 byte programPacketLength = (byte)(4 + 1 + byteCount + 2); //  <start address><byte count><data[0]...data[byte count - 1]><checksum>
-
-                byte[] transmitBuffer = new byte[programPacketLength]; 
 
                 arrayDataFrame[currentDataFramePointer].byteCount = byteCount;
                 arrayDataFrame[currentDataFramePointer].startAddress = startAddress;
                 arrayDataFrame[currentDataFramePointer].data = new byte[programPacketLength];
 
-                transmitBuffer[0] = (byte)(((startAddress >> 24) & 0xFF));
-                transmitBuffer[1] = (byte)(((startAddress >> 16) & 0xFF));
-                transmitBuffer[2] = (byte)(((startAddress >> 8) & 0xFF));
-                transmitBuffer[3] = (byte)(startAddress & 0xFF);
-                transmitBuffer[4] = (byte)byteCount;
                 for (int i = 0; i < byteCount; i++)
                 {
-                    transmitBuffer[i + 5] = programData[i];
                     arrayDataFrame[currentDataFramePointer].data[i] = programData[i];
                 }
-                transmitBuffer[programPacketLength - 2] = (byte)((checkSum >> 8) & 0xFF);
-                transmitBuffer[programPacketLength - 1] = (byte)(checkSum & 0xFF);
-
 
                 while (isCanceledByUser(cancelToken) == false)
                 {
+                    startAddress = arrayDataFrame[currentDataFramePointer].startAddress;
+                    byteCount = arrayDataFrame[currentDataFramePointer].byteCount;
+                    programPacketLength = (byte)(4 + 1 + byteCount + 2);
+
+                    byte[] transmitBuffer = new byte[programPacketLength]; 
+
+                    transmitBuffer[0] = (byte)(((startAddress >> 24) & 0xFF));
+                    transmitBuffer[1] = (byte)(((startAddress >> 16) & 0xFF));
+                    transmitBuffer[2] = (byte)(((startAddress >> 8) & 0xFF));
+                    transmitBuffer[3] = (byte)(startAddress & 0xFF);
+                    transmitBuffer[4] = (byte)byteCount;
+                    for (int i = 0; i < byteCount; i++)
+                    {
+                        transmitBuffer[i + 5] = arrayDataFrame[currentDataFramePointer].data[i];
+                    }
+
+                    checkSum = generateCheckSum(byteCount, startAddress, arrayDataFrame[currentDataFramePointer].data);
+
+                    transmitBuffer[programPacketLength - 2] = (byte)((checkSum >> 8) & 0xFF);
+                    transmitBuffer[programPacketLength - 1] = (byte)(checkSum & 0xFF);
+
+
                     theControlBoard.transmitBytesToRobot(transmitBuffer, programPacketLength, 0);
 
                     if ((endLineAddess + endLineByteCount) == (startAddress + byteCount))
@@ -754,17 +767,28 @@ namespace SwarmRobotControlAndCommunication
                             // or we reach the first data frame. 
                             // This is a roundabout way so we don't need "error" devices to send back 
                             // their current flash address.
-                            
-                            currentDataFramePointer--;
+
+                            lastCurrentDataFramePointer = currentDataFramePointer;
+
+                            //currentDataFramePointer--;
+
+                            if (currentDataFramePointer < NUMBER_OF_RESEND_PACKET)
+                                currentDataFramePointer = 0;
+                            else
+                                currentDataFramePointer -= NUMBER_OF_RESEND_PACKET;
+
                             //if (currentDataFramePointer < PROGRAM_RESERVED_PACKET_STEP)   
                             //    currentDataFramePointer = 0;
                             //else
                             //    currentDataFramePointer = currentDataFramePointer - PROGRAM_RESERVED_PACKET_STEP;
 
-                            programOneByteFrameToFlash(arrayDataFrame[currentDataFramePointer].byteCount,
-                                                    arrayDataFrame[currentDataFramePointer].startAddress,
-                                                    arrayDataFrame[currentDataFramePointer].data,
-                                                    cancelToken);
+                            while (currentDataFramePointer < lastCurrentDataFramePointer)
+                            {
+                                programOneByteFrameToFlash(arrayDataFrame[currentDataFramePointer].byteCount,
+                                                        arrayDataFrame[currentDataFramePointer].startAddress,
+                                                        arrayDataFrame[currentDataFramePointer].data,
+                                                        cancelToken);
+                            }
                         }
                     }
                     else
