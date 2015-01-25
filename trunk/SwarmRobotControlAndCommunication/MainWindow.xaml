@@ -163,59 +163,6 @@
                     </StackPanel>
                 </Grid>
             </TabItem>
-            <TabItem x:Name="spiTab"
-                     Header="SPI"
-                     Margin="{Binding Margin, ElementName=controlTab}" RenderTransformOrigin="0.5,0.5">
-                <Grid Name="gridSPIConfig">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="6*"/>
-                        <ColumnDefinition Width="55*"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="28"/>
-                        <RowDefinition Height="28"/>
-                        <RowDefinition Height="28"/>
-                        <RowDefinition Height="28"/>
-                        <RowDefinition/>
-                    </Grid.RowDefinitions>
-                    <StackPanel x:Name="configureSPIStack" Margin="5.4,0,-0.2,0" Grid.Row="0" Orientation="Horizontal" FlowDirection="LeftToRight" Grid.Column="1" >
-                        <Label Content="Clock Speed" 
-                               HorizontalAlignment="Left" VerticalAlignment="Bottom" FlowDirection="LeftToRight" Padding="0,5,5,5" Width="{Binding Width, ElementName=SpiProtocollabel}"/>
-                        <TextBox x:Name="spiClockSpeedTextBox" IsEnabled="True" Text="2000000"
-                                 local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="20000000" local:TextBoxHelpers.MinValue="500000"
-                                 HorizontalAlignment="Center" VerticalContentAlignment="Center" FlowDirection="LeftToRight" 
-                                 HorizontalContentAlignment="Right" VerticalAlignment="Center"  Width="{Binding Width, ElementName=SpiProtocolComboBox}" 
-                                 Height="20"  Padding="0" Style="{StaticResource PathTextbox}"/>
-                        <Label Content="Hz"  HorizontalAlignment="Left" VerticalAlignment="Center" FlowDirection="LeftToRight"/>
-                    </StackPanel>
-                    <StackPanel x:Name="configureSpiProtocol"
-                                Margin="5.4,0,-0.2,0" Grid.Row="1" Orientation="Horizontal" FlowDirection="LeftToRight" Grid.Column="1">
-                        <Label x:Name="SpiProtocollabel" IsEnabled="True" Content="Transmit Protocol" 
-                               HorizontalAlignment="Left" VerticalAlignment="Bottom" FlowDirection="LeftToRight" Padding="0,5,5,5" Width="100"/>
-                        <ComboBox x:Name="SpiProtocolComboBox" SelectedIndex="0"
-                                  VerticalContentAlignment="Center" HorizontalContentAlignment="Center" 
-                                  Height="20" Width="90" BorderThickness="1"  MinHeight="11" Margin="0,0,0,0" 
-                                  HorizontalAlignment="Center" VerticalAlignment="Center" FlowDirection="LeftToRight" >
-                            <ComboBoxItem Content="SPO 0, SPH 0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                            <ComboBoxItem Content="SPO 1, SPH 0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                            <ComboBoxItem Content="SPO 0, SPH 1" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                            <ComboBoxItem Content="SPO 1, SPH 1"/>
-                        </ComboBox>
-                        <Label IsEnabled="True" Content="Motorola" HorizontalAlignment="Left" VerticalAlignment="Center" FlowDirection="LeftToRight"/>
-                    </StackPanel>
-                    <StackPanel x:Name="SpiDataWidthStack" Margin="5.4,0,-0.2,0" Grid.Row="2" Orientation="Horizontal" FlowDirection="LeftToRight" Grid.Column="1">
-                        <Label x:Name="SpiDataWidth" IsEnabled="False" Content="Data Width"  Width="{Binding Width, ElementName=SpiProtocollabel}"
-                               HorizontalAlignment="Left" VerticalAlignment="Bottom" FlowDirection="LeftToRight" Padding="0,5,5,5"/>
-                        <TextBox x:Name="SpiDataWidthTextBox" IsEnabled="False" Text="8" Width="{Binding Width, ElementName=SpiProtocolComboBox}" 
-                                 HorizontalAlignment="Center" VerticalContentAlignment="Center" FlowDirection="LeftToRight" 
-                                 VerticalAlignment="Center" TextWrapping="Wrap"
-                                 Height="20"  Padding="0" Margin="0,4"  Style="{StaticResource PathTextbox}" HorizontalContentAlignment="Right"/>
-                        <Label IsEnabled="False" Content="bits"  HorizontalAlignment="Left" VerticalAlignment="Center" FlowDirection="LeftToRight"/>
-                    </StackPanel>
-                    <Button Content="Configure SPI"  Grid.Row="3" Grid.Column="1"
-                                Margin="5.4,1,0,1" Height="26" HorizontalAlignment="Left" VerticalAlignment="Center" FlowDirection="LeftToRight" Width="100" Click="configureSPI_Click"/>
-                </Grid>
-            </TabItem>
             <TabItem x:Name="rfTab" 
                      Header="RF24" 
                      Margin="{Binding Margin, ElementName=controlTab}">
@@ -224,96 +171,26 @@
                         <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
-                        <RowDefinition Height="28"/>
-                        <RowDefinition Height="28"/>
                         <RowDefinition/>
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="148.8"/>
+                        <ColumnDefinition Width="24"/>
+                        <ColumnDefinition Width="125"/>
                         <ColumnDefinition/>
                     </Grid.ColumnDefinitions>
-                    <StackPanel x:Name="RfMode" Grid.Column="0"
-                                Margin="0,2,1.8,2" Grid.Row="0" Orientation="Horizontal" FlowDirection="LeftToRight">
-                        <Label x:Name ="lblRFMode" Content="RF Mode"
-                               HorizontalAlignment="Left" VerticalAlignment="Center" Width="{Binding Width, ElementName=label1}"/>
-                        <ComboBox x:Name="RFModeComboBox"  SelectedIndex="0"
-                                  Margin="0,2,5,2" Height="20" Width="70" BorderThickness="1" MinHeight="11" 
-                                  VerticalContentAlignment="Center" HorizontalContentAlignment="Center" 
-                                  HorizontalAlignment="Center" VerticalAlignment="Center" >
-                            <ComboBoxItem Content="Transmiter" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                            <ComboBoxItem Content="Reciever" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                        </ComboBox>
-                    </StackPanel>
-                    <StackPanel x:Name="ChannelPanel" Grid.Row="2" Grid.Column="0" Margin="0"
-                                HorizontalAlignment="Left"  VerticalAlignment="Bottom" 
-                                Orientation="Horizontal" FlowDirection="LeftToRight" Width="140" Height="28">
-                        <Label Content="Channel" 
-                               HorizontalAlignment="Left" VerticalAlignment="Center" Width="{Binding Width, ElementName=label1}" Margin="0,1"/>
-                        <TextBox x:Name="rfChannelTextBox" Text="0"
-                                 local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="125" local:TextBoxHelpers.MinValue="0" VerticalContentAlignment="Center" FlowDirection="LeftToRight" 
-                                 VerticalAlignment="Center" TextWrapping="Wrap" Width="{Binding Width, ElementName=RFModeComboBox}" 
-                                 Height="20"  Padding="0" Margin="0,4"  Style="{StaticResource PathTextbox}" HorizontalAlignment="Center"/>
-                    </StackPanel>
-                    <StackPanel x:Name="TxAddressPanel" Grid.Row="1" Grid.Column="0" 
-                        Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1.8,0">
+
+                    <StackPanel x:Name="TxAddressPanel" Grid.Row="0" Grid.Column="0" 
+                        Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,2,0" Grid.ColumnSpan="2">
                         <Label x:Name="label1" Content="TX Address" 
                                HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,1" Width="69"/>
                         <TextBox x:Name="TXAdrrTextBox"
                         	HorizontalAlignment="Center" VerticalContentAlignment="Center" FlowDirection="LeftToRight" 
-                        	VerticalAlignment="Center" TextWrapping="Wrap" Width="{Binding Width, ElementName=RFModeComboBox}" 
+                        	VerticalAlignment="Center" TextWrapping="Wrap" Width="70" 
                         	Height="20"  Padding="0" Margin="0,4"  Style="{StaticResource PathTextbox}" KeyDown="TXAdrrTextBox_KeyDown"/>
                     </StackPanel>
-                    <StackPanel x:Name="DataRatePanel" Grid.Row="3" Grid.Column="0"
-                        HorizontalAlignment="Left"  VerticalAlignment="Bottom" 
-                        Orientation="Horizontal" FlowDirection="LeftToRight" Height="28" Width="140">
-                        <Label Content="Data Rate" 
-                               HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="{Binding Width, ElementName=label1}"/>
-                        <ComboBox x:Name="rfAirRateComboBox"  SelectedIndex="0"
-                                  Margin="0,4,5,4" Height="20" Width="{Binding Width, ElementName=RFModeComboBox}" BorderThickness="1" MinHeight="11" 
-                                  VerticalContentAlignment="Center" HorizontalContentAlignment="Center" 
-                                  HorizontalAlignment="Center" VerticalAlignment="Center" >
-                            <ComboBoxItem Content="1 Mbps" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                            <ComboBoxItem Content="2 Mbps" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                        </ComboBox>
-                    </StackPanel>
-                    <StackPanel x:Name="TXPowerPanel" Grid.Row="4" Grid.Column="0"
-                        HorizontalAlignment="Left"  VerticalAlignment="Bottom" 
-                        Orientation="Horizontal" FlowDirection="LeftToRight" Height="28" Width="140">
-                        <Label Content="TX Power" 
-                               HorizontalAlignment="Left" Margin="0,2,0,0" Width="{Binding Width, ElementName=label1}"/>
-                        <ComboBox x:Name="TXPowerComboBox"  SelectedIndex="3"
-                                  Margin="0,4,5,4" Height="20" Width="{Binding Width, ElementName=RFModeComboBox}" BorderThickness="1" MinHeight="11" 
-                                  VerticalContentAlignment="Center" HorizontalContentAlignment="Center" 
-                                  HorizontalAlignment="Center" VerticalAlignment="Center" >
-                            <ComboBoxItem Content="-18 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                            <ComboBoxItem Content="-12 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                            <ComboBoxItem Content="-6 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                            <ComboBoxItem Content="0 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                        </ComboBox>
-                    </StackPanel>
-                    <StackPanel x:Name="Pipe0PayloadPanel" IsEnabled="False" 
-                        Grid.Row="0" Grid.Column="1"
-                        HorizontalAlignment="Left"  VerticalAlignment="Bottom" 
-                        Orientation="Horizontal" FlowDirection="LeftToRight" Height="28" Width="165" Margin="0.2,0,-10,0">
-                        <StackPanel HorizontalAlignment="Left"  VerticalAlignment="Bottom" 
-                                    Orientation="Horizontal" FlowDirection="LeftToRight" Width="151">
-                            <Label Content="Payload"
-                               HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,1" Width="{Binding Width, ElementName=label1}"/>
-                            <ComboBox x:Name="P0PayloadComboBox"  SelectedIndex="1"
-                                  Margin="0,4,5,4" Height="20" Width="{Binding Width, ElementName=RFModeComboBox}" BorderThickness="1" MinHeight="11" 
-                                  VerticalContentAlignment="Center" HorizontalContentAlignment="Center" 
-                                  HorizontalAlignment="Center" VerticalAlignment="Center" >
-                                <ComboBoxItem Content="Static" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                                <ComboBoxItem Content="Dynamic" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                            </ComboBox>
-                        </StackPanel>
-                        <StackPanel x:Name="PayloadBytesPanel"
-                                    HorizontalAlignment="Left"  VerticalAlignment="Bottom" 
-                                    Orientation="Horizontal" FlowDirection="LeftToRight" Width="151" />
-                    </StackPanel>
 
-                    <StackPanel x:Name="Pipe0Panel"  Grid.Row="1" Grid.Column="1"
-                                    HorizontalAlignment="Left"  VerticalAlignment="Bottom" Margin="0.2,0,0,0"
+                    <StackPanel x:Name="Pipe0Panel"  Grid.Row="0" Grid.Column="2"
+                                    HorizontalAlignment="Left"  VerticalAlignment="Bottom" Margin="0,0,-4,0"
                                     Orientation="Horizontal" FlowDirection="LeftToRight" Height="28" Width="155">
                         <Label Content="RX Address"
                                HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,1" Width="69"/>
@@ -322,34 +199,57 @@
                         	VerticalAlignment="Center" TextWrapping="Wrap" Width="{Binding Width, ElementName=TXAdrrTextBox}" 
                         	Height="20"  Padding="0" Margin="0,4"  Style="{StaticResource PathTextbox}" KeyDown="TXAdrrTextBox_KeyDown"/>
                     </StackPanel>
-                    <StackPanel x:Name="CRCPanel" Grid.Row="2" Grid.Column="1" Margin="0.2,0,0,0"
+
+                    <StackPanel x:Name="ChannelPanel" Grid.Row="1" Grid.Column="0" Margin="0"
                                 HorizontalAlignment="Left"  VerticalAlignment="Bottom" 
-                                Orientation="Horizontal" FlowDirection="LeftToRight" Width="140" Height="28">
-                        <Label Content="RX CRC" Width="{Binding Width, ElementName=label1}"
-                               HorizontalAlignment="Left" VerticalAlignment="Center"/>
-                        <ComboBox x:Name="rfCRCComboBox"  SelectedIndex="2"
-                                  Margin="0,4,5,4" Height="20" Width="{Binding Width, ElementName=RFModeComboBox}" BorderThickness="1" MinHeight="11" 
+                                Orientation="Horizontal" FlowDirection="LeftToRight" Width="140" Height="28" Grid.ColumnSpan="2">
+                        <Label Content="Channel" 
+                               HorizontalAlignment="Left" VerticalAlignment="Center" Width="{Binding Width, ElementName=label1}" Margin="0,1"/>
+                        <TextBox x:Name="rfChannelTextBox" Text="0"
+                                 local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="3" local:TextBoxHelpers.MinValue="0" VerticalContentAlignment="Center" FlowDirection="LeftToRight" 
+                                 VerticalAlignment="Center" TextWrapping="Wrap" Width="70" 
+                                 Height="20"  Padding="0" Margin="0,4"  Style="{StaticResource PathTextbox}" HorizontalAlignment="Center"/>
+                    </StackPanel>
+
+                    <StackPanel x:Name="TXPowerPanel" Grid.Row="1" Grid.Column="2"
+                        HorizontalAlignment="Left"  VerticalAlignment="Bottom" 
+                        Orientation="Horizontal" FlowDirection="LeftToRight" Height="28" Width="140">
+                        <Label Content="TX Power" 
+                               HorizontalAlignment="Left" Margin="0,2,0,0" Width="{Binding Width, ElementName=label1}"/>
+                        <ComboBox x:Name="TXPowerComboBox"  SelectedIndex="1"
+                                  Margin="0,4,5,4" Height="20" Width="70" BorderThickness="1" MinHeight="11" 
                                   VerticalContentAlignment="Center" HorizontalContentAlignment="Center" 
                                   HorizontalAlignment="Center" VerticalAlignment="Center" >
-                            <ComboBoxItem Content="OFF" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                            <ComboBoxItem Content="1 Byte" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                            <ComboBoxItem Content="2 Bytes" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            <ComboBoxItem Content="1 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            <ComboBoxItem Content="0 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            <ComboBoxItem Content="-2 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            <ComboBoxItem Content="-4 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            <ComboBoxItem Content="-6 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            <ComboBoxItem Content="-8 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            <ComboBoxItem Content="-10 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            <ComboBoxItem Content="-12 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            <ComboBoxItem Content="-14 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            <ComboBoxItem Content="-16 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            <ComboBoxItem Content="-18 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            <ComboBoxItem Content="-20 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            <ComboBoxItem Content="-22 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            <ComboBoxItem Content="-24 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            <ComboBoxItem Content="-26 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            <ComboBoxItem Content="-28 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            <ComboBoxItem Content="-30 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            <ComboBoxItem Content="-55 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                         </ComboBox>
                     </StackPanel>
-                    <StackPanel x:Name="defaultPanel" Grid.Column="1"
-                                Margin="0.2,2,0,2" Grid.Row="3" Orientation="Horizontal" FlowDirection="LeftToRight">
-                        <Label x:Name ="LNAlabel" Content="LNA"
-                               HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,0,3,0"/>
-                        <CheckBox x:Name="LNACheckBox" 
-                                  IsChecked="True" Margin="0,3,12,3"
-                                  VerticalContentAlignment="Center" HorizontalContentAlignment="Center" 
-                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        <Button x:Name="rfDefaultButton" Content="Default"
-                                Margin="3,0,4,0" Height="26" Width="73"
-                                HorizontalAlignment="Center" VerticalAlignment="Center" FlowDirection="RightToLeft" Style="{DynamicResource ProgramButton}" Click="rfDefaultButton_Click"/>
-                    </StackPanel>
-                    <Button Content="Configure RF Module" Click="configureRF_Click" Grid.Column="1" Grid.Row="4" 
-                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="135" HorizontalAlignment="Left"/>
+
+                    <Button x:Name="rfDefaultButton" Content="Default"
+                                Margin="43,1,9,1" Height="26" Width="73" Grid.Column="1" Grid.Row="2" 
+                                HorizontalAlignment="Center" VerticalAlignment="Center" FlowDirection="RightToLeft" 
+                                Style="{DynamicResource ProgramButton}" Click="rfDefaultButton_Click"/>
+
+                    <Button x:Name="rfConfigureButton" Content="Configure RF Module" 
+                            Click="configureRF_Click" Grid.Column="2" Grid.Row="2" 
+                            Margin="4,1,0,1" Height="26" Width="135"
+                            HorizontalAlignment="Left" VerticalAlignment="Center" FlowDirection="RightToLeft"  />
                 </Grid>
             </TabItem>
             <TabItem Header="Calibration" Margin="{Binding Margin, ElementName=controlTab}">
