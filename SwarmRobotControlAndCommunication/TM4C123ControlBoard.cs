@@ -52,7 +52,7 @@ namespace SwarmRobotControlAndCommunication
         private const byte MAX_NUM_BYTE_TRANSMITTED = 64;
         private const byte RECEIVE_DATA_FROM_ROBOT_ERROR = 0xEE;
         private const byte RECEIVE_DATA_FROM_ROBOT_CONTINUE = 0xAE;
-        private const byte MAX_NUM_BYTE_RECEIVED = 64;
+        private const byte MAX_NUM_BYTE_RECEIVED = 32;
 
         public string failedToSendData = "Can't send data to the control board";
         public string failedToReadData = "No respone from the control board";
@@ -73,34 +73,6 @@ namespace SwarmRobotControlAndCommunication
             if (usbDeviceChangeEvent != null)
             {
                 usbDeviceChangeEvent(this, e);
-            }
-        }
-
-        /// <summary>
-        /// Configure the SPI module of the control board.
-        /// Thrown an exception if an error occurs
-        /// </summary>
-        /// <param name="setupData">The data frame corresponding to the SPI data frame
-        /// of the control board to configure the SPI module</param>
-        public void configureSPI(byte[] setupData)
-        {
-            try
-            {
-                Byte[] outputBuffer = new Byte[USB_BUFFER_LENGTH];
-                outputBuffer[0] = 0;
-                outputBuffer[1] = CONFIGURE_SPI;
-                for (int i = 0; i < setupData.Length; i++)
-                {
-                    outputBuffer[i + 2] = setupData[i];
-                }
-
-                sendDataToControlBoard(outputBuffer);
-
-                isOperationFinishOk(CONFIGURE_SPI_OK);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Control Board configure SPI: " + ex.Message);
             }
         }
 
@@ -174,6 +146,17 @@ namespace SwarmRobotControlAndCommunication
         }
 
         /// <summary>
+        /// Configure the SPI module of the control board.
+        /// Thrown an exception if an error occurs
+        /// </summary>
+        /// <param name="setupData">The data frame corresponding to the SPI data frame
+        /// of the control board to configure the SPI module</param>
+        public void configureSPI(byte[] setupData)
+            {
+                throw new Exception("SPI configuration function has not been implemented yet");
+            }
+
+        /// <summary>
         /// Not implemented. Reserved for future use
         /// </summary>
         /// <param name="setupData"></param>
@@ -196,9 +179,9 @@ namespace SwarmRobotControlAndCommunication
         /// </summary>
         /// <param name="transmissionModeSelected"></param>
         public void setTransmissionMode(byte transmissionModeSelected)
-        {
-            throw new Exception("Set transmission mode function has not been implemented yet");
-        }
+            {
+                throw new Exception("Set transmission mode function has not been implemented yet");
+            }
 
         /// <summary>
         /// Transfer a number of bytes from the control board to targets.
@@ -390,6 +373,7 @@ namespace SwarmRobotControlAndCommunication
             UInt32 pointer = 0;
 
             outputBuffer[1] = RECEIVE_DATA_FROM_ROBOT_CONTINUE;
+            inputBuffer = readDataFromControlBoard();   //TODO: fix - DUMMY read
             while (true)
             {
                 inputBuffer = readDataFromControlBoard();

@@ -39,8 +39,8 @@ namespace SwarmRobotControlAndCommunication
     {
         #region Constants
             //--------------------Control board-----------------------------
-            private const string DEFAULT_TX_ADDRESS = "BEADFF";
-            private const string DEFAULT_RX_ADDRESS = "BEADFF";
+            private const string DEFAULT_TX_ADDRESS = "00BEADFF";
+            private const string DEFAULT_RX_ADDRESS = "00C1AC02";
             //-------------------------------------------------Control board
 
             //------------Commands to control all Robots---------------------
@@ -488,133 +488,62 @@ namespace SwarmRobotControlAndCommunication
 
         #endregion
 
-        #region SPI Configure Tab
-        private void configureSPI_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                byte[] setupData = new byte[6];
-                UInt32 clockSpeed = Convert.ToUInt32(this.spiClockSpeedTextBox.Text);
-
-                setupData[0] = (byte)this.SpiProtocolComboBox.SelectedIndex;
-                setupData[1] = (byte)((clockSpeed >> 24) & 0xFF);
-                setupData[2] = (byte)((clockSpeed >> 16) & 0xFF);
-                setupData[3] = (byte)((clockSpeed >> 8) & 0xFF);
-                setupData[4] = (byte)(clockSpeed & 0xFF);
-                setupData[5] = Convert.ToByte(this.SpiDataWidthTextBox.Text);
-
-                theControlBoard.configureSPI(setupData);
-            }
-            catch (Exception ex)
-            {
-                defaultExceptionHandle(new Exception("Configure SPI: " + ex.Message));
-            }
-        }
-        #endregion
-
         #region RF Configure Tab
         private void configureRF(string TX_ADDRstring)
         {
             try
             {
-                const byte RF24_ADDRESS_WIDTH = 3;
+                UInt32 address;
+                const byte RF_ADDRESS_WIDTH = 4;
 
-                byte crcByte = 0;
-                byte crcEnable = 0x08;
-                switch (this.rfCRCComboBox.SelectionBoxItem.ToString())
-                {
-                    case "OFF":
-                        crcByte = 0x00;
-                        crcEnable = 0x00;
-                        break;
-                    case "1 Byte":
-                        crcByte = 0x00;
-                        break;
-                    case "2 Bytes":
-                        crcByte = 0x04;
-                        break;
-                    default:
-                        throw new Exception("Unrecognised CRC format");
-                }
-
+                // Get channel - 1 byte
                 byte channel = Convert.ToByte(this.rfChannelTextBox.Text);
-                if ((channel > 125) || (channel < 0))
+                if ((channel > 3) || (channel < 0))
                     throw new Exception("The chosen channel is out of range");
 
-                byte airDataRate = 0x00;
-                if (this.rfAirRateComboBox.SelectionBoxItem.ToString() == "2 Mbps")
-                    airDataRate = 0x08;
+                // Get output power inder - 1 byte
+                byte powerIndex = (byte)(this.TXPowerComboBox.SelectedIndex);
 
-                byte power = 0x00;
-                switch (this.TXPowerComboBox.SelectionBoxItem.ToString())
+                // Get Tx address - 4 bytes
+                byte[] rfTXAddress = new byte[RF_ADDRESS_WIDTH];
+                // string TX_ADDRstring = this.TXAdrrTextBox.Text;
+                if (TX_ADDRstring.Length != (2 * RF_ADDRESS_WIDTH))
                 {
-                    case "0 dBm":
-                        power = 0x06;
-                        break;
-                    case "-6 dBm":
-                        power = 0x04;
-                        break;
-                    case "-12 dBm":
-                        power = 0x02;
-                        break;
-                    case "-18 dBm":
-                        power = 0x00;
-                        break;
-                    default:
-                        throw new Exception("Unrecognised power configuration format");
-                }
-
-                byte lnaGainEnable = 0x00;
-                if ((bool)this.LNACheckBox.IsChecked)
-                    lnaGainEnable |= 0x01;
-
-                byte[] rfTXAddress = new byte[3];
-                //string TX_ADDRstring = this.TXAdrrTextBox.Text;
-                if (TX_ADDRstring.Length != (2 * RF24_ADDRESS_WIDTH))
-                {
-                    string msg = String.Format("TX address must have {0} characters!", 2 * RF24_ADDRESS_WIDTH);
+                    string msg = String.Format("TX address must have {0} characters!", 2 * RF_ADDRESS_WIDTH);
                     throw new Exception(msg);
                 }
-                Int32 address = 0;
-                for (int i = 0; i < 6; i++)
-                {
-                    address <<= 4;
-                    address += TivaBootLoader.convertCharToHex(TX_ADDRstring[i]);
-                }
+                address = getAddress(TX_ADDRstring, 2 * RF_ADDRESS_WIDTH);
                 rfTXAddress[0] = (byte)address;
                 rfTXAddress[1] = (byte)(address >> 8);
                 rfTXAddress[2] = (byte)(address >> 16);
+                rfTXAddress[3] = (byte)(address >> 24);
 
-                byte[] rfRXAddress = new byte[3];
+                // Get Rx address - 4 bytes
+                byte[] rfRXAddress = new byte[RF_ADDRESS_WIDTH];
                 string RX_ADDRstring = this.Pipe0AddressTextBox.Text;
-                if (RX_ADDRstring.Length != (2 * RF24_ADDRESS_WIDTH))
+                if (RX_ADDRstring.Length != (2 * RF_ADDRESS_WIDTH))
                 {
-                    string msg = String.Format("RX address must have {0} characters!", 2 * RF24_ADDRESS_WIDTH);
+                    string msg = String.Format("RX address must have {0} characters!", 2 * RF_ADDRESS_WIDTH);
                     throw new Exception(msg);
                 }
-                for (int i = 0; i < 6; i++)
-                {
-                    address <<= 4;
-                    address += TivaBootLoader.convertCharToHex(RX_ADDRstring[i]);
-                }
+                address = getAddress(RX_ADDRstring, 2 * RF_ADDRESS_WIDTH);
                 rfRXAddress[0] = (byte)address;
                 rfRXAddress[1] = (byte)(address >> 8);
                 rfRXAddress[2] = (byte)(address >> 16);
+                rfRXAddress[3] = (byte)(address >> 24);
 
-                byte[] setupData = new byte[7 + 2 * RF24_ADDRESS_WIDTH];
-                setupData[0] = crcByte;
-                setupData[1] = RF24_ADDRESS_WIDTH;
-                setupData[2] = channel;
-                setupData[3] = crcEnable;
-                setupData[4] = airDataRate;
-                setupData[5] = power;
-                setupData[6] = lnaGainEnable;
-                for (int i = 0; i < RF24_ADDRESS_WIDTH; i++)
+                // Construct setup data
+                byte[] setupData = new byte[3 + 2 * RF_ADDRESS_WIDTH];
+                setupData[0] = channel;
+                setupData[1] = powerIndex;
+                setupData[2] = RF_ADDRESS_WIDTH;
+                for (int i = 0; i < RF_ADDRESS_WIDTH; i++)
                 {
-                    setupData[7 + i] = rfTXAddress[i];
-                    setupData[7 + i + RF24_ADDRESS_WIDTH] = rfRXAddress[i];
+                    setupData[3 + i] = rfTXAddress[RF_ADDRESS_WIDTH - 1 - i]; 
+                    setupData[3 + i + RF_ADDRESS_WIDTH] = rfRXAddress[RF_ADDRESS_WIDTH - 1 - i];
                 }
 
+                // Send
                 theControlBoard.configureRF(setupData);
             }
             catch (Exception ex)
@@ -622,6 +551,18 @@ namespace SwarmRobotControlAndCommunication
                 defaultExceptionHandle(new Exception("Configure RF: " + ex.Message + ex.StackTrace));
             }
         }
+
+        private UInt32 getAddress(string addrString, uint addrWidth)
+        {
+            UInt32 address = 0;
+            for (int i = 0; i < addrWidth; i++)
+            {
+                address <<= 4;
+                address += TivaBootLoader.convertCharToHex(addrString[i]);
+            }
+            return address;
+        }
+
         private void configureRF_Click(object sender, RoutedEventArgs e)
         {
             configureRF(this.TXAdrrTextBox.Text);
@@ -636,15 +577,10 @@ namespace SwarmRobotControlAndCommunication
         }
         private void rfDefaultButton_Click(object sender, RoutedEventArgs e)
         {
-            this.RFModeComboBox.SelectedIndex = 0;
             this.TXAdrrTextBox.Text = DEFAULT_TX_ADDRESS;
             this.Pipe0AddressTextBox.Text = DEFAULT_RX_ADDRESS;
             this.rfChannelTextBox.Text = "0";
-            this.rfAirRateComboBox.SelectedIndex = 0;
-            this.TXPowerComboBox.SelectedIndex = 3;
-
-            this.LNACheckBox.IsChecked = true;
-            this.rfCRCComboBox.SelectedIndex = 2;
+            this.TXPowerComboBox.SelectedIndex = 1;
         }
         #endregion
 

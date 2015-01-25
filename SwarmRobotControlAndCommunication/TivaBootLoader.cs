@@ -102,7 +102,7 @@ namespace SwarmRobotControlAndCommunication
             /// </summary>
            private const byte DATA_FRAME_NACK_WAIT_TIME = 10; // unit = 1ms
             private const UInt32 ROBOT_NEXT_FRAME_WAIT_TIME = 255000; // Not use
-            private const UInt32 BACKWARD_STEP_FOR_RESEND_PACKET = 6;
+            private const UInt32 BACKWARD_STEP_FOR_RESEND_PACKET = 4;
             private const UInt32 NUMBER_OF_RESEND_LAST_PACKET = 8;
         #endregion
 
