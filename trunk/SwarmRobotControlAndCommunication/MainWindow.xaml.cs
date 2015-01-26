@@ -37,6 +37,87 @@ namespace SwarmRobotControlAndCommunication
     /// </summary>
     public partial class MainWindow : Window, IDisposable
     {
+        #region Swarm Message Definition
+            enum e_MessageType : byte
+            {
+                MESSAGE_TYPE_HOST_REQUEST = 0x00,
+                MESSAGE_TYPE_HOST_COMMAND = 0x01,
+                MESSAGE_TYPE_ROBOT_REQUEST = 0x02,
+                MESSAGE_TYPE_ROBOT_RESPONSE = 0x03,
+                MESSAGE_TYPE_SMARTPHONE_REQUEST = 0x04,
+                MESSAGE_TYPE_SMARTPHONE_COMMAND = 0x05
+            }
+
+            class MessageHeader
+            {
+                private e_MessageType eMessageType;
+                private byte ui8Cmd;
+
+                public MessageHeader(e_MessageType eMessType, byte cmd)
+                {
+                    eMessageType = eMessType;
+                    ui8Cmd = cmd;
+                }
+                public e_MessageType getMessageType() { return eMessageType; }
+                public byte getCmd() { return ui8Cmd; }
+            }
+
+            class SwarmMessage 
+            {
+                private MessageHeader header;
+                private byte[] data;
+
+                public SwarmMessage(MessageHeader header)
+                {
+                    this.header = header;
+                    data = null;
+                }
+                public SwarmMessage(MessageHeader header, byte[] data)
+                {
+                    this.header = header;
+                    this.data = new byte[data.Length];
+                    for (int i = 0; i < data.Length; i++)
+                    {
+                        this.data[i] = data[i];
+                    }
+                }
+                public uint getMessageSize()
+                {
+                    if (data != null)
+                        return (uint)(sizeof(e_MessageType) + 1 + data.Length);
+                    else
+                        return (sizeof(e_MessageType) + 1);
+                    
+                }
+                public byte[] convertToByteArray()
+                {
+                    if (data != null)
+                    {
+                        byte[] output = new byte[sizeof(e_MessageType) + 1 + data.Length];
+
+                        output[0] = (byte)(header.getMessageType());
+                        output[1] = header.getCmd();
+                        for (int i = 0; i < data.Length; i++)
+                        {
+                            output[i + 2] = data[i];
+                        }
+                        return output;
+                    }
+                    else 
+                    {
+                        byte[] output = new byte[sizeof(e_MessageType) + 1];
+
+                        output[0] = (byte)(header.getMessageType());
+                        output[1] = header.getCmd();
+
+                        return output;
+                    }
+                }
+            };
+
+            e_MessageType messType = (e_MessageType)Enum.ToObject(typeof(e_MessageType), 1);    // Test only
+        #endregion
+
         #region Constants
             //--------------------Control board-----------------------------
             private const string DEFAULT_TX_ADDRESS = "00BEADFF";
@@ -291,45 +372,32 @@ namespace SwarmRobotControlAndCommunication
 
         private void sleepButton_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                theControlBoard.transmitBytesToRobot(COMMAND_SLEEP);
-            }
-            catch (Exception ex)
-            {
-                defaultExceptionHandle(ex);
-            }
+            sendCommandToRobot(COMMAND_SLEEP);
         }
 
         private void deepsleepButton_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                theControlBoard.transmitBytesToRobot(COMMAND_DEEP_SLEEP);
-            }
-            catch (Exception ex)
-            {
-                defaultExceptionHandle(ex);
-            }
+            sendCommandToRobot(COMMAND_DEEP_SLEEP);
         }
 
         private void wakeUpButton_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                theControlBoard.transmitBytesToRobot(COMMAND_WAKE_UP);
-            }
-            catch (Exception ex)
-            {
-                defaultExceptionHandle(ex);
-            }
+            sendCommandToRobot(COMMAND_WAKE_UP);
         }
 
         private void resetButton_Click(object sender, RoutedEventArgs e)
         {
+            sendCommandToRobot(COMMAND_RESET);
+        }
+
+        private void sendCommandToRobot(byte cmd)
+        {
+            MessageHeader header = new MessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, cmd);
+            SwarmMessage message = new SwarmMessage(header);
+
             try
             {
-                theControlBoard.transmitBytesToRobot(COMMAND_RESET);
+                theControlBoard.transmitBytesToRobot(message.convertToByteArray(), message.getMessageSize(), 0);
             }
             catch (Exception ex)
             {
