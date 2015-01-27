@@ -37,142 +37,65 @@ namespace SwarmRobotControlAndCommunication
     /// </summary>
     public partial class MainWindow : Window, IDisposable
     {
-        #region Swarm Message Definition
-            enum e_MessageType : byte
-            {
-                MESSAGE_TYPE_HOST_REQUEST = 0x00,
-                MESSAGE_TYPE_HOST_COMMAND = 0x01,
-                MESSAGE_TYPE_ROBOT_REQUEST = 0x02,
-                MESSAGE_TYPE_ROBOT_RESPONSE = 0x03,
-                MESSAGE_TYPE_SMARTPHONE_REQUEST = 0x04,
-                MESSAGE_TYPE_SMARTPHONE_COMMAND = 0x05
-            }
-
-            class MessageHeader
-            {
-                private e_MessageType eMessageType;
-                private byte ui8Cmd;
-
-                public MessageHeader(e_MessageType eMessType, byte cmd)
-                {
-                    eMessageType = eMessType;
-                    ui8Cmd = cmd;
-                }
-                public e_MessageType getMessageType() { return eMessageType; }
-                public byte getCmd() { return ui8Cmd; }
-            }
-
-            class SwarmMessage 
-            {
-                private MessageHeader header;
-                private byte[] data;
-
-                public SwarmMessage(MessageHeader header)
-                {
-                    this.header = header;
-                    data = null;
-                }
-                public SwarmMessage(MessageHeader header, byte[] data)
-                {
-                    this.header = header;
-                    this.data = new byte[data.Length];
-                    for (int i = 0; i < data.Length; i++)
-                    {
-                        this.data[i] = data[i];
-                    }
-                }
-                public uint getMessageSize()
-                {
-                    if (data != null)
-                        return (uint)(sizeof(e_MessageType) + 1 + data.Length);
-                    else
-                        return (sizeof(e_MessageType) + 1);
-                    
-                }
-                public byte[] convertToByteArray()
-                {
-                    if (data != null)
-                    {
-                        byte[] output = new byte[sizeof(e_MessageType) + 1 + data.Length];
-
-                        output[0] = (byte)(header.getMessageType());
-                        output[1] = header.getCmd();
-                        for (int i = 0; i < data.Length; i++)
-                        {
-                            output[i + 2] = data[i];
-                        }
-                        return output;
-                    }
-                    else 
-                    {
-                        byte[] output = new byte[sizeof(e_MessageType) + 1];
-
-                        output[0] = (byte)(header.getMessageType());
-                        output[1] = header.getCmd();
-
-                        return output;
-                    }
-                }
-            };
-
-            e_MessageType messType = (e_MessageType)Enum.ToObject(typeof(e_MessageType), 1);    // Test only
-        #endregion
 
         #region Constants
-            //--------------------Control board-----------------------------
-            private const string DEFAULT_TX_ADDRESS = "00BEADFF";
-            private const string DEFAULT_RX_ADDRESS = "00C1AC02";
-            //-------------------------------------------------Control board
+        //--------------------Control board-----------------------------
+        private const string DEFAULT_TX_ADDRESS = "00BEADFF";
+        private const string DEFAULT_RX_ADDRESS = "00C1AC02";
+        //-------------------------------------------------Control board
 
-            //------------Commands to control all Robots---------------------
-            private const byte COMMAND_RESET = 0x01;
-            private const byte COMMAND_SLEEP = 0x02;
-            private const byte COMMAND_DEEP_SLEEP = 0x03;
-            private const byte COMMAND_WAKE_UP = 0x04;
+        private const byte ROBOT_RESPONSE_OK = 0x0A;
 
-            private const byte COMMAND_TEST_RF_TRANSMIT     = 0xC0;
-            private const byte COMMAND_TEST_RF_RECEIVE      = 0xC6;
-            private const byte COMMAND_TOGGLE_LEDS          = 0xC1;
-            private const byte COMMAND_SAMPLE_MICS_SIGNALS  = 0xC2;
-            private const byte COMMAND_SET_RUNNING_STATUS   = 0xC3;
-            private const byte COMMAND_CHANGE_MOTOR_SPEED   = 0xC4;
-            private const byte COMMAND_TEST_RF_CD           = 0xC5;
-            private const byte COMMAND_TEST_SPEAKER         = 0xC8;
+        //------------Commands to control all Robots---------------------
+        private const byte COMMAND_RESET = 0x01;
+        private const byte COMMAND_SLEEP = 0x02;
+        private const byte COMMAND_DEEP_SLEEP = 0x03;
+        private const byte COMMAND_WAKE_UP = 0x04;
 
-            private const byte COMMAND_READ_ADC1            = 0xA0;
-            private const byte COMMAND_READ_ADC2            = 0xA1;
-            private const byte COMMAND_DISTANCE_SENSING     = 0xA2;
-            private const byte COMMAND_BATTERY_MEASUREMENT  = 0xA3;
-            private const byte COMMAND_STOP_MOTOR1          = 0xA4;
-            private const byte COMMAND_STOP_MOTOR2          = 0xA5;
-            private const byte COMMAND_READ_NEIGHBORS_TABLE = 0xA6;
-            private const byte COMMAND_READ_ONEHOP_TABLE    = 0xA7;
-            private const byte COMMAND_READ_LOCS_TABLE      = 0xA8;
+        private const byte COMMAND_TEST_RF_TRANSMISTER = 0x05;
+        private const byte COMMAND_TEST_RF_RECEIVER = 0x06;
 
-            private const byte COMMAND_READ_EEPROM          = 0xE0;
-            private const byte COMMAND_WRITE_EEPROM         = 0xE1;
-            private const byte COMMAND_SET_ADDRESS_EEROM    = 0xE2;
+        private const byte COMMAND_TOGGLE_LEDS = 0xC1;
+        private const byte COMMAND_SAMPLE_MICS_SIGNALS = 0xC2;
+        private const byte COMMAND_SET_RUNNING_STATUS = 0xC3;
+        private const byte COMMAND_CHANGE_MOTOR_SPEED = 0xC4;
+        private const byte COMMAND_TEST_RF_CD = 0xC5;
+        private const byte COMMAND_TEST_SPEAKER = 0xC8;
 
-            private const byte COMMAND_MEASURE_DISTANCE     = 0xB0;
-            private const byte COMMAND_READ_VECTOR          = 0xB1;
-            private const byte COMMAND_SET_LOCAL_LOOP_STOP  = 0xB2;
-            private const byte COMMAND_SET_STEPSIZE         = 0xB3;
-            private const byte COMMAND_SET_STOP1            = 0xB4;
-            private const byte COMMAND_SET_STOP2            = 0xB5;
-            private const byte COMMAND_ROTATE_CLOCKWISE     = 0xB6;
-            private const byte COMMAND_ROTATE_CLOCKWISE_ANGLE   = 0xB7;
-            private const byte COMMAND_FORWARD_PERIOD           = 0xB8;
-            private const byte COMMAND_FORWARD_DISTANCE         = 0xB9;
-            private const byte COMMAND_SET_ROBOT_STATE          = 0xBA;
-            private const byte COMMAND_ROTATE_CORRECTION_ANGLE  = 0xBB;
-            private const byte COMMAND_READ_CORRECTION_ANGLE    = 0xBC;
+        private const byte COMMAND_READ_ADC1 = 0xA0;
+        private const byte COMMAND_READ_ADC2 = 0xA1;
+        private const byte COMMAND_DISTANCE_SENSING = 0xA2;
+        private const byte COMMAND_BATTERY_MEASUREMENT = 0xA3;
+        private const byte COMMAND_STOP_MOTOR1 = 0xA4;
+        private const byte COMMAND_STOP_MOTOR2 = 0xA5;
+        private const byte COMMAND_READ_NEIGHBORS_TABLE = 0xA6;
+        private const byte COMMAND_READ_ONEHOP_TABLE = 0xA7;
+        private const byte COMMAND_READ_LOCS_TABLE = 0xA8;
 
-            private const byte COMMAND_ROTATE_CORRECTION_ANGLE_DIFF = 0xBD;
-            private const byte COMMAND_ROTATE_CORRECTION_ANGLE_SAME = 0xBE;
+        private const byte COMMAND_READ_EEPROM = 0xE0;
+        private const byte COMMAND_WRITE_EEPROM = 0xE1;
+        private const byte COMMAND_SET_ADDRESS_EEROM = 0xE2;
 
-            private const byte MOTOR_FORWARD_DIRECTION      = 0x00;
-            private const byte MOTOR_REVERSE_DIRECTION      = 0x01;
-            //---------------------------------Commands to control all Robots
+        private const byte COMMAND_MEASURE_DISTANCE = 0xB0;
+        private const byte COMMAND_READ_VECTOR = 0xB1;
+        private const byte COMMAND_SET_LOCAL_LOOP_STOP = 0xB2;
+        private const byte COMMAND_SET_STEPSIZE = 0xB3;
+        private const byte COMMAND_SET_STOP1 = 0xB4;
+        private const byte COMMAND_SET_STOP2 = 0xB5;
+        private const byte COMMAND_ROTATE_CLOCKWISE = 0xB6;
+        private const byte COMMAND_ROTATE_CLOCKWISE_ANGLE = 0xB7;
+        private const byte COMMAND_FORWARD_PERIOD = 0xB8;
+        private const byte COMMAND_FORWARD_DISTANCE = 0xB9;
+        private const byte COMMAND_SET_ROBOT_STATE = 0xBA;
+        private const byte COMMAND_ROTATE_CORRECTION_ANGLE = 0xBB;
+        private const byte COMMAND_READ_CORRECTION_ANGLE = 0xBC;
+
+        private const byte COMMAND_ROTATE_CORRECTION_ANGLE_DIFF = 0xBD;
+        private const byte COMMAND_ROTATE_CORRECTION_ANGLE_SAME = 0xBE;
+
+        private const byte MOTOR_FORWARD_DIRECTION = 0x00;
+        private const byte MOTOR_REVERSE_DIRECTION = 0x01;
+        //---------------------------------Commands to control all Robots
         #endregion
 
         #region Constructors
@@ -196,7 +119,7 @@ namespace SwarmRobotControlAndCommunication
 
             bootLoader.currentProgrammingPercentEvent += updateProgressProgramBar;
 
-            theControlBoard.findTargetDevice(); 
+            theControlBoard.findTargetDevice();
             setStatusBarAndButtonsAppearanceFromDeviceState();
 
             this.TXAdrrTextBox.Text = DEFAULT_TX_ADDRESS;
@@ -228,6 +151,10 @@ namespace SwarmRobotControlAndCommunication
         {
             this.statusDeviceAttached.Content = content;
             this.statusDeviceAttached.Background = color;
+        }
+        private void setStatusBarContent(string content)
+        {
+            this.statusDeviceAttached.Content = content;
         }
         private void enableAllButtons(bool isEnable)
         {
@@ -392,12 +319,12 @@ namespace SwarmRobotControlAndCommunication
 
         private void sendCommandToRobot(byte cmd)
         {
-            MessageHeader header = new MessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, cmd);
+            SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, cmd);
             SwarmMessage message = new SwarmMessage(header);
 
             try
             {
-                theControlBoard.transmitBytesToRobot(message.convertToByteArray(), message.getMessageSize(), 0);
+                theControlBoard.transmitBytesToRobot(message.toByteArray(), message.getSize(), 0);
             }
             catch (Exception ex)
             {
@@ -412,7 +339,7 @@ namespace SwarmRobotControlAndCommunication
             dlg.Filter = "Hex files (*.HEX)|*.HEX" + "|All files (*.*)|*.*";
 
             // Process open file dialog box results 
-            if (dlg.ShowDialog() == true) 
+            if (dlg.ShowDialog() == true)
             {
                 string pathToFile = dlg.FileName;
                 this.pathOfHexFile.Text = pathToFile;  // <?>
@@ -430,9 +357,12 @@ namespace SwarmRobotControlAndCommunication
         }
         private void wakeUpAndProgramButton_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: Prepare robots so they can go into bootloader mode
+            sendCommandToRobot(COMMAND_WAKE_UP);
+
+            // Prepare robots so they can go into bootloader mode
             // when receive the command goIntoBootloaderMode.
             Button buttonClicked = (Button)sender;
+
             startProgramProcedureAsync(buttonClicked, @"Wake Up & Program");
         }
 
@@ -449,7 +379,7 @@ namespace SwarmRobotControlAndCommunication
             {
                 if ((string)buttonClicked.Content == "Stop")
                 {
-                    result = MessageBox.Show("Stop the current programming process?", 
+                    result = MessageBox.Show("Stop the current programming process?",
                                                           "Warning!", MessageBoxButton.YesNo, MessageBoxImage.Warning);
                     if (result == MessageBoxResult.Yes)
                         cancelProgramProcess.Cancel();
@@ -607,7 +537,7 @@ namespace SwarmRobotControlAndCommunication
                 setupData[2] = RF_ADDRESS_WIDTH;
                 for (int i = 0; i < RF_ADDRESS_WIDTH; i++)
                 {
-                    setupData[3 + i] = rfTXAddress[RF_ADDRESS_WIDTH - 1 - i]; 
+                    setupData[3 + i] = rfTXAddress[RF_ADDRESS_WIDTH - 1 - i];
                     setupData[3 + i + RF_ADDRESS_WIDTH] = rfRXAddress[RF_ADDRESS_WIDTH - 1 - i];
                 }
 
@@ -663,12 +593,12 @@ namespace SwarmRobotControlAndCommunication
 
                 switch (command)
                 {
-                    case "Test RF Transmister":
-                        testTransmittingData(COMMAND_TEST_RF_TRANSMIT);
+                    case "Test Robot's RF Transmistter":
+                        testReceivedData(COMMAND_TEST_RF_TRANSMISTER);
                         break;
 
-                    case "Test RF Receiver":
-                        testReceivedData(COMMAND_TEST_RF_RECEIVE);
+                    case "Test Robot's RF Receiver":
+                        testTransmittingData(COMMAND_TEST_RF_RECEIVER);
                         break;
 
                     case "Toggle All Status Leds":
@@ -684,21 +614,21 @@ namespace SwarmRobotControlAndCommunication
 
                         if (motor1ReverseCheckBox.IsChecked == true)
                             transmittedData[1] = MOTOR_REVERSE_DIRECTION;
-                        else 
+                        else
                             transmittedData[1] = MOTOR_FORWARD_DIRECTION;
 
                         transmittedData[2] = Convert.ToByte(this.motor1SpeedTextBox.Text);
 
                         if (motor2ReverseCheckBox.IsChecked == true)
                             transmittedData[3] = MOTOR_REVERSE_DIRECTION;
-                        else 
-                            transmittedData[3] = MOTOR_FORWARD_DIRECTION; 
+                        else
+                            transmittedData[3] = MOTOR_FORWARD_DIRECTION;
 
                         transmittedData[4] = Convert.ToByte(this.motor2SpeedTextBox.Text);
 
                         theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
                         break;
-                    
+
                     case "Test RF Carrier Detection":
                         theControlBoard.transmitBytesToRobot(COMMAND_TEST_RF_CD);
                         break;
@@ -707,11 +637,11 @@ namespace SwarmRobotControlAndCommunication
                         theControlBoard.transmitBytesToRobot(COMMAND_TEST_SPEAKER);
                         break;
 
-					default:
+                    default:
                         throw new Exception("Send Command: Can not recognise command!");
-                } 
+                }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 defaultExceptionHandle(ex);
             }
@@ -719,10 +649,10 @@ namespace SwarmRobotControlAndCommunication
 
         private void testReceivedData(byte Command)
         {
-            uint length = 600;
-            Byte[] receivedData = new Byte[length];
-            uint data = new uint();
-            uint value = 0;
+            uint length = 2000;
+            byte[] receivedData = new byte[length];
+            UInt16 data = new UInt16();
+            UInt16 value = 0;
             try
             {
                 theControlBoard.receiveBytesFromRobot(Command, length, ref receivedData, 1000);
@@ -730,7 +660,7 @@ namespace SwarmRobotControlAndCommunication
                 while (true)
                 {
                     data = receivedData[i + 1];
-                    data = (data << 8) | receivedData[i];
+                    data = (UInt16)((data << 8) | (receivedData[i]));
                     i += 2;
 
                     if (data != value)
@@ -741,12 +671,61 @@ namespace SwarmRobotControlAndCommunication
                     value++;
 
                     if (i >= length)
+                    {
+                        setStatusBarContent("Robot's RF Transmister OK");
                         break;
+                    }
                 }
             }
             catch (Exception ex)
             {
                 defaultExceptionHandle(ex);
+            }
+        }
+
+        private void testTransmittingData(byte commandNumber)
+        {
+            try
+            {
+                //TODO: for large length (>32) 
+                // we need implement a function transmitBytesToRobotWithACK(...)
+                // to replace the function theControlBoard.transmitBytesToRobot(...)
+
+                UInt32 length = 32;
+
+                Byte[] data = new Byte[4];
+                data[0] = (byte)((length >> 24) & 0x0FF);
+                data[1] = (byte)((length >> 16) & 0x0FF);
+                data[2] = (byte)((length >> 8) & 0x0FF);
+                data[3] = (byte)(length & 0x0FF);
+                SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, commandNumber);
+                SwarmMessage message = new SwarmMessage(header, data);
+                theControlBoard.transmitBytesToRobot(message.toByteArray(), message.getSize(), 1);
+
+                data = new byte[length];
+                byte value = 0;
+                for (int i = 0; i < length; i++)
+                    data[i] = value++;
+
+                theControlBoard.transmitBytesToRobot(data, length, 0);
+
+                uint bufferLength = 2;
+                Byte[] dataBuffer = new Byte[bufferLength];
+                theControlBoard.receiveBytesFromRobot(bufferLength, ref dataBuffer, 1000);
+                SwarmMessage rxMessage = SwarmMessage.ConstructFromByteArray(dataBuffer);
+                if (rxMessage.getHeader().getMessageType() == e_MessageType.MESSAGE_TYPE_ROBOT_RESPONSE
+                    && rxMessage.getHeader().getCmd() == ROBOT_RESPONSE_OK)
+                {
+                    setStatusBarContent("Robot's RF Reciever OK");
+                }
+                else
+                {
+                    setStatusBarContent("Robot's RF Reciever: Wrong response!!!");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Test transmitting data " + ex.Message);
             }
         }
 
@@ -764,17 +743,17 @@ namespace SwarmRobotControlAndCommunication
         {
             uint length = 600;
             Byte[] receivedData = new Byte[length];
-            uint[] adcData = new uint[length/2];
+            uint[] adcData = new uint[length / 2];
             tBox.Text = "";
             try
             {
                 theControlBoard.receiveBytesFromRobot(Command, length, ref receivedData, 1000);
                 uint i = 0;
-                for(uint pointer = 0; pointer < length/2; pointer++)
+                for (uint pointer = 0; pointer < length / 2; pointer++)
                 {
-                    adcData[pointer] = receivedData[i+1];
+                    adcData[pointer] = receivedData[i + 1];
                     adcData[pointer] = (adcData[pointer] << 8) | receivedData[i];
-                    i+=2;
+                    i += 2;
                     tBox.Text += adcData[pointer].ToString();
                     if (i >= length)
                         break;
@@ -802,41 +781,12 @@ namespace SwarmRobotControlAndCommunication
                 theControlBoard.receiveBytesFromRobot(COMMAND_BATTERY_MEASUREMENT, length, ref receivedData, 1000);
                 adcData = (receivedData[1] << 8) | receivedData[0];
                 BatteryVoltage = (adcData * 3330) / 2048;
-                readBatteryVoltageTextBox.Text = BatteryVoltage.ToString() + "mV (ADCvalue = " + 
+                readBatteryVoltageTextBox.Text = BatteryVoltage.ToString() + "mV (ADCvalue = " +
                                                  adcData.ToString() + ")";
             }
             catch (Exception ex)
             {
                 defaultExceptionHandle(ex);
-            }
-        }
-
-        private void testTransmittingData(byte commandNumber)
-        {
-            try
-            {
-                UInt32 length = 600;
-                Byte[] data = new Byte[length];
-                byte value = 0;
-
-                data[0] = commandNumber;
-                data[1] = (byte)((length >> 24) & 0x0FF);
-                data[2] = (byte)((length >> 16) & 0x0FF);
-                data[3] = (byte)((length >> 8) & 0x0FF);
-                data[4] = (byte)(length & 0x0FF);
-                theControlBoard.transmitBytesToRobot(data, 5, 1);
-
-                for (int i = 0; i < length; i++)
-                {
-                    data[i] = value;
-                    value++;
-                }
-
-                theControlBoard.transmitBytesToRobot(data, length, 0);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Test transmitting data " + ex.Message);
             }
         }
 
@@ -1023,10 +973,10 @@ namespace SwarmRobotControlAndCommunication
 
                     temp = (float)((Int32)((receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3]) / 65536.0);
                     xAxis.Add(temp);
-                    
+
                     temp = (float)((Int32)((receivedData[4] << 24) | (receivedData[5] << 16) | (receivedData[6] << 8) | receivedData[7]) / 65536.0);
                     yAxis.Add(temp);
-                    
+
                     ui32ID.Add(Plot_id[i]);
                 }
                 catch (Exception ex)
@@ -1124,7 +1074,7 @@ namespace SwarmRobotControlAndCommunication
                 {
                     ID[i] = (receivedData[pointer] << 24) | (receivedData[pointer + 1] << 16) | (receivedData[pointer + 2] << 8) | receivedData[pointer + 3];
                     distance[i] = (receivedData[pointer + 4] << 8) | receivedData[pointer + 5];
-                    
+
                     pointer += 6;
 
                     distanceInCm = distance[i] / 256.0;
@@ -1287,7 +1237,7 @@ namespace SwarmRobotControlAndCommunication
 
                 System.IO.StreamReader file = new System.IO.StreamReader(@pathToFile);
 
-                string title; 
+                string title;
                 if ((title = file.ReadLine()) == null)
                     return;
 
@@ -1425,7 +1375,7 @@ namespace SwarmRobotControlAndCommunication
             theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
         }
 
-        private void requestRotateCorrectionAngle() 
+        private void requestRotateCorrectionAngle()
         {
             uint length = 1;
             Byte[] transmittedData = new Byte[length];
@@ -1488,10 +1438,10 @@ namespace SwarmRobotControlAndCommunication
             configureRF(this.TXAdrrTextBoxDebug.Text);
         }
 
-        private void setLocalLoopButton_Click(object sender, RoutedEventArgs e) 
+        private void setLocalLoopButton_Click(object sender, RoutedEventArgs e)
         {
             Byte[] transmittedData = new Byte[5]; // <set stop loop command><value>
-            
+
             transmittedData[0] = COMMAND_SET_LOCAL_LOOP_STOP;
 
             Int32 value = Convert.ToInt32(this.LocalLoopTextBox.Text);
@@ -1550,7 +1500,7 @@ namespace SwarmRobotControlAndCommunication
             else
             {
                 MessageBox.Show("Unvalid stop 1!");
-            } 
+            }
         }
 
         private void setStop2Button_Click(object sender, RoutedEventArgs e)
