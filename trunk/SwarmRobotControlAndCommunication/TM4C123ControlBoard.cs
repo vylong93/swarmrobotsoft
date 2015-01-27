@@ -27,12 +27,13 @@ namespace SwarmRobotControlAndCommunication
 {
 
     public class TM4C123ControlBoard : usbGenericHidCommunication, ControlBoardInterface
-	{
+    {
         #region Definitions to communicate with the control board
         private const byte USB_BUFFER_LENGTH = 65;
 
         //--------------------Commands definitions--------------------//
         private const byte TRANSMIT_DATA_TO_ROBOT = 0x10;
+        private const byte TRANSMIT_DATA_TO_ROBOT_ACK = 0x17;
         private const byte RECEIVE_DATA_FROM_ROBOT = 0x11;
         private const byte RECEIVE_DATA_FROM_ROBOT_WITH_COMMAND = 0x12;
         private const byte CONFIGURE_RF = 0x13;
@@ -49,7 +50,7 @@ namespace SwarmRobotControlAndCommunication
         private const byte TRANSMIT_DATA_TO_ROBOT_DONE = 0xAA;
         private const byte TRANSMIT_DATA_TO_ROBOT_FAILED = 0xFA;
         private const byte DELAY_AFTER_MAX_DATA_TRANSMITTED = 1;
-        private const byte MAX_NUM_BYTE_TRANSMITTED = 64;
+        private const byte MAX_NUM_BYTE_TRANSMITTED = 32;
         private const byte RECEIVE_DATA_FROM_ROBOT_ERROR = 0xEE;
         private const byte RECEIVE_DATA_FROM_ROBOT_CONTINUE = 0xAE;
         private const byte MAX_NUM_BYTE_RECEIVED = 32;
@@ -89,7 +90,7 @@ namespace SwarmRobotControlAndCommunication
 
                 sendDataToControlBoard(outputBuffer);
 
-                isOperationFinishOk(CONFIGURE_BOOTLOAD_PROTOCOL_OK);   
+                isOperationFinishOk(CONFIGURE_BOOTLOAD_PROTOCOL_OK);
             }
             catch (Exception ex)
             {
@@ -152,36 +153,36 @@ namespace SwarmRobotControlAndCommunication
         /// <param name="setupData">The data frame corresponding to the SPI data frame
         /// of the control board to configure the SPI module</param>
         public void configureSPI(byte[] setupData)
-            {
-                throw new Exception("SPI configuration function has not been implemented yet");
-            }
+        {
+            throw new Exception("SPI configuration function has not been implemented yet");
+        }
 
         /// <summary>
         /// Not implemented. Reserved for future use
         /// </summary>
         /// <param name="setupData"></param>
         public void configurePWM(byte[] setupData)
-            {
-                throw new Exception("PWM configuration function has not been implemented yet");
-            }
+        {
+            throw new Exception("PWM configuration function has not been implemented yet");
+        }
 
         /// <summary>
         /// Not implemented. Reserved for future use
         /// </summary>
         /// <param name="setupData"></param>
         public void configureUART(byte[] setupData)
-            {
-                throw new Exception("UART configuration function has not been implemented yet");
-            }
+        {
+            throw new Exception("UART configuration function has not been implemented yet");
+        }
 
         /// <summary>
         /// Not implemented. Reserved for future use
         /// </summary>
         /// <param name="transmissionModeSelected"></param>
         public void setTransmissionMode(byte transmissionModeSelected)
-            {
-                throw new Exception("Set transmission mode function has not been implemented yet");
-            }
+        {
+            throw new Exception("Set transmission mode function has not been implemented yet");
+        }
 
         /// <summary>
         /// Transfer a number of bytes from the control board to targets.
@@ -204,7 +205,7 @@ namespace SwarmRobotControlAndCommunication
                 byte bufferPointer = 0;
                 byte dataLength = 0;
                 byte delayTime = DELAY_AFTER_MAX_DATA_TRANSMITTED;
-                    
+
                 outputBuffer[0] = 0;
                 outputBuffer[1] = TRANSMIT_DATA_TO_ROBOT;
 
@@ -212,7 +213,7 @@ namespace SwarmRobotControlAndCommunication
                 {
                     calculateRemainedDataLength(ref numberOfTransmittedBytes, ref dataLength);
 
-                    if(isEndOfSentData(numberOfTransmittedBytes))
+                    if (isEndOfSentData(numberOfTransmittedBytes))
                         delayTime = delayTimeBeforeSendResponeToPC;
 
                     outputBuffer[2] = dataLength;
@@ -237,7 +238,12 @@ namespace SwarmRobotControlAndCommunication
                 throw new Exception(string.Format("Control Board: Transmit {0} bytes to device: \n", numberOfTransmittedBytes) + ex.Message);
             }
         }
-        
+
+        public void transmitBytesToRobotWithACK(byte[] transmittedData, UInt32 numberOfTransmittedBytes, byte delayTimeBeforeSendResponeToPC)
+        {
+           //TODO: implement
+        }
+
         /// <summary>
         /// An overload function that used to transmit only one byte
         /// </summary>
@@ -265,7 +271,7 @@ namespace SwarmRobotControlAndCommunication
             {
                 throw new Exception(string.Format("Control Board: Transmit {0} bytes to device: \n", numberOfTransmittedBytes) + ex.Message);
             }
-        }    
+        }
         void calculateRemainedDataLength(ref UInt32 numberOfTransmittedBytes, ref byte dataLength)
         {
             if (numberOfTransmittedBytes <= MAX_NUM_BYTE_TRANSMITTED)
@@ -314,10 +320,10 @@ namespace SwarmRobotControlAndCommunication
             if (inputBuffer[1] == successFlag)
                 return;
 
-            if(inputBuffer[1] == noResponeFlag)
+            if (inputBuffer[1] == noResponeFlag)
                 throw new Exception("No respone from robot");
 
-            if(inputBuffer[1] == invalidFlag)
+            if (inputBuffer[1] == invalidFlag)
                 throw new Exception("Invalid respone from robot");
 
             throw new Exception(invalidRespone);
@@ -350,19 +356,40 @@ namespace SwarmRobotControlAndCommunication
         }
         private void setupControlBoardBeforeReceivingData(byte command, byte receiveMode, UInt32 numberOfReceivedBytes, UInt32 waitTime)
         {
+            const int COMMAND_HEADER_LENGTH = 6;
+            SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, command);
+
+            byte[] byteBuffer = new byte[4];
+
+            byteBuffer[0] = (byte)((numberOfReceivedBytes >> 24) & 0x0FF);
+            byteBuffer[1] = (byte)((numberOfReceivedBytes >> 16) & 0x0FF);
+            byteBuffer[2] = (byte)((numberOfReceivedBytes >> 8) & 0x0FF);
+            byteBuffer[3] = (byte)(numberOfReceivedBytes & 0x0FF);
+
+            SwarmMessage message = new SwarmMessage(header, byteBuffer);
+
+            byte[] messageByte = message.toByteArray();
+
+            if (message.getSize() > (65 - COMMAND_HEADER_LENGTH))
+            {
+                throw new Exception("setupControlBoardBeforeReceivingData() message size to large!!!");
+            }
+
             byte[] outputBuffer = new Byte[65];
 
             outputBuffer[0] = 0;
             outputBuffer[1] = receiveMode;
-            outputBuffer[2] = command;
-            outputBuffer[3] = (byte)((numberOfReceivedBytes >> 24) & 0x0FF);
-            outputBuffer[4] = (byte)((numberOfReceivedBytes >> 16) & 0x0FF);
-            outputBuffer[5] = (byte)((numberOfReceivedBytes >> 8) & 0x0FF);
-            outputBuffer[6] = (byte)(numberOfReceivedBytes & 0x0FF);
-            outputBuffer[7] = (byte)((waitTime >> 24) & 0x0FF);
-            outputBuffer[8] = (byte)((waitTime >> 16) & 0x0FF);
-            outputBuffer[9] = (byte)((waitTime >> 8) & 0x0FF);
-            outputBuffer[10] = (byte)(waitTime & 0x0FF);
+
+            outputBuffer[2] = (byte)((waitTime >> 24) & 0x0FF);
+            outputBuffer[3] = (byte)((waitTime >> 16) & 0x0FF);
+            outputBuffer[4] = (byte)((waitTime >> 8) & 0x0FF);
+            outputBuffer[5] = (byte)(waitTime & 0x0FF);
+
+            for (int i = 0; i < messageByte.Length; i++)
+            {
+                outputBuffer[i + COMMAND_HEADER_LENGTH] = messageByte[i];
+            }
+
             sendDataToControlBoard(outputBuffer);
         }
         private void startReceivingData(ref UInt32 numberOfReceivedBytes, ref byte[] data)
@@ -373,7 +400,11 @@ namespace SwarmRobotControlAndCommunication
             UInt32 pointer = 0;
 
             outputBuffer[1] = RECEIVE_DATA_FROM_ROBOT_CONTINUE;
-            inputBuffer = readDataFromControlBoard();   //TODO: fix - DUMMY read
+
+            //TODO: fix - DUMMY read
+            inputBuffer = readDataFromControlBoard();
+            checkIfReceivedDataFromRobot(inputBuffer);
+
             while (true)
             {
                 inputBuffer = readDataFromControlBoard();
@@ -457,15 +488,19 @@ namespace SwarmRobotControlAndCommunication
                 }
 
                 setupControlBoardBeforeReceivingData(0, RECEIVE_DATA_FROM_ROBOT, dataLength, waitTime);
-                inputBuffer = readDataFromControlBoard();
 
+                //TODO: fix this DUMMY read
+                inputBuffer = readDataFromControlBoard();
+                if (inputBuffer[33] == RECEIVE_DATA_FROM_ROBOT_ERROR)
+                    return false;
+
+                inputBuffer = readDataFromControlBoard();
                 if (inputBuffer[33] == RECEIVE_DATA_FROM_ROBOT_ERROR)
                     return false;
 
                 for (UInt32 j = 1; j <= length; j++)
                 {
-                    data[pointer] = inputBuffer[j];
-                    pointer++;
+                    data[pointer++] = inputBuffer[j];
                 }
                 return true;
             }

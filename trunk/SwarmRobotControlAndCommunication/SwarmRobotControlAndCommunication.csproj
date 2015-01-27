@@ -75,6 +75,7 @@
     <Compile Include="OxyplotWindow.xaml.cs">
       <DependentUpon>OxyplotWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="SwarmMessage.cs" />
     <Compile Include="UserInputTextWindow.xaml.cs">
       <DependentUpon>UserInputTextWindow.xaml</DependentUpon>
     </Compile>
