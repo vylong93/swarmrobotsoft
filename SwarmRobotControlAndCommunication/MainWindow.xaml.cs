@@ -44,24 +44,24 @@ namespace SwarmRobotControlAndCommunication
         private const string DEFAULT_RX_ADDRESS = "00C1AC02";
         //-------------------------------------------------Control board
 
+        //------------Commands from Robots---------------------
         private const byte ROBOT_RESPONSE_OK = 0x0A;
+        //---------------------------------Commands from Robots
 
         //------------Commands to control all Robots---------------------
         private const byte COMMAND_RESET = 0x01;
         private const byte COMMAND_SLEEP = 0x02;
         private const byte COMMAND_DEEP_SLEEP = 0x03;
         private const byte COMMAND_WAKE_UP = 0x04;
-
         private const byte COMMAND_TEST_RF_TRANSMISTER = 0x05;
         private const byte COMMAND_TEST_RF_RECEIVER = 0x06;
+        private const byte COMMAND_TOGGLE_LEDS = 0x07;
+        private const byte COMMAND_SAMPLE_MICS_SIGNALS = 0x08;
+        private const byte COMMAND_TEST_SPEAKER = 0x09;
+        private const byte COMMAND_CHANGE_MOTOR_SPEED = 0x0A;
+        //==== out
 
-        private const byte COMMAND_TOGGLE_LEDS = 0xC1;
-        private const byte COMMAND_SAMPLE_MICS_SIGNALS = 0xC2;
         private const byte COMMAND_SET_RUNNING_STATUS = 0xC3;
-        private const byte COMMAND_CHANGE_MOTOR_SPEED = 0xC4;
-        private const byte COMMAND_TEST_RF_CD = 0xC5;
-        private const byte COMMAND_TEST_SPEAKER = 0xC8;
-
         private const byte COMMAND_READ_ADC1 = 0xA0;
         private const byte COMMAND_READ_ADC2 = 0xA1;
         private const byte COMMAND_DISTANCE_SENSING = 0xA2;
@@ -299,37 +299,22 @@ namespace SwarmRobotControlAndCommunication
 
         private void sleepButton_Click(object sender, RoutedEventArgs e)
         {
-            sendCommandToRobot(COMMAND_SLEEP);
+            theControlBoard.sendCommandToRobot(COMMAND_SLEEP);
         }
 
         private void deepsleepButton_Click(object sender, RoutedEventArgs e)
         {
-            sendCommandToRobot(COMMAND_DEEP_SLEEP);
+            theControlBoard.sendCommandToRobot(COMMAND_DEEP_SLEEP);
         }
 
         private void wakeUpButton_Click(object sender, RoutedEventArgs e)
         {
-            sendCommandToRobot(COMMAND_WAKE_UP);
+            theControlBoard.sendCommandToRobot(COMMAND_WAKE_UP);
         }
 
         private void resetButton_Click(object sender, RoutedEventArgs e)
         {
-            sendCommandToRobot(COMMAND_RESET);
-        }
-
-        private void sendCommandToRobot(byte cmd)
-        {
-            SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, cmd);
-            SwarmMessage message = new SwarmMessage(header);
-
-            try
-            {
-                theControlBoard.transmitBytesToRobot(message.toByteArray(), message.getSize(), 0);
-            }
-            catch (Exception ex)
-            {
-                defaultExceptionHandle(ex);
-            }
+            theControlBoard.sendCommandToRobot(COMMAND_RESET);
         }
 
         private void loadHexButton_Click(object sender, RoutedEventArgs e)
@@ -357,7 +342,7 @@ namespace SwarmRobotControlAndCommunication
         }
         private void wakeUpAndProgramButton_Click(object sender, RoutedEventArgs e)
         {
-            sendCommandToRobot(COMMAND_WAKE_UP);
+            theControlBoard.sendCommandToRobot(COMMAND_WAKE_UP);
 
             // Prepare robots so they can go into bootloader mode
             // when receive the command goIntoBootloaderMode.
@@ -602,14 +587,22 @@ namespace SwarmRobotControlAndCommunication
                         break;
 
                     case "Toggle All Status Leds":
-                        theControlBoard.transmitBytesToRobot(COMMAND_TOGGLE_LEDS);
+                        theControlBoard.sendCommandToRobot(COMMAND_TOGGLE_LEDS);
+                        setStatusBarContent("Command sent: Toggle all lEDs.");
                         break;
 
                     case "Start Sampling Mics Signals":
-                        theControlBoard.transmitBytesToRobot(COMMAND_SAMPLE_MICS_SIGNALS);
+                        theControlBoard.sendCommandToRobot(COMMAND_SAMPLE_MICS_SIGNALS);
+                        setStatusBarContent("Command sent: Sampling Mics.");
+                        break;
+
+                    case "Test Speaker":
+                        theControlBoard.sendCommandToRobot(COMMAND_TEST_SPEAKER);
+                        setStatusBarContent("Command sent: Trigger speaker.");
                         break;
 
                     case "Change Motors Speed":
+                        //TODO: construct full message
                         transmittedData[0] = COMMAND_CHANGE_MOTOR_SPEED;
 
                         if (motor1ReverseCheckBox.IsChecked == true)
@@ -627,14 +620,6 @@ namespace SwarmRobotControlAndCommunication
                         transmittedData[4] = Convert.ToByte(this.motor2SpeedTextBox.Text);
 
                         theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
-                        break;
-
-                    case "Test RF Carrier Detection":
-                        theControlBoard.transmitBytesToRobot(COMMAND_TEST_RF_CD);
-                        break;
-
-                    case "Test Speaker":
-                        theControlBoard.transmitBytesToRobot(COMMAND_TEST_SPEAKER);
                         break;
 
                     default:
@@ -672,7 +657,7 @@ namespace SwarmRobotControlAndCommunication
 
                     if (i >= length)
                     {
-                        setStatusBarContent("Robot's RF Transmister OK");
+                        setStatusBarContent("Robot's RF Transmister OK!");
                         break;
                     }
                 }
@@ -716,11 +701,11 @@ namespace SwarmRobotControlAndCommunication
                 if (rxMessage.getHeader().getMessageType() == e_MessageType.MESSAGE_TYPE_ROBOT_RESPONSE
                     && rxMessage.getHeader().getCmd() == ROBOT_RESPONSE_OK)
                 {
-                    setStatusBarContent("Robot's RF Reciever OK");
+                    setStatusBarContent("Robot's RF Reciever OK!");
                 }
                 else
                 {
-                    setStatusBarContent("Robot's RF Reciever: Wrong response!!!");
+                    setStatusBarContent("Robot's RF Reciever: Wrong response...");
                 }
             }
             catch (Exception ex)
