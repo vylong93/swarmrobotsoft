@@ -241,8 +241,17 @@ namespace SwarmRobotControlAndCommunication
 
         public void transmitBytesToRobotWithACK(byte[] transmittedData, UInt32 numberOfTransmittedBytes, byte delayTimeBeforeSendResponeToPC)
         {
-           //TODO: implement
+            //TODO: implement
         }
+
+        public void sendCommandToRobot(byte cmd)
+        {
+            SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, cmd);
+            SwarmMessage message = new SwarmMessage(header);
+            
+            transmitBytesToRobot(message.toByteArray(), message.getSize(), 0);
+        }
+
 
         /// <summary>
         /// An overload function that used to transmit only one byte
