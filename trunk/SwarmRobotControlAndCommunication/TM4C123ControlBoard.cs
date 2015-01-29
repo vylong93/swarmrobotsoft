@@ -410,9 +410,21 @@ namespace SwarmRobotControlAndCommunication
 
             outputBuffer[1] = RECEIVE_DATA_FROM_ROBOT_CONTINUE;
 
-            //TODO: fix - DUMMY read
+            //TODO: fix DUMMY read ------------------
             inputBuffer = readDataFromControlBoard();
-            checkIfReceivedDataFromRobot(inputBuffer);
+
+            if (numberOfReceivedBytes <= MAX_NUM_BYTE_RECEIVED)
+            {
+                checkIfReceivedDataFromRobot(inputBuffer);
+
+                for (UInt32 j = 1; j <= numberOfReceivedBytes; j++)
+                {
+                    data[pointer] = inputBuffer[j];
+                    pointer++;
+                }
+                return;
+            }
+            //TODO: fix ------------------ DUMMY read
 
             while (true)
             {

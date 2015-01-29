@@ -53,19 +53,20 @@ namespace SwarmRobotControlAndCommunication
         private const byte COMMAND_SLEEP = 0x02;
         private const byte COMMAND_DEEP_SLEEP = 0x03;
         private const byte COMMAND_WAKE_UP = 0x04;
+
         private const byte COMMAND_TEST_RF_TRANSMISTER = 0x05;
         private const byte COMMAND_TEST_RF_RECEIVER = 0x06;
         private const byte COMMAND_TOGGLE_LEDS = 0x07;
         private const byte COMMAND_SAMPLE_MICS_SIGNALS = 0x08;
         private const byte COMMAND_TEST_SPEAKER = 0x09;
         private const byte COMMAND_CHANGE_MOTOR_SPEED = 0x0A;
+        private const byte COMMAND_REQUEST_BATTERY_VOLT = 0x0B;
         //==== out
 
         private const byte COMMAND_SET_RUNNING_STATUS = 0xC3;
         private const byte COMMAND_READ_ADC1 = 0xA0;
         private const byte COMMAND_READ_ADC2 = 0xA1;
         private const byte COMMAND_DISTANCE_SENSING = 0xA2;
-        private const byte COMMAND_BATTERY_MEASUREMENT = 0xA3;
         private const byte COMMAND_STOP_MOTOR1 = 0xA4;
         private const byte COMMAND_STOP_MOTOR2 = 0xA5;
         private const byte COMMAND_READ_NEIGHBORS_TABLE = 0xA6;
@@ -576,6 +577,8 @@ namespace SwarmRobotControlAndCommunication
 
                 string command = this.commandSelectBox.Text;
 
+                setStatusBarContent("Broadcast Command: " + command);
+
                 switch (command)
                 {
                     case "Test Robot's RF Transmistter":
@@ -588,17 +591,14 @@ namespace SwarmRobotControlAndCommunication
 
                     case "Toggle All Status Leds":
                         theControlBoard.sendCommandToRobot(COMMAND_TOGGLE_LEDS);
-                        setStatusBarContent("Command sent: Toggle all lEDs.");
                         break;
 
                     case "Start Sampling Mics Signals":
                         theControlBoard.sendCommandToRobot(COMMAND_SAMPLE_MICS_SIGNALS);
-                        setStatusBarContent("Command sent: Sampling Mics.");
                         break;
 
                     case "Test Speaker":
                         theControlBoard.sendCommandToRobot(COMMAND_TEST_SPEAKER);
-                        setStatusBarContent("Command sent: Trigger speaker.");
                         break;
 
                     case "Change Motors Speed":
@@ -622,8 +622,12 @@ namespace SwarmRobotControlAndCommunication
                         theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
                         break;
 
+                    case "Read Battery Voltage":
+                        readBatteryVoltage();
+                        break;
+
                     default:
-                        throw new Exception("Send Command: Can not recognise command!");
+                        throw new Exception("Broadcast Command: Can not recognise command!");
                 }
             }
             catch (Exception ex)
@@ -754,24 +758,35 @@ namespace SwarmRobotControlAndCommunication
             }
         }
 
-        private void readBatteryVoltageButton_Click(object sender, RoutedEventArgs e)
+        private void readBatteryVoltage()
         {
-            uint length = 2;
+            uint length = 4;
             Byte[] receivedData = new Byte[length];
             int adcData;
             float BatteryVoltage;
 
             try
             {
-                theControlBoard.receiveBytesFromRobot(COMMAND_BATTERY_MEASUREMENT, length, ref receivedData, 1000);
-                adcData = (receivedData[1] << 8) | receivedData[0];
-                BatteryVoltage = (adcData * 3330) / 2048;
-                readBatteryVoltageTextBox.Text = BatteryVoltage.ToString() + "mV (ADCvalue = " +
-                                                 adcData.ToString() + ")";
+                theControlBoard.receiveBytesFromRobot(COMMAND_REQUEST_BATTERY_VOLT, length, ref receivedData, 1000);
+                SwarmMessage rxMessage = SwarmMessage.ConstructFromByteArray(receivedData);
+                if (rxMessage.getHeader().getMessageType() == e_MessageType.MESSAGE_TYPE_ROBOT_RESPONSE
+                    && rxMessage.getHeader().getCmd() == ROBOT_RESPONSE_OK)
+                {
+                    adcData = (rxMessage.getData()[1] << 8) | rxMessage.getData()[0];
+                    BatteryVoltage = (adcData * 3330) / 2048;
+                    string message = BatteryVoltage.ToString() + "mV (ADCvalue = " + adcData.ToString() + ")";
+                    setStatusBarContent("Robot's V_batt = " + message);
+                }
+                else 
+                {
+                    setStatusBarContent("Wrong Vbatt response from robot...");
+                }
+
             }
             catch (Exception ex)
             {
-                defaultExceptionHandle(ex);
+                //defaultExceptionHandle(ex);
+                setStatusBarContent("Failed to read robot's V_batt...");
             }
         }
 

@@ -108,5 +108,10 @@ namespace SwarmRobotControlAndCommunication
         {
             return header;
         }
+        
+        public byte[] getData()
+        {
+            return data;
+        }
     };
 }
