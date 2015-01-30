@@ -65,6 +65,11 @@ namespace SwarmRobotControlAndCommunication
         private const byte COMMAND_CHANGE_MOTOR_SPEED = 0x0D;
         private const byte COMMAND_STOP_MOTOR1 = 0x0E;
         private const byte COMMAND_STOP_MOTOR2 = 0x0F;
+
+        private const byte COMMAND_EEPROM_DATA_READ = 0x10;
+        private const byte COMMAND_EEPROM_DATA_WRITE = 0x11;
+        private const byte COMMAND_EEPROM_TABLE_READ = 0x12;
+        private const byte COMMAND_EEPROM_TABLE_UPDATE = 0x13;
         //==== out
 
         private const byte COMMAND_SET_RUNNING_STATUS = 0xC3;
@@ -568,6 +573,149 @@ namespace SwarmRobotControlAndCommunication
         }
         #endregion
 
+        #region EEPROM Tab
+        private void setAddressEeprom()
+        {
+            //Byte[] transmittedData = new Byte[5]; // <set address command>< address>
+            //Int32 readAddress;
+
+            //transmittedData[0] = COMMAND_SET_ADDRESS_EEROM;
+
+            //readAddress = Convert.ToInt32(this.EepromAddressTextBox.Text);
+            //transmittedData[1] = (Byte)(readAddress >> 24);
+            //transmittedData[2] = (Byte)(readAddress >> 16);
+            //transmittedData[3] = (Byte)(readAddress >> 8);
+            //transmittedData[4] = (Byte)(readAddress & 0xFF);
+
+            //theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
+        }
+
+        private void EepromDataReadButton_Click(object sender, RoutedEventArgs e)
+        {
+            byte unit = 3;
+            byte[] data = new byte[unit * 2 + 1];
+            UInt16 ui16WordIndex;
+
+            uint bufferLength = (uint)unit * 6 + 1;
+            byte rxUnit;
+            UInt32 ui32RxData = 0;
+            byte[] dataBuffer = new byte[bufferLength];
+
+            data[0] = unit;
+
+            /* 1 */
+            ui16WordIndex = Convert.ToUInt16(this.EepromRobotIdWordIndexTextBox.Text);
+            data[1] = (byte)((ui16WordIndex >> 8) & 0x0FF);
+            data[2] = (byte)(ui16WordIndex & 0x0FF);
+
+            /* 2 */
+            ui16WordIndex = Convert.ToUInt16(this.EepromInterceptWordIndexTextBox.Text);
+            data[3] = (byte)((ui16WordIndex >> 8) & 0x0FF);
+            data[4] = (byte)(ui16WordIndex & 0x0FF);
+
+            /* 3 */
+            ui16WordIndex = Convert.ToUInt16(this.EepromSlopeWordIndexTextBox.Text);
+            data[5] = (byte)((ui16WordIndex >> 8) & 0x0FF);
+            data[6] = (byte)(ui16WordIndex & 0x0FF);
+
+            SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_EEPROM_DATA_READ);
+            SwarmMessage message = new SwarmMessage(header, data);
+            theControlBoard.transmitBytesToRobot(message.toByteArray(), message.getSize(), 1);
+
+            theControlBoard.receiveBytesFromRobot(bufferLength, ref dataBuffer, 1000);
+            SwarmMessage rxMessage = SwarmMessage.ConstructFromByteArray(dataBuffer);
+            byte[] messageContent;
+            if (rxMessage.getHeader().getMessageType() == e_MessageType.MESSAGE_TYPE_ROBOT_RESPONSE
+                && rxMessage.getHeader().getCmd() == ROBOT_RESPONSE_OK)
+            {
+                messageContent = rxMessage.toByteArray();
+                rxUnit = messageContent[0];
+                if (rxUnit == unit)
+                {
+                    constructWordIndexAndDataContent(ref ui16WordIndex, ref ui32RxData, messageContent, 1);
+                    this.EepromRobotIdWordIndexTextBox.Text = ui16WordIndex.ToString();
+                    this.EepromRobotIdTextBox.Text = ui32RxData.ToString("X8");
+
+                    constructWordIndexAndDataContent(ref ui16WordIndex, ref ui32RxData, messageContent, 7);
+                    this.EepromInterceptWordIndexTextBox.Text = ui16WordIndex.ToString();
+                    float fIntercept = (float)(ui32RxData / 32768.0);
+                    this.EepromInterceptTextBox.Text = fIntercept.ToString("0.0000");
+
+                    constructWordIndexAndDataContent(ref ui16WordIndex, ref ui32RxData, messageContent, 13);
+                    this.EepromSlopeWordIndexTextBox.Text = ui16WordIndex.ToString();
+                    float fSlope = (float)(ui32RxData / 32768.0);
+                    this.EepromSlopeTextBox.Text = fSlope.ToString("0.0000");
+
+                    setStatusBarContent("EEPROM Data Read: OK!");
+                }
+            }
+            else
+            {
+                setStatusBarContent("EEPROM data read: Wrong response...");
+            }
+        }
+
+        void constructWordIndexAndDataContent(ref UInt16 ui16WordIndex, ref UInt32 ui32RxData, byte[] data, uint offset)
+        {
+            ui16WordIndex = (UInt16)((data[offset] << 8) | data[offset + 1]);
+            ui32RxData = (UInt32)((data[offset + 2] << 24) | (data[offset + 3] << 16)
+                                | (data[offset + 4] << 8) | data[offset + 5]);
+        }
+
+        private void EepromDataSynchronousButton_Click(object sender, RoutedEventArgs e)
+        {
+            // <DataNum><2b word index><4b data><2b word index><4b data>...<2b word index><4b data>
+            try
+            {
+                UInt16 ui16WordIndex;
+                UInt32 ui32Data;
+                float fData;
+
+                byte unit = 3;
+                byte[] data = new byte[unit * 6 + 1];
+                data[0] = unit;
+
+                /* 1 */
+                ui16WordIndex = Convert.ToUInt16(this.EepromRobotIdWordIndexTextBox.Text);
+                ui32Data = getAddress(this.EepromRobotIdTextBox.Text, 8);
+                fillPairIndexAndWordToByteArray(ui16WordIndex, ui32Data, data, 1);
+
+                /* 2 */
+                ui16WordIndex = Convert.ToUInt16(this.EepromInterceptWordIndexTextBox.Text);
+                float.TryParse(this.EepromInterceptTextBox.Text, out fData);
+                ui32Data = (UInt32)(fData * 32768);
+                fillPairIndexAndWordToByteArray(ui16WordIndex, ui32Data, data, 7);
+
+                /* 3 */
+                ui16WordIndex = Convert.ToUInt16(this.EepromSlopeWordIndexTextBox.Text);
+                float.TryParse(this.EepromSlopeTextBox.Text, out fData);
+                ui32Data = (UInt32)(fData * 32768);
+                fillPairIndexAndWordToByteArray(ui16WordIndex, ui32Data, data, 13);
+
+                SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_EEPROM_DATA_WRITE);
+                SwarmMessage message = new SwarmMessage(header, data);
+                theControlBoard.transmitBytesToRobot(message.toByteArray(), message.getSize(), 1);
+
+                setStatusBarContent("EEPROM Data is synchronized!");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("EEPROM Synchronous Data " + ex.Message);
+            }
+        }
+
+        void fillPairIndexAndWordToByteArray(UInt16 uiIndex, UInt32 ui32Data, byte[] data, UInt32 offset)
+        {
+            data[offset] = (byte)((uiIndex >> 8) & 0xFF);
+            data[offset + 1] = (byte)(uiIndex & 0xFF);
+            data[offset + 2] = (byte)((ui32Data >> 24) & 0xFF);
+            data[offset + 3] = (byte)((ui32Data >> 16) & 0xFF);
+            data[offset + 4] = (byte)((ui32Data >> 8) & 0xFF);
+            data[offset + 5] = (byte)(ui32Data & 0xFF);
+        }
+
+        #endregion
+
         #region Calibration Tab
         private void sendCommandButton_Click(object sender, RoutedEventArgs e)
         {
@@ -817,69 +965,6 @@ namespace SwarmRobotControlAndCommunication
         {
             theControlBoard.sendCommandToRobot(COMMAND_STOP_MOTOR2);
             setStatusBarContent("Broadcast Command: Pause right motor");
-        }
-
-        private void setAddressEeprom()
-        {
-            Byte[] transmittedData = new Byte[5]; // <set address command>< address>
-            Int32 readAddress;
-
-            transmittedData[0] = COMMAND_SET_ADDRESS_EEROM;
-
-            readAddress = Convert.ToInt32(this.EepromAddressTextBox.Text);
-            transmittedData[1] = (Byte)(readAddress >> 24);
-            transmittedData[2] = (Byte)(readAddress >> 16);
-            transmittedData[3] = (Byte)(readAddress >> 8);
-            transmittedData[4] = (Byte)(readAddress & 0xFF);
-
-            theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
-        }
-
-        private void readEepromButton_Click(object sender, RoutedEventArgs e)
-        {
-            uint length = 4;
-            Byte[] receivedData = new Byte[length];
-            UInt32 receivedWord;
-
-            setAddressEeprom();
-            Thread.Sleep(1);
-
-            try
-            {
-                theControlBoard.receiveBytesFromRobot(COMMAND_READ_EEPROM, length, ref receivedData, 1000);
-                receivedWord = (UInt32)((receivedData[3] << 24) | (receivedData[2] << 16) | (receivedData[1] << 8) | receivedData[0]);
-                this.EepromContentTextBox.Text = receivedWord.ToString();
-            }
-            catch (Exception ex)
-            {
-                defaultExceptionHandle(ex);
-            }
-        }
-
-        private void writeEepromButton_Click(object sender, RoutedEventArgs e)
-        {
-            Byte[] transmittedData = new Byte[9]; // <Write EEPROM command><write address><Word>
-            Int32 writeAddress;
-            Int32 writeWord;
-
-            setAddressEeprom();
-            Thread.Sleep(1);
-
-            transmittedData[0] = COMMAND_WRITE_EEPROM;
-
-            writeAddress = Convert.ToInt32(this.EepromAddressTextBox.Text);
-            transmittedData[1] = (Byte)(writeAddress >> 24);
-            transmittedData[2] = (Byte)(writeAddress >> 16);
-            transmittedData[3] = (Byte)(writeAddress >> 8);
-            transmittedData[4] = (Byte)(writeAddress & 0xFF);
-
-            writeWord = Convert.ToInt32(this.EepromContentTextBox.Text);
-            transmittedData[5] = (Byte)(writeWord >> 24);
-            transmittedData[6] = (Byte)(writeWord >> 16);
-            transmittedData[7] = (Byte)(writeWord >> 8);
-            transmittedData[8] = (Byte)(writeWord & 0xFF);
-
-            theControlBoard.transmitBytesToRobot(transmittedData, 9, 1);
         }
 
         #endregion

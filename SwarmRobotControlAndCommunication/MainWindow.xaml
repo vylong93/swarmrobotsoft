@@ -164,7 +164,7 @@
                 </Grid>
             </TabItem>
             <TabItem x:Name="rfTab" 
-                     Header="RF24" 
+                     Header="RF Config" 
                      Margin="{Binding Margin, ElementName=controlTab}">
                 <Grid Name="gridRFConfig" HorizontalAlignment="Center" VerticalAlignment="Top">
                     <Grid.RowDefinitions>
@@ -241,28 +241,90 @@
                             <ComboBoxItem Content="-55 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                         </ComboBox>
                     </StackPanel>
-
+                    
                     <Button x:Name="rfDefaultButton" Content="Default"
                                 Margin="43,1,9,1" Height="26" Width="73" Grid.Column="1" Grid.Row="2" 
                                 HorizontalAlignment="Center" VerticalAlignment="Center" FlowDirection="RightToLeft" 
                                 Style="{DynamicResource ProgramButton}" Click="rfDefaultButton_Click" Grid.ColumnSpan="2"/>
-
+                    
                     <Button x:Name="rfConfigureButton" Content="Configure RF Module" 
                             Click="configureRF_Click" Grid.Column="3" Grid.Row="2" 
                             Margin="4,1,0,1" Height="26" Width="135"
                             HorizontalAlignment="Left" VerticalAlignment="Center" FlowDirection="RightToLeft"  />
                 </Grid>
             </TabItem>
-            <TabItem Header="Calibration" Margin="{Binding Margin, ElementName=controlTab}">
-                <Grid HorizontalAlignment="Left" Height="238.4" VerticalAlignment="Top" Width="304.8">
+            <TabItem x:Name="eepromTab"
+                     Header="EEPROM"
+                     Margin="{Binding Margin, ElementName=controlTab}">
+                <Grid HorizontalAlignment="Left" Width="305" Margin="0,0,-5,0">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="36"/>
                         <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
-                        <RowDefinition Height="36.8"/>
+                        <RowDefinition Height="28"/>
+                        <RowDefinition Height="28"/>
+                        <RowDefinition Height="28"/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <StackPanel x:Name="dataHeaderPanel" Grid.Column="0" Grid.Row="0" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                        <Label Content="------------------- DATA PARAMETERS -------------------" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" HorizontalContentAlignment="Center" Width="299"/>
+                    </StackPanel>
+                    <StackPanel x:Name="robotIdEepromPanel" Grid.Column="0" Grid.Row="1" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                        <Label Content="Robot's ID" Width="70" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center"/>
+                        <TextBox x:Name="EepromRobotIdTextBox" Text="00BEADFF"  Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" Width="80" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
+                        <Label Content="at index Word" Width="85" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center"/>
+                        <TextBox x:Name="EepromRobotIdWordIndexTextBox" Text="16" IsEnabled="false" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="511" 
+                                 local:TextBoxHelpers.MinValue="0" Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" Width="65" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>                                        
+                    </StackPanel>
+                    <StackPanel x:Name="interceptEepromPanel" Grid.Column="0" Grid.Row="2" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                        <Label Content="Intercept" Width="70" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center"/>
+                        <TextBox x:Name="EepromInterceptTextBox" Text="8.5619"  Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" Width="80" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
+                        <Label Content="at index Word" Width="85" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center"/>
+                        <TextBox x:Name="EepromInterceptWordIndexTextBox" Text="17" IsEnabled="false" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="511" 
+                                 local:TextBoxHelpers.MinValue="0" Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" Width="65" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
+                    </StackPanel>
+                    <StackPanel x:Name="slopeEepromPanel" Grid.Column="0" Grid.Row="3" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                        <Label Content="Slope" Width="70" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center"/>
+                        <TextBox x:Name="EepromSlopeTextBox" Text="3.046"  Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" Width="80" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
+                        <Label Content="at index Word" Width="85" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center"/>
+                        <TextBox x:Name="EepromSlopeWordIndexTextBox" Text="18" IsEnabled="false" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="511" 
+                                 local:TextBoxHelpers.MinValue="0" Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" Width="65" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
+                    </StackPanel>
+                    <StackPanel x:Name="dataButtonPanel" Grid.Column="0" Grid.Row="4" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                        <Button x:Name="EepromDataSynchronousButton" Content="Synchronous Data" Margin="4,1,0,1" Height="26" Width="147"
+                                HorizontalAlignment="Center" VerticalAlignment="Center" FlowDirection="RightToLeft" Style="{DynamicResource ProgramButton}" Click="EepromDataSynchronousButton_Click"/>
+                        <Button x:Name="EepromDataReadButton" Content="Data Read" Margin="3,1,0,1" Height="26" Width="147"
+                            HorizontalAlignment="Left" VerticalAlignment="Center" FlowDirection="RightToLeft" Click="EepromDataReadButton_Click" />
+                    </StackPanel>
+                    <StackPanel x:Name="tableHeaderPanel" Grid.Column="0" Grid.Row="5" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                        <Label Content="---------------------- TABLE STATUS ----------------------" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" HorizontalContentAlignment="Center" Width="299"/>
+                    </StackPanel>
+                    <StackPanel x:Name="tablePanel" Grid.Column="0" Grid.Row="6" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                        <Label Content="Sine table" Width="70" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center"/>
+                        <TextBox x:Name="SineTableStatusTextBox" Text="invalid" IsEnabled="false" Style="{DynamicResource PathTextbox}" 
+                                 VerticalContentAlignment="Center" Padding="2,0,0,0" Width="80" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
+                        <Label Content="ArcSine table" Width="85" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center"/>
+                        <TextBox x:Name="ArcSineTableStatusTextBox" Text="invalid" IsEnabled="false" Style="{DynamicResource PathTextbox}" 
+                                 VerticalContentAlignment="Center" Padding="2,0,0,0" Width="65" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
+                    </StackPanel>
+                    <StackPanel x:Name="tableButtonPanel" Grid.Column="0" Grid.Row="7" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                        <Button x:Name="EepromProgramTableButton" Content="Update Table" Margin="4,1,0,1" Height="26" Width="147"
+                                HorizontalAlignment="Center" VerticalAlignment="Center" FlowDirection="RightToLeft" Style="{DynamicResource ProgramButton}"/>
+                        <Button x:Name="EepromTableCheckButton" Content="Table Status Check" Margin="3,1,0,1" Height="26" Width="147"
+                            HorizontalAlignment="Left" VerticalAlignment="Center" FlowDirection="RightToLeft" />
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Calibration" Margin="{Binding Margin, ElementName=controlTab}">
+                <Grid HorizontalAlignment="Left" VerticalAlignment="Top" Width="304.8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="28"/>
+                        <RowDefinition Height="28"/>
+                        <RowDefinition Height="28"/>
+                        <RowDefinition Height="28"/>
+                        <RowDefinition Height="28"/>
                         <RowDefinition/>
                     </Grid.RowDefinitions>
                     <StackPanel x:Name="stackPanel3" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="24" Orientation="Horizontal">
@@ -299,17 +361,10 @@
                         <Label Content="Speed (8-bit):" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Height="24"/>
                         <TextBox x:Name="motor2SpeedTextBox"  local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="255" local:TextBoxHelpers.MinValue="0" Text="50" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
                     </StackPanel>
-                    <StackPanel x:Name="readWriteEEPROM" Grid.Column="0" Grid.Row="5" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
-                        <Label Content="EEPROM Address" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Width="102"/>
-                        <TextBox x:Name="EepromAddressTextBox" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="511" local:TextBoxHelpers.MinValue="0" Text="511" Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" Width="30" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                        <Button x:Name="readEepromButton" Content="Read" HorizontalAlignment="Left" Margin="2,0,2,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc2StackPanel}" Width="45" Click="readEepromButton_Click"/>
-                        <TextBox x:Name="EepromContentTextBox" Text="123456789"  Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" Width="80" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                        <Button x:Name="writeEepromButton" Content="Write" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Top" Height="{Binding Height, ElementName=readAdc2StackPanel}" Width="40" Click="writeEepromButton_Click"/>
-                    </StackPanel>
                 </Grid>
             </TabItem>
             <TabItem Header="Debug" Margin="{Binding Margin, ElementName=controlTab}">
-                <Grid HorizontalAlignment="Left" Height="238.4" VerticalAlignment="Top" Width="304.8">
+                <Grid HorizontalAlignment="Left" VerticalAlignment="Top" Width="304.8">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="29*"/>
                         <ColumnDefinition Width="32*"/>
@@ -321,9 +376,6 @@
                         <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
-                        <RowDefinition Height="28"/>
-                        <RowDefinition Height="28"/>
-                        <RowDefinition Height="36.8"/>
                         <RowDefinition/>
                     </Grid.RowDefinitions>
                     <StackPanel x:Name="DebugComandPanel" Grid.Row="0" Grid.Column="0" Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1.8,0" Grid.ColumnSpan="2">
