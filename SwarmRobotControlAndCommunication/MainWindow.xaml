@@ -277,34 +277,34 @@
                             <ComboBoxItem Content="Read Battery Voltage"/>
                         </ComboBox>
                     </StackPanel>
-                    <StackPanel x:Name="readWriteEEPROM" Grid.Column="0" Grid.Row="1" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
-                        <Label Content="EEPROM Address" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Width="102"/>
-                        <TextBox x:Name="EepromAddressTextBox" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="511" local:TextBoxHelpers.MinValue="0" Text="511" Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" Width="30" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                        <Button x:Name="readEepromButton" Content="Read" HorizontalAlignment="Left" Margin="2,0,2,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc2StackPanel}" Width="45" Click="readEepromButton_Click"/>
-                        <TextBox x:Name="EepromContentTextBox" Text="123456789"  Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" Width="75" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                        <Button x:Name="writeEepromButton" Content="Write" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Top" Height="{Binding Height, ElementName=readAdc2StackPanel}" Width="45" Click="writeEepromButton_Click"/>
-                    </StackPanel>
-                    <StackPanel x:Name="motor1SpeedStackPanel" Grid.Column="0" Grid.Row="2" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="24" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
-                        <Label Content="Motor 1:    Speed" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Width="102" Height="24"/>
-                        <TextBox x:Name="motor1SpeedTextBox"  local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="99" local:TextBoxHelpers.MinValue="1" Text="20" Style="{DynamicResource PathTextbox}" Width="30" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
-                        <Label Content="Reverse" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Width="50" Height="24"/>
-                        <CheckBox x:Name="motor1ReverseCheckBox" IsChecked="False" Margin="0,3,5,3" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        <Button x:Name="stopMotor1Button" Content="Stop Motor 1" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc1StackPanel}" Width="100" Click="stopMotor1Button_Click"/>
-                    </StackPanel>
-                    <StackPanel x:Name="motor2SpeedStackPanel" Grid.Column="0" Grid.Row="3" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="24" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
-                        <Label Content="Motor 2:    Speed" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Width="102" Height="24"/>
-                        <TextBox x:Name="motor2SpeedTextBox"  local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="99" local:TextBoxHelpers.MinValue="1" Text="20" Style="{DynamicResource PathTextbox}" Width="30" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
-                        <Label Content="Reverse" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Width="50" Height="24"/>
-                        <CheckBox x:Name="motor2ReverseCheckBox" IsChecked="False" Margin="0,3,5,3" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        <Button x:Name="stopMotor2Button" Content="Stop Motor 2" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc1StackPanel}" Width="100" Click="stopMotor2Button_Click"/>
-                    </StackPanel>
-                    <StackPanel x:Name="readAdc1StackPanel" Grid.Column="0" Grid.Row="4" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="24" Orientation="Horizontal">
+                    <StackPanel x:Name="readAdc1StackPanel" Grid.Column="0" Grid.Row="1" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="24" Orientation="Horizontal">
                         <Button x:Name="readAdc1Button" Content="Read ADC 1" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc1StackPanel}" Width="100" Click="readAdc1Button_Click"/>
                         <TextBox x:Name="readAdc1TextBox" Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" IsReadOnly="True" Width="200" Height="{Binding Height, ElementName=readAdc1StackPanel}" VerticalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="True" UseLayoutRounding="True" Cursor=""/>
                     </StackPanel>
-                    <StackPanel x:Name="readAdc2StackPanel" Grid.Column="0" Grid.Row="5" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                    <StackPanel x:Name="readAdc2StackPanel" Grid.Column="0" Grid.Row="2" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
                         <Button x:Name="readAdc2Button" Content="Read ADC 2" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc2StackPanel}" Width="100" Click="readAdc2Button_Click"/>
                         <TextBox x:Name="readAdc2TextBox" Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" IsReadOnly="True" Width="200" Height="{Binding Height, ElementName=readAdc2StackPanel}"/>
+                    </StackPanel>
+                    <StackPanel x:Name="motor1SpeedStackPanel" Grid.Column="0" Grid.Row="3" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="24" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                        <Button x:Name="stopMotor1Button" Content="Stop Motor 1" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc1StackPanel}" Width="100" Click="stopMotor1Button_Click"/>
+                        <Label Content="Backward:" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Height="24"/>
+                        <CheckBox x:Name="motor1ReverseCheckBox" IsChecked="False" Margin="0,3,5,3" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Label Content="Speed (8-bit):" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Height="24"/>
+                        <TextBox x:Name="motor1SpeedTextBox"  local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="255" local:TextBoxHelpers.MinValue="0" Text="50" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                    </StackPanel>
+                    <StackPanel x:Name="motor2SpeedStackPanel" Grid.Column="0" Grid.Row="4" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="24" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                        <Button x:Name="stopMotor2Button" Content="Stop Motor 2" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc1StackPanel}" Width="100" Click="stopMotor2Button_Click"/>
+                        <Label Content="Backward:" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Height="24"/>
+                        <CheckBox x:Name="motor2ReverseCheckBox" IsChecked="False" Margin="0,3,5,3" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Label Content="Speed (8-bit):" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Height="24"/>
+                        <TextBox x:Name="motor2SpeedTextBox"  local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="255" local:TextBoxHelpers.MinValue="0" Text="50" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                    </StackPanel>
+                    <StackPanel x:Name="readWriteEEPROM" Grid.Column="0" Grid.Row="5" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                        <Label Content="EEPROM Address" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Width="102"/>
+                        <TextBox x:Name="EepromAddressTextBox" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="511" local:TextBoxHelpers.MinValue="0" Text="511" Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" Width="30" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
+                        <Button x:Name="readEepromButton" Content="Read" HorizontalAlignment="Left" Margin="2,0,2,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc2StackPanel}" Width="45" Click="readEepromButton_Click"/>
+                        <TextBox x:Name="EepromContentTextBox" Text="123456789"  Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" Width="80" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
+                        <Button x:Name="writeEepromButton" Content="Write" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Top" Height="{Binding Height, ElementName=readAdc2StackPanel}" Width="40" Click="writeEepromButton_Click"/>
                     </StackPanel>
                 </Grid>
             </TabItem>

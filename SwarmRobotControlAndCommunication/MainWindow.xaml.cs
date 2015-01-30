@@ -58,17 +58,17 @@ namespace SwarmRobotControlAndCommunication
         private const byte COMMAND_TEST_RF_RECEIVER = 0x06;
         private const byte COMMAND_TOGGLE_LEDS = 0x07;
         private const byte COMMAND_SAMPLE_MICS_SIGNALS = 0x08;
-        private const byte COMMAND_TEST_SPEAKER = 0x09;
-        private const byte COMMAND_CHANGE_MOTOR_SPEED = 0x0A;
+        private const byte COMMAND_READ_ADC1 = 0x09;
+        private const byte COMMAND_READ_ADC2 = 0x0A;
         private const byte COMMAND_REQUEST_BATTERY_VOLT = 0x0B;
+        private const byte COMMAND_TEST_SPEAKER = 0x0C;
+        private const byte COMMAND_CHANGE_MOTOR_SPEED = 0x0D;
+        private const byte COMMAND_STOP_MOTOR1 = 0x0E;
+        private const byte COMMAND_STOP_MOTOR2 = 0x0F;
         //==== out
 
         private const byte COMMAND_SET_RUNNING_STATUS = 0xC3;
-        private const byte COMMAND_READ_ADC1 = 0xA0;
-        private const byte COMMAND_READ_ADC2 = 0xA1;
         private const byte COMMAND_DISTANCE_SENSING = 0xA2;
-        private const byte COMMAND_STOP_MOTOR1 = 0xA4;
-        private const byte COMMAND_STOP_MOTOR2 = 0xA5;
         private const byte COMMAND_READ_NEIGHBORS_TABLE = 0xA6;
         private const byte COMMAND_READ_ONEHOP_TABLE = 0xA7;
         private const byte COMMAND_READ_LOCS_TABLE = 0xA8;
@@ -602,24 +602,7 @@ namespace SwarmRobotControlAndCommunication
                         break;
 
                     case "Change Motors Speed":
-                        //TODO: construct full message
-                        transmittedData[0] = COMMAND_CHANGE_MOTOR_SPEED;
-
-                        if (motor1ReverseCheckBox.IsChecked == true)
-                            transmittedData[1] = MOTOR_REVERSE_DIRECTION;
-                        else
-                            transmittedData[1] = MOTOR_FORWARD_DIRECTION;
-
-                        transmittedData[2] = Convert.ToByte(this.motor1SpeedTextBox.Text);
-
-                        if (motor2ReverseCheckBox.IsChecked == true)
-                            transmittedData[3] = MOTOR_REVERSE_DIRECTION;
-                        else
-                            transmittedData[3] = MOTOR_FORWARD_DIRECTION;
-
-                        transmittedData[4] = Convert.ToByte(this.motor2SpeedTextBox.Text);
-
-                        theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
+                        testMotorsConfiguration(COMMAND_CHANGE_MOTOR_SPEED);
                         break;
 
                     case "Read Battery Voltage":
@@ -638,7 +621,7 @@ namespace SwarmRobotControlAndCommunication
 
         private void testReceivedData(byte Command)
         {
-            uint length = 2000;
+            uint length = 600;
             byte[] receivedData = new byte[length];
             UInt16 data = new UInt16();
             UInt16 value = 0;
@@ -718,20 +701,54 @@ namespace SwarmRobotControlAndCommunication
             }
         }
 
+        private void testMotorsConfiguration(byte Command)
+        {
+            try
+            {
+                Byte[] data = new Byte[4];
+
+                if (motor1ReverseCheckBox.IsChecked == true)
+                    data[0] = MOTOR_REVERSE_DIRECTION;
+                else
+                    data[0] = MOTOR_FORWARD_DIRECTION;
+
+                data[1] = Convert.ToByte(this.motor1SpeedTextBox.Text);
+
+                if (motor2ReverseCheckBox.IsChecked == true)
+                    data[2] = MOTOR_REVERSE_DIRECTION;
+                else
+                    data[2] = MOTOR_FORWARD_DIRECTION;
+
+                data[3] = Convert.ToByte(this.motor2SpeedTextBox.Text);
+
+                SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, Command);
+
+                SwarmMessage message = new SwarmMessage(header, data);
+
+                theControlBoard.transmitBytesToRobot(message.toByteArray(), message.getSize(), 1);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Test Motors Configuration " + ex.Message);
+            }
+        }
+
         private void readAdc1Button_Click(object sender, RoutedEventArgs e)
         {
             readADC(COMMAND_READ_ADC1, this.readAdc1TextBox);
+            setStatusBarContent("Read ADC1 successful!");
         }
 
         private void readAdc2Button_Click(object sender, RoutedEventArgs e)
         {
             readADC(COMMAND_READ_ADC2, this.readAdc2TextBox);
+            setStatusBarContent("Read ADC2 successful!");
         }
 
         private void readADC(byte Command, TextBox tBox)
         {
             uint length = 600;
-            Byte[] receivedData = new Byte[length];
+            byte[] receivedData = new byte[length];
             uint[] adcData = new uint[length / 2];
             tBox.Text = "";
             try
@@ -792,12 +809,14 @@ namespace SwarmRobotControlAndCommunication
 
         private void stopMotor1Button_Click(object sender, RoutedEventArgs e)
         {
-            theControlBoard.transmitBytesToRobot(COMMAND_STOP_MOTOR1);
+            theControlBoard.sendCommandToRobot(COMMAND_STOP_MOTOR1);
+            setStatusBarContent("Broadcast Command: Pause left motor");
         }
 
         private void stopMotor2Button_Click(object sender, RoutedEventArgs e)
         {
-            theControlBoard.transmitBytesToRobot(COMMAND_STOP_MOTOR2);
+            theControlBoard.sendCommandToRobot(COMMAND_STOP_MOTOR2);
+            setStatusBarContent("Broadcast Command: Pause right motor");
         }
 
         private void setAddressEeprom()
