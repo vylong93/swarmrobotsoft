@@ -27,6 +27,7 @@ using System.IO;
 using Microsoft.Win32;
 using System.Threading;
 using System.Diagnostics;
+using System.ComponentModel;
 
 using SwarmRobotControlAndCommunication.CustomInterfaces;
 
@@ -574,6 +575,16 @@ namespace SwarmRobotControlAndCommunication
         #endregion
 
         #region EEPROM Tab
+        private BackgroundWorker backgroundWorker = null;
+
+        private enum e_VerifyTableReturn
+        {
+            SINE_OK_ARCSINE_OK = 1,
+            SINE_OK_ARCSINE_ERROR = 2,
+            SINE_ERROR_ARCSINE_OK = 3,
+            SINE_ERROR_ARCSINE_ERROR = 4
+        }
+        
         private void setAddressEeprom()
         {
             //Byte[] transmittedData = new Byte[5]; // <set address command>< address>
@@ -596,7 +607,7 @@ namespace SwarmRobotControlAndCommunication
             byte[] data = new byte[unit * 2 + 1];
             UInt16 ui16WordIndex;
 
-            uint bufferLength = (uint)unit * 6 + 1;
+            uint bufferLength = (uint)unit * 6 + 1 + 2;
             byte rxUnit;
             UInt32 ui32RxData = 0;
             byte[] dataBuffer = new byte[bufferLength];
@@ -618,43 +629,46 @@ namespace SwarmRobotControlAndCommunication
             data[5] = (byte)((ui16WordIndex >> 8) & 0x0FF);
             data[6] = (byte)(ui16WordIndex & 0x0FF);
 
-            SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_EEPROM_DATA_READ);
-            SwarmMessage message = new SwarmMessage(header, data);
-            theControlBoard.transmitBytesToRobot(message.toByteArray(), message.getSize(), 1);
-
-            theControlBoard.receiveBytesFromRobot(bufferLength, ref dataBuffer, 1000);
-            SwarmMessage rxMessage = SwarmMessage.ConstructFromByteArray(dataBuffer);
-            byte[] messageContent;
-            if (rxMessage.getHeader().getMessageType() == e_MessageType.MESSAGE_TYPE_ROBOT_RESPONSE
-                && rxMessage.getHeader().getCmd() == ROBOT_RESPONSE_OK)
+            try
             {
-                messageContent = rxMessage.toByteArray();
-                rxUnit = messageContent[0];
-                if (rxUnit == unit)
+                theControlBoard.receiveBytesFromRobot(COMMAND_EEPROM_DATA_READ, data, bufferLength, ref dataBuffer, 1000);
+
+                SwarmMessage rxMessage = SwarmMessage.ConstructFromByteArray(dataBuffer);
+                byte[] messageContent;
+                if (rxMessage.getHeader().getMessageType() == e_MessageType.MESSAGE_TYPE_ROBOT_RESPONSE
+                    && rxMessage.getHeader().getCmd() == ROBOT_RESPONSE_OK)
                 {
-                    constructWordIndexAndDataContent(ref ui16WordIndex, ref ui32RxData, messageContent, 1);
-                    this.EepromRobotIdWordIndexTextBox.Text = ui16WordIndex.ToString();
-                    this.EepromRobotIdTextBox.Text = ui32RxData.ToString("X8");
+                    messageContent = rxMessage.getData();
+                    rxUnit = messageContent[0];
+                    if (rxUnit == unit)
+                    {
+                        constructWordIndexAndDataContent(ref ui16WordIndex, ref ui32RxData, messageContent, 1);
+                        this.EepromRobotIdWordIndexTextBox.Text = ui16WordIndex.ToString();
+                        this.EepromRobotIdTextBox.Text = ui32RxData.ToString("X8");
 
-                    constructWordIndexAndDataContent(ref ui16WordIndex, ref ui32RxData, messageContent, 7);
-                    this.EepromInterceptWordIndexTextBox.Text = ui16WordIndex.ToString();
-                    float fIntercept = (float)(ui32RxData / 32768.0);
-                    this.EepromInterceptTextBox.Text = fIntercept.ToString("0.0000");
+                        constructWordIndexAndDataContent(ref ui16WordIndex, ref ui32RxData, messageContent, 7);
+                        this.EepromInterceptWordIndexTextBox.Text = ui16WordIndex.ToString();
+                        float fIntercept = (float)(ui32RxData / 32768.0);
+                        this.EepromInterceptTextBox.Text = fIntercept.ToString("0.0000");
 
-                    constructWordIndexAndDataContent(ref ui16WordIndex, ref ui32RxData, messageContent, 13);
-                    this.EepromSlopeWordIndexTextBox.Text = ui16WordIndex.ToString();
-                    float fSlope = (float)(ui32RxData / 32768.0);
-                    this.EepromSlopeTextBox.Text = fSlope.ToString("0.0000");
+                        constructWordIndexAndDataContent(ref ui16WordIndex, ref ui32RxData, messageContent, 13);
+                        this.EepromSlopeWordIndexTextBox.Text = ui16WordIndex.ToString();
+                        float fSlope = (float)(ui32RxData / 32768.0);
+                        this.EepromSlopeTextBox.Text = fSlope.ToString("0.0000");
 
-                    setStatusBarContent("EEPROM Data Read: OK!");
+                        setStatusBarContent("EEPROM Data Read: OK!");
+                    }
+                }
+                else
+                {
+                    setStatusBarContent("EEPROM data read: Wrong response...");
                 }
             }
-            else
+            catch (Exception ex)
             {
-                setStatusBarContent("EEPROM data read: Wrong response...");
+                defaultExceptionHandle(ex);
             }
         }
-
         void constructWordIndexAndDataContent(ref UInt16 ui16WordIndex, ref UInt32 ui32RxData, byte[] data, uint offset)
         {
             ui16WordIndex = (UInt16)((data[offset] << 8) | data[offset + 1]);
@@ -703,7 +717,6 @@ namespace SwarmRobotControlAndCommunication
                 throw new Exception("EEPROM Synchronous Data " + ex.Message);
             }
         }
-
         void fillPairIndexAndWordToByteArray(UInt16 uiIndex, UInt32 ui32Data, byte[] data, UInt32 offset)
         {
             data[offset] = (byte)((uiIndex >> 8) & 0xFF);
@@ -713,6 +726,236 @@ namespace SwarmRobotControlAndCommunication
             data[offset + 4] = (byte)((ui32Data >> 8) & 0xFF);
             data[offset + 5] = (byte)(ui32Data & 0xFF);
         }
+
+        private void EepromProgramTableButton_Click(object sender, RoutedEventArgs e)
+        {
+            assignTaskForBackgroundWorker((Button)sender, "Cancel Update");
+        }
+
+        private void EepromTableVerifyButton_Click(object sender, RoutedEventArgs e)
+        {
+            assignTaskForBackgroundWorker((Button)sender, "Cancel Verify");
+        }
+
+        #region EEPROM backgroundWorker
+        private void assignTaskForBackgroundWorker(Button buttonClicked, string busyContent)
+        {
+            Object originalContent = buttonClicked.Content;
+
+            bool bIsCancel = false;
+            try
+            {
+                if (backgroundWorker == null)
+                {
+                    backgroundWorker = new BackgroundWorker();
+
+                    backgroundWorker.WorkerReportsProgress = true;
+                    backgroundWorker.WorkerSupportsCancellation = true;
+
+                    backgroundWorker.DoWork += new DoWorkEventHandler(backgroundWorkerTableManipulation_DoWork);
+                    backgroundWorker.ProgressChanged += new ProgressChangedEventHandler(backgroundWorkerTableManipulation_ProgressChanged);
+
+                    switch ((string)buttonClicked.Content)
+                    {
+                        case "Verify Table":
+                            backgroundWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(backgroundWorkerTableVerifying_RunWorkerCompleted);
+                            break;
+
+                        case "Update Table":
+                            backgroundWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(backgroundWorkerTableProgramming_RunWorkerCompleted);
+                            break;
+
+                        default:
+                            throw new Exception("Unrecognize button task");
+                    }
+                }
+
+                if ((string)(buttonClicked.Content) == busyContent)
+                {
+                    backgroundWorker.CancelAsync();
+                    bIsCancel = true;
+                }
+                else
+                {
+                    toggleAllButtonStatusExceptSelected(buttonClicked);
+                    setStatusBarContentAndColor("Busy", Brushes.Indigo);
+
+                    tableVerifyProgramBar.Value = 0;
+                    backgroundWorker.RunWorkerAsync((string)buttonClicked.Content);
+
+                    buttonClicked.Content = busyContent;
+
+                    setStatusBarContent("EEPROM Table Manipulation: Simulate UI Only...");
+                }
+
+            }
+            catch (Exception ex)
+            {
+                defaultExceptionHandle(new Exception("Verify EEPROM " + ex.Message));
+            }
+            finally
+            {
+                if (bIsCancel)
+                {
+                    tableVerifyProgramBar.Value = 0;
+                    setStatusBarAndButtonsAppearanceFromDeviceState();
+                }
+            }
+        }
+        
+        private void backgroundWorkerTableManipulation_DoWork(object sender, DoWorkEventArgs e)
+        {
+            string buttonClickedContent = (string)e.Argument;
+            switch (buttonClickedContent)
+            {
+                case "Verify Table":
+                    tableVerifying_DoWork(sender, e);
+                    break;
+
+                case "Update Table":
+                    tableProgramming_DoWork(sender, e);
+                    break;
+
+                default:
+                    break;
+            }
+        }
+        private void tableVerifying_DoWork(object sender, DoWorkEventArgs e)
+        {
+            //TODO: put your task here
+
+            //Test only-------------------------------------------------------
+            int count = 10; 
+            int sum = 0;
+            for (int i = 1; i <= count; i++)
+            {
+                if (backgroundWorker.CancellationPending)
+                {
+                    e.Cancel = true;
+                    break;
+                }
+
+                sum += i;
+
+                backgroundWorker.ReportProgress(i * 100 / count);
+
+                System.Threading.Thread.Sleep(300);
+            }
+
+            e.Result = e_VerifyTableReturn.SINE_ERROR_ARCSINE_ERROR;
+            //-------------------------------------------------------Test only
+        }
+        private void tableProgramming_DoWork(object sender, DoWorkEventArgs e)
+        {
+            //TODO: put your task here
+
+            //Test only-------------------------------------------------------
+            int count = 28;
+            int sum = 0;
+            for (int i = 1; i <= count; i++)
+            {
+                if (backgroundWorker.CancellationPending)
+                {
+                    e.Cancel = true;
+                    break;
+                }
+
+                sum += i;
+
+                backgroundWorker.ReportProgress(i * 100 / count);
+
+                System.Threading.Thread.Sleep(300);
+            }
+
+            e.Result = e_VerifyTableReturn.SINE_ERROR_ARCSINE_ERROR;
+            //-------------------------------------------------------Test only
+        }
+
+        private void backgroundWorkerTableManipulation_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            tableVerifyProgramBar.Value = e.ProgressPercentage;
+
+            Double percentSineTable;
+            Double percentArcSineTable;
+
+            if (e.ProgressPercentage == 100)
+            {
+                percentSineTable = 100;
+                percentArcSineTable = 100;
+            }
+            else if (e.ProgressPercentage > 50 && (e.ProgressPercentage < 100))
+            {          
+                percentSineTable = 100;
+                percentArcSineTable = (e.ProgressPercentage - 50) * 2;
+            }
+            else
+            {
+                percentSineTable = e.ProgressPercentage * 2;
+                percentArcSineTable = 0;
+            }
+
+            SineTableStatusTextBox.Text = percentSineTable.ToString() + "%";
+            ArcSineTableStatusTextBox.Text = percentArcSineTable.ToString() + "%";
+        }
+       
+        private void backgroundWorkerTableVerifying_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            tableManipulation_RunWorkerCompleted(sender, e);
+
+            backgroundWorker.RunWorkerCompleted -= backgroundWorkerTableVerifying_RunWorkerCompleted;
+            backgroundWorker = null;
+
+            this.EepromTableVerifyButton.Content = "Verify Table";
+        }
+        private void backgroundWorkerTableProgramming_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            tableManipulation_RunWorkerCompleted(sender, e);
+
+            backgroundWorker.RunWorkerCompleted -= backgroundWorkerTableProgramming_RunWorkerCompleted;
+            backgroundWorker = null;
+
+            this.EepromTableUpdatingButton.Content = "Update Table";
+        }
+        private void tableManipulation_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        { 
+                    if (e.Cancelled)
+            {
+                ArcSineTableStatusTextBox.Text = "0%";
+                SineTableStatusTextBox.Text = "0%";
+            }
+            else
+            {
+                switch ((e_VerifyTableReturn)(e.Result))
+                {
+                    case e_VerifyTableReturn.SINE_OK_ARCSINE_OK:
+                        SineTableStatusTextBox.Text = "Good!";
+                        ArcSineTableStatusTextBox.Text = "Good!";
+                        break;
+
+                    case e_VerifyTableReturn.SINE_OK_ARCSINE_ERROR:
+                        SineTableStatusTextBox.Text = "Good!";
+                        ArcSineTableStatusTextBox.Text = "Bad...";
+                        break;
+
+                    case e_VerifyTableReturn.SINE_ERROR_ARCSINE_OK:
+                        SineTableStatusTextBox.Text = "Bad...";
+                        ArcSineTableStatusTextBox.Text = "Good!";
+                        break;
+
+                    case e_VerifyTableReturn.SINE_ERROR_ARCSINE_ERROR:
+                        SineTableStatusTextBox.Text = "Bad...";
+                        ArcSineTableStatusTextBox.Text = "Bad...";
+                        break;
+                }
+            }
+
+            tableVerifyProgramBar.Value = 0;
+            setStatusBarAndButtonsAppearanceFromDeviceState();
+
+            backgroundWorker.DoWork -= backgroundWorkerTableManipulation_DoWork;
+            backgroundWorker.ProgressChanged -= backgroundWorkerTableManipulation_ProgressChanged;
+        }
+        #endregion
 
         #endregion
 
