@@ -730,11 +730,11 @@ namespace SwarmRobotControlAndCommunication
                 switch (command)
                 {
                     case "Test Robot's RF Transmistter":
-                        testReceivedData(COMMAND_TEST_RF_TRANSMISTER);
+                        testRobotTransmitter(COMMAND_TEST_RF_TRANSMISTER);
                         break;
 
                     case "Test Robot's RF Receiver":
-                        testTransmittingData(COMMAND_TEST_RF_RECEIVER);
+                        testRobotReceiver(COMMAND_TEST_RF_RECEIVER);
                         break;
 
                     case "Toggle All Status Leds":
@@ -767,15 +767,21 @@ namespace SwarmRobotControlAndCommunication
             }
         }
 
-        private void testReceivedData(byte Command)
+        private void testRobotTransmitter(byte Command)
         {
             uint length = 600;
+            byte[] commandContent = new byte[4];
+            commandContent[0] = (byte)((length >> 24) & 0xFF);
+            commandContent[1] = (byte)((length >> 16) & 0xFF);
+            commandContent[2] = (byte)((length >> 8) & 0xFF);
+            commandContent[3] = (byte)(length & 0xFF);
+
             byte[] receivedData = new byte[length];
             UInt16 data = new UInt16();
             UInt16 value = 0;
             try
             {
-                theControlBoard.receiveBytesFromRobot(Command, length, ref receivedData, 1000);
+                theControlBoard.receiveBytesFromRobot(Command, commandContent, length, ref receivedData, 1000);
                 uint i = 0;
                 while (true)
                 {
@@ -803,7 +809,7 @@ namespace SwarmRobotControlAndCommunication
             }
         }
 
-        private void testTransmittingData(byte commandNumber)
+        private void testRobotReceiver(byte commandNumber)
         {
             try
             {
@@ -901,7 +907,7 @@ namespace SwarmRobotControlAndCommunication
             tBox.Text = "";
             try
             {
-                theControlBoard.receiveBytesFromRobot(Command, length, ref receivedData, 1000);
+                theControlBoard.receiveBytesFromRobot(Command, null, length, ref receivedData, 1000);
                 uint i = 0;
                 for (uint pointer = 0; pointer < length / 2; pointer++)
                 {
@@ -932,7 +938,7 @@ namespace SwarmRobotControlAndCommunication
 
             try
             {
-                theControlBoard.receiveBytesFromRobot(COMMAND_REQUEST_BATTERY_VOLT, length, ref receivedData, 1000);
+                theControlBoard.receiveBytesFromRobot(COMMAND_REQUEST_BATTERY_VOLT, null, length, ref receivedData, 1000);
                 SwarmMessage rxMessage = SwarmMessage.ConstructFromByteArray(receivedData);
                 if (rxMessage.getHeader().getMessageType() == e_MessageType.MESSAGE_TYPE_ROBOT_RESPONSE
                     && rxMessage.getHeader().getCmd() == ROBOT_RESPONSE_OK)
@@ -1073,7 +1079,7 @@ namespace SwarmRobotControlAndCommunication
 
                 try
                 {
-                    theControlBoard.receiveBytesFromRobot(COMMAND_READ_VECTOR, length, ref receivedData, 1000);
+                    theControlBoard.receiveBytesFromRobot(COMMAND_READ_VECTOR, null, length, ref receivedData, 1000);
 
                     temp = (float)((Int32)((receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3]) / 65536.0);
                     xAxis.Add(temp);
@@ -1129,7 +1135,7 @@ namespace SwarmRobotControlAndCommunication
 
                 try
                 {
-                    theControlBoard.receiveBytesFromRobot(COMMAND_READ_CORRECTION_ANGLE, length, ref receivedData, 1000);
+                    theControlBoard.receiveBytesFromRobot(COMMAND_READ_CORRECTION_ANGLE, null, length, ref receivedData, 1000);
 
                     correctionAngleInRadian = (float)((Int32)((receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3]) / 65536.0);
                     lstAngle.Add(correctionAngleInRadian);
@@ -1172,7 +1178,7 @@ namespace SwarmRobotControlAndCommunication
             double distanceInCm = 0;
             try
             {
-                theControlBoard.receiveBytesFromRobot(COMMAND_READ_NEIGHBORS_TABLE, length, ref receivedData, 1000);
+                theControlBoard.receiveBytesFromRobot(COMMAND_READ_NEIGHBORS_TABLE, null, length, ref receivedData, 1000);
 
                 for (int i = 0; i < 10; i++)
                 {
@@ -1212,7 +1218,7 @@ namespace SwarmRobotControlAndCommunication
 
             try
             {
-                theControlBoard.receiveBytesFromRobot(COMMAND_READ_ONEHOP_TABLE, length, ref receivedData, 1000);
+                theControlBoard.receiveBytesFromRobot(COMMAND_READ_ONEHOP_TABLE, null, length, ref receivedData, 1000);
 
                 for (int i = 0; i < 10; i++)
                 {
@@ -1287,7 +1293,7 @@ namespace SwarmRobotControlAndCommunication
             float[] dataY = new float[10];
             try
             {
-                theControlBoard.receiveBytesFromRobot(COMMAND_READ_LOCS_TABLE, length, ref receivedData, 1000);
+                theControlBoard.receiveBytesFromRobot(COMMAND_READ_LOCS_TABLE, null,length, ref receivedData, 1000);
 
                 for (int i = 0; i < 10; i++)
                 {

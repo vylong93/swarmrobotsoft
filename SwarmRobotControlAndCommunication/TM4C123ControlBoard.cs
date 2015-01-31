@@ -252,7 +252,6 @@ namespace SwarmRobotControlAndCommunication
             transmitBytesToRobot(message.toByteArray(), message.getSize(), 0);
         }
 
-
         /// <summary>
         /// An overload function that used to transmit only one byte
         /// </summary>
@@ -347,14 +346,14 @@ namespace SwarmRobotControlAndCommunication
         /// <param name="dataLength">The length of the expected data (also transmitted to the target)</param>
         /// <param name="data">The buffer to hold the received data</param>
         /// <param name="waitTime">The waiting time for a packet to be received</param>
-        public void receiveBytesFromRobot(byte command, UInt32 dataLength, ref byte[] data, UInt32 waitTime)
+        public void receiveBytesFromRobot(byte command, byte[] commandContent, UInt32 dataLength, ref byte[] data, UInt32 waitTime)
         {
             try
             {
                 if (dataLength < 1)
                     throw new Exception("Data length must be larger than 1");
 
-                setupControlBoardBeforeReceivingData(command, RECEIVE_DATA_FROM_ROBOT_WITH_COMMAND, dataLength, waitTime);
+                setupControlBoardBeforeReceivingData(command, commandContent, RECEIVE_DATA_FROM_ROBOT_WITH_COMMAND, dataLength, waitTime);
                 startReceivingData(ref dataLength, ref data);
             }
             catch (Exception ex)
@@ -363,21 +362,11 @@ namespace SwarmRobotControlAndCommunication
                                     "Number of data left: " + dataLength.ToString());
             }
         }
-        private void setupControlBoardBeforeReceivingData(byte command, byte receiveMode, UInt32 numberOfReceivedBytes, UInt32 waitTime)
+        private void setupControlBoardBeforeReceivingData(byte command, byte[] commandContent, byte receiveMode, UInt32 numberOfReceivedBytes, UInt32 waitTime)
         {
-            const int COMMAND_HEADER_LENGTH = 6;
-            SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, command);
-
-            byte[] byteBuffer = new byte[4];
-
-            byteBuffer[0] = (byte)((numberOfReceivedBytes >> 24) & 0x0FF);
-            byteBuffer[1] = (byte)((numberOfReceivedBytes >> 16) & 0x0FF);
-            byteBuffer[2] = (byte)((numberOfReceivedBytes >> 8) & 0x0FF);
-            byteBuffer[3] = (byte)(numberOfReceivedBytes & 0x0FF);
-
-            SwarmMessage message = new SwarmMessage(header, byteBuffer);
-
-            byte[] messageByte = message.toByteArray();
+            const int COMMAND_HEADER_LENGTH = 11;
+            SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, command);   
+            SwarmMessage message = new SwarmMessage(header, commandContent);
 
             if (message.getSize() > (65 - COMMAND_HEADER_LENGTH))
             {
@@ -389,16 +378,24 @@ namespace SwarmRobotControlAndCommunication
             outputBuffer[0] = 0;
             outputBuffer[1] = receiveMode;
 
-            outputBuffer[2] = (byte)((waitTime >> 24) & 0x0FF);
-            outputBuffer[3] = (byte)((waitTime >> 16) & 0x0FF);
-            outputBuffer[4] = (byte)((waitTime >> 8) & 0x0FF);
-            outputBuffer[5] = (byte)(waitTime & 0x0FF);
+            outputBuffer[2] = (byte)((numberOfReceivedBytes >> 24) & 0x0FF);
+            outputBuffer[3] = (byte)((numberOfReceivedBytes >> 16) & 0x0FF);
+            outputBuffer[4] = (byte)((numberOfReceivedBytes >> 8) & 0x0FF);
+            outputBuffer[5] = (byte)(numberOfReceivedBytes & 0x0FF);
 
-            for (int i = 0; i < messageByte.Length; i++)
+            outputBuffer[6] = (byte)((waitTime >> 24) & 0x0FF);
+            outputBuffer[7] = (byte)((waitTime >> 16) & 0x0FF);
+            outputBuffer[8] = (byte)((waitTime >> 8) & 0x0FF);
+            outputBuffer[9] = (byte)(waitTime & 0x0FF);
+
+            outputBuffer[10] = (byte)(message.getSize());
+
+            byte[] messageInByte = message.toByteArray();
+            for (int i = 0; i < messageInByte.Length; i++)
             {
-                outputBuffer[i + COMMAND_HEADER_LENGTH] = messageByte[i];
+                outputBuffer[i + COMMAND_HEADER_LENGTH] = messageInByte[i];
             }
-
+            
             sendDataToControlBoard(outputBuffer);
         }
         private void startReceivingData(ref UInt32 numberOfReceivedBytes, ref byte[] data)
@@ -472,7 +469,7 @@ namespace SwarmRobotControlAndCommunication
                 if (dataLength < 1)
                     throw new Exception("Data length must be larger than 1");
 
-                setupControlBoardBeforeReceivingData(0, RECEIVE_DATA_FROM_ROBOT, dataLength, waitTime);
+                setupControlBoardBeforeReceivingData(0, null, RECEIVE_DATA_FROM_ROBOT, dataLength, waitTime);
                 startReceivingData(ref dataLength, ref data);
             }
             catch (Exception ex)
@@ -508,7 +505,7 @@ namespace SwarmRobotControlAndCommunication
                     throw new Exception(message);
                 }
 
-                setupControlBoardBeforeReceivingData(0, RECEIVE_DATA_FROM_ROBOT, dataLength, waitTime);
+                setupControlBoardBeforeReceivingData(0, null, RECEIVE_DATA_FROM_ROBOT, dataLength, waitTime);
 
                 //TODO: fix this DUMMY read
                 inputBuffer = readDataFromControlBoard();
