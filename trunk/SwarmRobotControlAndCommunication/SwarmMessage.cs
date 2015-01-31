@@ -43,10 +43,17 @@ namespace SwarmRobotControlAndCommunication
         public SwarmMessage(SwarmMessageHeader header, byte[] data)
         {
             this.header = header;
-            this.data = new byte[data.Length];
-            for (int i = 0; i < data.Length; i++)
+            if (data == null)
             {
-                this.data[i] = data[i];
+                this.data = null;
+            }
+            else
+            {
+                this.data = new byte[data.Length];
+                for (int i = 0; i < data.Length; i++)
+                {
+                    this.data[i] = data[i];
+                }
             }
         }
         public uint getSize()

@@ -92,7 +92,7 @@ namespace SwarmRobotControlAndCommunication.CustomInterfaces
         /// <param name="dataLength">The length of the expected data (also transmitted to the target)</param>
         /// <param name="data">The buffer to hold the received data</param>
         /// <param name="waitTime">The waiting time for a packet to be received</param>
-        void receiveBytesFromRobot(byte command, UInt32 dataLength, ref byte[] data, UInt32 waitTime);
+        void receiveBytesFromRobot(byte command, byte[] commandContent, UInt32 dataLength, ref byte[] data, UInt32 waitTime);
 
         /// <summary>
         /// Receive data from target through the control board 
