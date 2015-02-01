@@ -51,6 +51,7 @@ namespace SwarmRobotControlAndCommunication
         private const byte TRANSMIT_DATA_TO_ROBOT_FAILED = 0xFA;
         private const byte DELAY_AFTER_MAX_DATA_TRANSMITTED = 1;
         private const byte MAX_NUM_BYTE_TRANSMITTED = 32;
+        private const byte MAX_NUM_BSL_PACKET_LENGTH_TRANSMITTED = 64;
         private const byte RECEIVE_DATA_FROM_ROBOT_ERROR = 0xEE;
         private const byte RECEIVE_DATA_FROM_ROBOT_CONTINUE = 0xAE;
         private const byte MAX_NUM_BYTE_RECEIVED = 32;
@@ -238,6 +239,51 @@ namespace SwarmRobotControlAndCommunication
                 throw new Exception(string.Format("Control Board: Transmit {0} bytes to device: \n", numberOfTransmittedBytes) + ex.Message);
             }
         }
+        public void transmitBslPacketToRobot(byte[] transmittedData, UInt32 numberOfTransmittedBytes, byte delayTimeBeforeSendResponeToPC)
+        {
+            try
+            {
+                if (numberOfTransmittedBytes < 1)
+                    throw new Exception("Data lengh must be larger than 1");
+
+                Byte[] outputBuffer = new Byte[USB_BUFFER_LENGTH];
+                UInt32 dataPointer = 0;
+                byte bufferPointer = 0;
+                byte dataLength = 0;
+                byte delayTime = DELAY_AFTER_MAX_DATA_TRANSMITTED;
+
+                outputBuffer[0] = 0;
+                outputBuffer[1] = TRANSMIT_DATA_TO_ROBOT;
+
+                while (true)
+                {
+                    calculateRemainedBslPacketLength(ref numberOfTransmittedBytes, ref dataLength);
+
+                    if (isEndOfSentData(numberOfTransmittedBytes))
+                        delayTime = delayTimeBeforeSendResponeToPC;
+
+                    outputBuffer[2] = dataLength;
+                    outputBuffer[3] = delayTime;
+
+                    for (bufferPointer = 0; bufferPointer < dataLength; bufferPointer++)
+                    {
+                        outputBuffer[4 + bufferPointer] = transmittedData[dataPointer];
+                        dataPointer++;
+                    }
+
+                    sendDataToControlBoard(outputBuffer);
+
+                    isOperationFinishOk(TRANSMIT_DATA_TO_ROBOT_DONE, TRANSMIT_DATA_TO_ROBOT_FAILED);
+
+                    if (isEndOfSentData(numberOfTransmittedBytes))
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(string.Format("Control Board: Transmit {0} bytes to device: \n", numberOfTransmittedBytes) + ex.Message);
+            }
+        }
 
         public void transmitBytesToRobotWithACK(byte[] transmittedData, UInt32 numberOfTransmittedBytes, byte delayTimeBeforeSendResponeToPC)
         {
@@ -290,6 +336,19 @@ namespace SwarmRobotControlAndCommunication
             else
             {
                 dataLength = MAX_NUM_BYTE_TRANSMITTED;
+                numberOfTransmittedBytes -= dataLength;
+            }
+        }
+        void calculateRemainedBslPacketLength(ref UInt32 numberOfTransmittedBytes, ref byte dataLength)
+        {
+            if (numberOfTransmittedBytes <= MAX_NUM_BSL_PACKET_LENGTH_TRANSMITTED)
+            {
+                dataLength = (byte)(numberOfTransmittedBytes & 0xFF);
+                numberOfTransmittedBytes = 0;
+            }
+            else
+            {
+                dataLength = MAX_NUM_BSL_PACKET_LENGTH_TRANSMITTED;
                 numberOfTransmittedBytes -= dataLength;
             }
         }
@@ -506,11 +565,6 @@ namespace SwarmRobotControlAndCommunication
                 }
 
                 setupControlBoardBeforeReceivingData(0, null, RECEIVE_DATA_FROM_ROBOT, dataLength, waitTime);
-
-                //TODO: fix this DUMMY read
-                inputBuffer = readDataFromControlBoard();
-                if (inputBuffer[33] == RECEIVE_DATA_FROM_ROBOT_ERROR)
-                    return false;
 
                 inputBuffer = readDataFromControlBoard();
                 if (inputBuffer[33] == RECEIVE_DATA_FROM_ROBOT_ERROR)

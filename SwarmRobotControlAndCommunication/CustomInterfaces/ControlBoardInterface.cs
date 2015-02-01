@@ -74,6 +74,7 @@ namespace SwarmRobotControlAndCommunication.CustomInterfaces
         /// This parameter can be used when we need to wait for the target to finish a certain action before sending the next command or data.
         /// </param>
         void transmitBytesToRobot(byte[] transmittedData, UInt32 numberOfTransmittedBytes, byte delayTimeBeforeSendResponeToPC);
+        void transmitBslPacketToRobot(byte[] transmittedData, UInt32 numberOfTransmittedBytes, byte delayTimeBeforeSendResponeToPC);
         void transmitBytesToRobotWithACK(byte[] transmittedData, UInt32 numberOfTransmittedBytes, byte delayTimeBeforeSendResponeToPC);
         void sendCommandToRobot(byte cmd);
 

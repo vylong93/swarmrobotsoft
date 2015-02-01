@@ -525,7 +525,7 @@ namespace SwarmRobotControlAndCommunication
             transmitData[1] = (byte)((transferSize >> 16) & 0xFF);
             transmitData[2] = (byte)((transferSize >> 8) & 0xFF);
             transmitData[3] = (byte)(transferSize & 0xFF);
-            theControlBoard.transmitBytesToRobot(transmitData, 4, 1);
+            theControlBoard.transmitBslPacketToRobot(transmitData, 4, 1);
             //System.Threading.Thread.Sleep((int)(WAIT_FOR_MASS_FLASH_ERASE*transferSize/1024));
             System.Threading.Thread.Sleep(WAIT_FOR_MASS_FLASH_ERASE);
             //MessageBox.Show(transferSize.ToString());
@@ -757,7 +757,7 @@ namespace SwarmRobotControlAndCommunication
                     {
                         for (int i = 0; i < NUMBER_OF_RESEND_LAST_PACKET; i++)
                         {
-                            theControlBoard.transmitBytesToRobot(transmitBuffer, programPacketLength, 0);
+                            theControlBoard.transmitBslPacketToRobot(transmitBuffer, programPacketLength, 0);
 
                             isReceivedSignal = theControlBoard.tryReceiveBytesFromRobot(1, ref nackSignal, DATA_FRAME_NACK_WAIT_TIME);
 
@@ -791,10 +791,9 @@ namespace SwarmRobotControlAndCommunication
                     }
                     else
                     {
-                        theControlBoard.transmitBytesToRobot(transmitBuffer, programPacketLength, 0);
+                        theControlBoard.transmitBslPacketToRobot(transmitBuffer, programPacketLength, 0);
 
                         isReceivedSignal = theControlBoard.tryReceiveBytesFromRobot(1, ref nackSignal, DATA_FRAME_NACK_WAIT_TIME);
-
 
                         if (isReceivedSignal)
                         {
