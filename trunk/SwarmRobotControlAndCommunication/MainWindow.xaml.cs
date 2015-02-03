@@ -351,6 +351,12 @@ namespace SwarmRobotControlAndCommunication
         {
             theControlBoard.sendCommandToRobot(COMMAND_WAKE_UP);
 
+            Thread.Sleep(10);
+
+            theControlBoard.sendCommandToRobot(COMMAND_RESET);
+
+            Thread.Sleep(500);
+
             // Prepare robots so they can go into bootloader mode
             // when receive the command goIntoBootloaderMode.
             Button buttonClicked = (Button)sender;
