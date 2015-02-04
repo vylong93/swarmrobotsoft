@@ -50,11 +50,11 @@ namespace SwarmRobotControlAndCommunication
         private const byte TRANSMIT_DATA_TO_ROBOT_DONE = 0xAA;
         private const byte TRANSMIT_DATA_TO_ROBOT_FAILED = 0xFA;
         private const byte DELAY_AFTER_MAX_DATA_TRANSMITTED = 1;
-        private const byte MAX_NUM_BYTE_TRANSMITTED = 32;
-        private const byte MAX_NUM_BSL_PACKET_LENGTH_TRANSMITTED = 64;
+        private const byte MAX_NUM_BYTE_TRANSMITTED = 16;
+        private const byte MAX_NUM_BSL_PACKET_LENGTH_TRANSMITTED = 28;
         private const byte RECEIVE_DATA_FROM_ROBOT_ERROR = 0xEE;
         private const byte RECEIVE_DATA_FROM_ROBOT_CONTINUE = 0xAE;
-        private const byte MAX_NUM_BYTE_RECEIVED = 32;
+        private const byte MAX_NUM_BYTE_RECEIVED = 16;
 
         public string failedToSendData = "Can't send data to the control board";
         public string failedToReadData = "No respone from the control board";

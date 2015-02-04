@@ -413,10 +413,13 @@ namespace SwarmRobotControlAndCommunication
                         ellipseProgressEffect.Stop();
                         this.progressProgramBar.Value = 0;
                         setStatusBarAndButtonsAppearanceFromDeviceState();
+
+                        Thread.Sleep(100);
+
+                        theControlBoard.configureNormalProtocol();
                     }
                     );
                 }
-                theControlBoard.configureNormalProtocol();
             }
         }
         private void toggleAllButtonStatusExceptSelected(Button buttonClicked)
