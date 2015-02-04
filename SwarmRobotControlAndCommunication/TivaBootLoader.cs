@@ -95,7 +95,7 @@ namespace SwarmRobotControlAndCommunication
             /// The size of one block of bytes that will be written
             /// into the  flash memory in each programming frame
             /// </summary>
-            private const byte SIZE_ONE_PROGRAM_BLOCK = 32; 
+            private const byte SIZE_ONE_PROGRAM_BLOCK = 16; 
 
             /// <summary>
             /// The waitting time for a NACK signal to be received (unit: ms).
