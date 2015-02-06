@@ -176,65 +176,68 @@ namespace SwarmRobotControlAndCommunication
                     throw new Exception("Data lengh must be larger than 1");
 
                 Byte[] outputBuffer = new Byte[USB_BUFFER_LENGTH];
+                Byte[] inputBuffer = new Byte[USB_BUFFER_LENGTH];
                 UInt32 dataPointer = 0;
                 byte bufferPointer = 0;
                 byte dataLength = 0;
-                byte delayTime = DELAY_AFTER_MAX_DATA_TRANSMITTED;
+                byte delayTime = delayTimeBeforeSendResponeToPC;
 
                 outputBuffer[0] = 0;
                 outputBuffer[1] = BOOTLOADER_BROADCAST_PACKET;
 
-                while (true)
+                if (numberOfTransmittedBytes <= MAX_NUM_BSL_PACKET_LENGTH_TRANSMITTED)
                 {
-                    calculateRemainedBslPacketLength(ref numberOfTransmittedBytes, ref dataLength);
-
-                    if (isEndOfSentData(numberOfTransmittedBytes))
-                        delayTime = delayTimeBeforeSendResponeToPC;
-
-                    outputBuffer[2] = dataLength;
-                    outputBuffer[3] = delayTime;
-
-                    for (bufferPointer = 0; bufferPointer < dataLength; bufferPointer++)
-                    {
-                        outputBuffer[4 + bufferPointer] = transmittedData[dataPointer];
-                        dataPointer++;
-                    }
-
-                    sendDataToControlBoard(outputBuffer);
-
-                    isOperationFinishOk(BOOTLOADER_BROADCAST_PACKET_DONE, BOOTLOADER_BROADCAST_PACKET_FAILED);
-
-                    if (isEndOfSentData(numberOfTransmittedBytes))
-                        break;
+                    dataLength = (byte)(numberOfTransmittedBytes & 0xFF);
                 }
+                else
+                {
+                    throw new Exception("Bootloader Program Packet too large!");
+                }
+
+                outputBuffer[2] = dataLength;
+                outputBuffer[3] = delayTime;
+
+                for (bufferPointer = 0; bufferPointer < dataLength; bufferPointer++)
+                {
+                    outputBuffer[4 + bufferPointer] = transmittedData[dataPointer];
+                    dataPointer++;
+                }
+
+                sendDataToControlBoard(outputBuffer);
+
+                inputBuffer = readDataFromControlBoard();
+
+                if (inputBuffer[1] == BOOTLOADER_BROADCAST_PACKET_DONE)
+                    return;
+
+                if (inputBuffer[1] == BOOTLOADER_BROADCAST_PACKET_FAILED)
+                    throw new Exception("Operation Failed");
             }
             catch (Exception ex)
             {
                 throw new Exception(string.Format("Control Board: Broadcast bootloader packet: {0}\n", ex.Message));
             }
         }
-        private void calculateRemainedBslPacketLength(ref UInt32 numberOfTransmittedBytes, ref byte dataLength)
-        {
-            if (numberOfTransmittedBytes <= MAX_NUM_BSL_PACKET_LENGTH_TRANSMITTED)
-            {
-                dataLength = (byte)(numberOfTransmittedBytes & 0xFF);
-                numberOfTransmittedBytes = 0;
-            }
-            else
-            {
-                dataLength = MAX_NUM_BSL_PACKET_LENGTH_TRANSMITTED;
-                numberOfTransmittedBytes -= dataLength;
-            }
-        }
-        
+
+        /// <summary>
+        /// Scan for any jamming signal
+        /// </summary>
         public bool tryToDetectJammingSignal(UInt32 waitTime)
         {
-            byte[] outputBuffer = new Byte[65];
-            byte[] inputBuffer = new Byte[65];
+            byte[] outputBuffer = new Byte[USB_BUFFER_LENGTH];
+            byte[] inputBuffer = new Byte[USB_BUFFER_LENGTH];
 
             try
             {
-                setupControlBoardBeforScanning(waitTime);
+                outputBuffer[0] = 0;
+                outputBuffer[1] = BOOTLOADER_SCAN_JAMMING;
+
+                outputBuffer[2] = (byte)((waitTime >> 24) & 0x0FF);
+                outputBuffer[3] = (byte)((waitTime >> 16) & 0x0FF);
+                outputBuffer[4] = (byte)((waitTime >> 8) & 0x0FF);
+                outputBuffer[5] = (byte)(waitTime & 0x0FF);
+
+                sendDataToControlBoard(outputBuffer);
 
                 inputBuffer = readDataFromControlBoard();
 
@@ -250,20 +253,6 @@ namespace SwarmRobotControlAndCommunication
             {
                 throw new Exception("Try receiving data: " + ex.Message);
             }
-        }
-        private void setupControlBoardBeforScanning(UInt32 waitTime)
-        {
-            byte[] outputBuffer = new Byte[65];
-
-            outputBuffer[0] = 0;
-            outputBuffer[1] = BOOTLOADER_SCAN_JAMMING;
-
-            outputBuffer[2] = (byte)((waitTime >> 24) & 0x0FF);
-            outputBuffer[3] = (byte)((waitTime >> 16) & 0x0FF);
-            outputBuffer[4] = (byte)((waitTime >> 8) & 0x0FF);
-            outputBuffer[5] = (byte)(waitTime & 0x0FF);
-
-            sendDataToControlBoard(outputBuffer);
         }
         #endregion
 
@@ -333,11 +322,6 @@ namespace SwarmRobotControlAndCommunication
                 throw new Exception(string.Format("Control Board: Transmit {0} bytes to device: \n", numberOfTransmittedBytes) + ex.Message);
             }
         }
-        
-        /// <summary>
-        /// An overload function that used to transmit only one byte
-        /// </summary>
-        /// <param name="transmittedData">The trasmitted Data</param>
         public void transmitBytesToRobot(byte transmittedData)
         {
             byte numberOfTransmittedBytes = 1;
@@ -402,16 +386,6 @@ namespace SwarmRobotControlAndCommunication
                                     "Number of data left: " + dataLength.ToString());
             }
         }
-
-        /// <summary>
-        /// Receive data from target through the control board 
-        /// without transmitting command and data length to other devices.
-        /// The received data length is limited to 2^32.
-        /// </summary>
-        /// <return> An exception if any errors occur or the number of received data is not enough</return>
-        /// <param name="dataLength">The length of the expected data (NOT transmitted to the target)</param>
-        /// <param name="data">The buffer to hold the received data</param>
-        /// <param name="waitTime">The waiting time for a packet to be received</param>
         public void receiveBytesFromRobot(UInt32 dataLength, ref byte[] data, UInt32 waitTime)
         {
             try
@@ -472,7 +446,6 @@ namespace SwarmRobotControlAndCommunication
                 throw new Exception("Try receiving data: " + ex.Message);
             }
         }
-
 
         void calculateRemainedDataLength(ref UInt32 numberOfTransmittedBytes, ref byte dataLength)
         {
@@ -604,7 +577,6 @@ namespace SwarmRobotControlAndCommunication
             if (inputBuffer[USB_MAXIMUM_TRANSMISSION_LENGTH + 1] == RECEIVE_DATA_FROM_ROBOT_ERROR)
                 throw new Exception("Did not receive data from robot");
         }
-       
         #endregion
 
         #region USB protocol for Control Board API
