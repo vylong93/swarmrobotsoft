@@ -55,6 +55,7 @@ namespace SwarmRobotControlAndCommunication
         private const byte RECEIVE_DATA_FROM_ROBOT_ERROR = 0xEE;
         private const byte RECEIVE_DATA_FROM_ROBOT_CONTINUE = 0xAE;
         private const byte MAX_NUM_BYTE_RECEIVED = 16;
+        private const byte USB_MAXIMUM_TRANSMISSION_LENGTH = 56;
 
         public string failedToSendData = "Can't send data to the control board";
         public string failedToReadData = "No respone from the control board";
@@ -466,30 +467,14 @@ namespace SwarmRobotControlAndCommunication
 
             outputBuffer[1] = RECEIVE_DATA_FROM_ROBOT_CONTINUE;
 
-            //TODO: fix DUMMY read ------------------
-            //inputBuffer = readDataFromControlBoard();
-
-            //if (numberOfReceivedBytes <= MAX_NUM_BYTE_RECEIVED)
-            //{
-            //    checkIfReceivedDataFromRobot(inputBuffer);
-
-            //    for (UInt32 j = 1; j <= numberOfReceivedBytes; j++)
-            //    {
-            //        data[pointer] = inputBuffer[j];
-            //        pointer++;
-            //    }
-            //    return;
-            //}
-            //TODO: fix ------------------ DUMMY read
-
             while (true)
             {
                 inputBuffer = readDataFromControlBoard();
 
                 checkIfReceivedDataFromRobot(inputBuffer);
 
-                if (numberOfReceivedBytes > MAX_NUM_BYTE_RECEIVED)
-                    length = MAX_NUM_BYTE_RECEIVED;
+                if (numberOfReceivedBytes > USB_MAXIMUM_TRANSMISSION_LENGTH)
+                    length = USB_MAXIMUM_TRANSMISSION_LENGTH;
                 else
                     length = numberOfReceivedBytes;
 
@@ -508,7 +493,7 @@ namespace SwarmRobotControlAndCommunication
         }
         void checkIfReceivedDataFromRobot(byte[] inputBuffer)
         {
-            if (inputBuffer[33] == RECEIVE_DATA_FROM_ROBOT_ERROR)
+            if (inputBuffer[USB_MAXIMUM_TRANSMISSION_LENGTH + 1] == RECEIVE_DATA_FROM_ROBOT_ERROR)
                 throw new Exception("Did not receive data from robot");
         }
 
@@ -567,7 +552,7 @@ namespace SwarmRobotControlAndCommunication
                 setupControlBoardBeforeReceivingData(0, null, RECEIVE_DATA_FROM_ROBOT, dataLength, waitTime);
 
                 inputBuffer = readDataFromControlBoard();
-                if (inputBuffer[33] == RECEIVE_DATA_FROM_ROBOT_ERROR)
+                if (inputBuffer[USB_MAXIMUM_TRANSMISSION_LENGTH + 1] == RECEIVE_DATA_FROM_ROBOT_ERROR)
                     return false;
 
                 for (UInt32 j = 1; j <= length; j++)
