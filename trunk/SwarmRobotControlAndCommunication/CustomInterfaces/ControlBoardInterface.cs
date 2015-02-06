@@ -29,6 +29,7 @@ namespace SwarmRobotControlAndCommunication.CustomInterfaces
         /// </summary>
         void Dispose();
 
+
         /// <summary>
         /// Command to configure the SPI module of the control board
         /// </summary>
@@ -50,19 +51,16 @@ namespace SwarmRobotControlAndCommunication.CustomInterfaces
         void configureUART(byte[] setupData);
 
         /// <summary>
-        /// Command to configure the communication protocol the control board
-        /// </summary>
-        void configureBootloadProtocol();
-
-        /// <summary>
-        /// Command to configure the communication protocol the control board
-        /// </summary>
-        void configureNormalProtocol();
-
-        /// <summary>
         /// Command to configure the transmission mode of the control board
         /// </summary>
         void setTransmissionMode(byte transmissionModeSelected);
+
+
+        void transmitBslPacketToRobot(byte[] transmittedData, UInt32 numberOfTransmittedBytes, byte delayTimeBeforeSendResponeToPC);
+        bool tryToDetectJammingSignal(UInt32 waitTime);
+
+
+
 
         /// <summary>
         /// Transfer a number of bytes from the control board to targets.
@@ -74,7 +72,6 @@ namespace SwarmRobotControlAndCommunication.CustomInterfaces
         /// This parameter can be used when we need to wait for the target to finish a certain action before sending the next command or data.
         /// </param>
         void transmitBytesToRobot(byte[] transmittedData, UInt32 numberOfTransmittedBytes, byte delayTimeBeforeSendResponeToPC);
-        void transmitBslPacketToRobot(byte[] transmittedData, UInt32 numberOfTransmittedBytes, byte delayTimeBeforeSendResponeToPC);
         void transmitBytesToRobotWithACK(byte[] transmittedData, UInt32 numberOfTransmittedBytes, byte delayTimeBeforeSendResponeToPC);
         void sendCommandToRobot(byte cmd);
 
