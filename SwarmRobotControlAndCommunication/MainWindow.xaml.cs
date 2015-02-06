@@ -393,8 +393,6 @@ namespace SwarmRobotControlAndCommunication
                     toggleAllButtonStatusExceptSelected(buttonClicked);
                     setStatusBarContentAndColor("Busy", Brushes.Indigo);
 
-                    theControlBoard.configureBootloadProtocol();
-
                     cancelProgramProcess = new CancellationTokenSource();
                     await programRobotsAsync(cancelProgramProcess);
                 }
@@ -413,10 +411,6 @@ namespace SwarmRobotControlAndCommunication
                         ellipseProgressEffect.Stop();
                         this.progressProgramBar.Value = 0;
                         setStatusBarAndButtonsAppearanceFromDeviceState();
-
-                        Thread.Sleep(100);
-
-                        theControlBoard.configureNormalProtocol();
                     }
                     );
                 }
@@ -565,6 +559,7 @@ namespace SwarmRobotControlAndCommunication
         private void configureRF_Click(object sender, RoutedEventArgs e)
         {
             configureRF(this.TXAdrrTextBox.Text);
+            setStatusBarContent("Configure RF: OK!");
         }
         private void TXAdrrTextBox_KeyDown(object sender, KeyEventArgs e)
         {
@@ -580,6 +575,8 @@ namespace SwarmRobotControlAndCommunication
             this.Pipe0AddressTextBox.Text = DEFAULT_RX_ADDRESS;
             this.rfChannelTextBox.Text = "0";
             this.TXPowerComboBox.SelectedIndex = 1;
+
+            setStatusBarContent("Default Rf configuration parameter.");
         }
         #endregion
 
