@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SwarmRobotControlAndCommunication
 {
-    enum e_MessageType : byte
+    public enum e_MessageType : byte
     {
         MESSAGE_TYPE_HOST_REQUEST = 0x00,
         MESSAGE_TYPE_HOST_COMMAND = 0x01,
@@ -16,7 +16,7 @@ namespace SwarmRobotControlAndCommunication
         MESSAGE_TYPE_SMARTPHONE_COMMAND = 0x05
     }
 
-    class SwarmMessageHeader
+    public class SwarmMessageHeader
     {
         private e_MessageType eMessageType;
         private byte ui8Cmd;
@@ -30,7 +30,7 @@ namespace SwarmRobotControlAndCommunication
         public byte getCmd() { return ui8Cmd; }
     }
 
-    class SwarmMessage 
+    public class SwarmMessage 
     {
         private SwarmMessageHeader header;
         private byte[] data;
