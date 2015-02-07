@@ -201,44 +201,30 @@
                         	Height="20"  Padding="0" Margin="0,4"  Style="{StaticResource PathTextbox}" KeyDown="TXAdrrTextBox_KeyDown"/>
                     </StackPanel>
 
-                    <StackPanel x:Name="ChannelPanel" Grid.Row="1" Grid.Column="0" Margin="0" IsEnabled="False"
+                    <StackPanel x:Name="ChannelPanel" Grid.Row="1" Grid.Column="0" Margin="0"
                                 HorizontalAlignment="Left"  VerticalAlignment="Bottom" 
                                 Orientation="Horizontal" FlowDirection="LeftToRight" Width="140" Height="28" Grid.ColumnSpan="3">
                         <Label Content="Channel" 
                                HorizontalAlignment="Left" VerticalAlignment="Center" Width="{Binding Width, ElementName=label1}" Margin="0,1"/>
-                        <TextBox x:Name="rfChannelTextBox" Text="0"
-                                 local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="3" local:TextBoxHelpers.MinValue="0" VerticalContentAlignment="Center" FlowDirection="LeftToRight" 
+                        <TextBox x:Name="rfChannelTextBox" Text="51"
+                                 local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="125" local:TextBoxHelpers.MinValue="0" VerticalContentAlignment="Center" FlowDirection="LeftToRight" 
                                  VerticalAlignment="Center" TextWrapping="Wrap" Width="70" 
                                  Height="20"  Padding="0" Margin="0,4"  Style="{StaticResource PathTextbox}" HorizontalAlignment="Center"/>
                     </StackPanel>
 
-                    <StackPanel x:Name="TXPowerPanel" Grid.Row="1" Grid.Column="3" IsEnabled="False"
+                    <StackPanel x:Name="TXPowerPanel" Grid.Row="1" Grid.Column="3"
                         HorizontalAlignment="Left"  VerticalAlignment="Bottom" 
                         Orientation="Horizontal" FlowDirection="LeftToRight" Height="28" Width="140">
                         <Label Content="TX Power" 
                                HorizontalAlignment="Left" Margin="0,2,0,0" Width="{Binding Width, ElementName=label1}"/>
-                        <ComboBox x:Name="TXPowerComboBox"  SelectedIndex="1"
+                        <ComboBox x:Name="TXPowerComboBox"  SelectedIndex="0"
                                   Margin="0,4,5,4" Height="20" Width="70" BorderThickness="1" MinHeight="11" 
                                   VerticalContentAlignment="Center" HorizontalContentAlignment="Center" 
                                   HorizontalAlignment="Center" VerticalAlignment="Center" >
-                            <ComboBoxItem Content="1 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                             <ComboBoxItem Content="0 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                            <ComboBoxItem Content="-2 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                            <ComboBoxItem Content="-4 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                             <ComboBoxItem Content="-6 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                            <ComboBoxItem Content="-8 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                            <ComboBoxItem Content="-10 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                             <ComboBoxItem Content="-12 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                            <ComboBoxItem Content="-14 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                            <ComboBoxItem Content="-16 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                             <ComboBoxItem Content="-18 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                            <ComboBoxItem Content="-20 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                            <ComboBoxItem Content="-22 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                            <ComboBoxItem Content="-24 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                            <ComboBoxItem Content="-26 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                            <ComboBoxItem Content="-28 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                            <ComboBoxItem Content="-30 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                            <ComboBoxItem Content="-55 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                         </ComboBox>
                     </StackPanel>
 

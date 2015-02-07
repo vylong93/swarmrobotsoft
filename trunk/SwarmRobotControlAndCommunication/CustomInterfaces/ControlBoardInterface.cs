@@ -56,62 +56,61 @@ namespace SwarmRobotControlAndCommunication.CustomInterfaces
         void setTransmissionMode(byte transmissionModeSelected);
 
 
-        void transmitBslPacketToRobot(byte[] transmittedData, UInt32 numberOfTransmittedBytes, byte delayTimeBeforeSendResponeToPC);
-        bool tryToDetectJammingSignal(UInt32 waitTime);
-
-
-
-
-        /// <summary>
-        /// Transfer a number of bytes from the control board to targets.
-        /// Only data is transmitted. numberOfTransmittedBytes and delay time are not sent to the robot.
-        /// </summary>
+		/// <summary>
+        /// Transmit bootloader program packet to Robot
         /// <param name="transmittedData">The transmitted data</param>
         /// <param name="numberOfTransmittedBytes">Data length (1 - 2^32)</param>
         /// <param name="delayTimeBeforeSendResponeToPC">The delay time (ms) before the control board send the ok respone to PC.
-        /// This parameter can be used when we need to wait for the target to finish a certain action before sending the next command or data.
-        /// </param>
-        void transmitBytesToRobot(byte[] transmittedData, UInt32 numberOfTransmittedBytes, byte delayTimeBeforeSendResponeToPC);
-        void transmitBytesToRobotWithACK(byte[] transmittedData, UInt32 numberOfTransmittedBytes, byte delayTimeBeforeSendResponeToPC);
-        void sendCommandToRobot(byte cmd);
-
-        /// <summary>
-        /// Overload function that used to transmit only one byte
         /// </summary>
-        /// <param name="transmittedData">The trasmitted Data</param>
-        void transmitBytesToRobot(byte transmittedData);
-
-        /// <summary>
-        /// Receive data from target through the control board.
-        /// The received data length is limited to 2^32.
+        void transmitBslPacketToRobot(byte[] transmittedData, UInt32 numberOfTransmittedBytes, byte delayTimeBeforeSendResponeToPC);
+        
+		/// <summary>
+        /// Scan for any jamming signal
+        /// <param name="waitTime">The scaning period in ms</param>
         /// </summary>
-        /// <return> An exception if any errors occur or the number of received data is not enough</return>
-        /// <param name="command">The command to specify what data should the target transmits to the PC</param>
-        /// <param name="dataLength">The length of the expected data (also transmitted to the target)</param>
-        /// <param name="data">The buffer to hold the received data</param>
-        /// <param name="waitTime">The waiting time for a packet to be received</param>
-        void receiveBytesFromRobot(byte command, byte[] commandContent, UInt32 dataLength, ref byte[] data, UInt32 waitTime);
+		bool tryToDetectJammingSignal(UInt32 waitTime);
 
+		
         /// <summary>
-        /// Receive data from target through the control board 
-        /// without transmitting command and data length to other devices.
-        /// The received data length is limited to 2^32.
+        /// Broadcast a command to the robots
         /// </summary>
-        /// <return> An exception if any errors occur or the number of received data is not enough</return>
-        /// <param name="dataLength">The length of the expected data (NOT transmitted to the target)</param>
-        /// <param name="data">The buffer to hold the received data</param>
-        /// <param name="waitTime">The waiting time for a packet to be received</param>
-        void receiveBytesFromRobot(UInt32 dataLength, ref byte[] data, UInt32 waitTime);
-
+        /// <param name="cmd">The command which transmit to the robots</param>
+        void broadcastCommandToRobot(byte cmd);
+		
+        /// <summary>
+        /// Broadcast a message to the robots
+        /// </summary>
+        /// <param name="message">The transmitted message</param>
+        void broadcastMessageToRobot(SwarmMessage message);
+		void broadcastDataToRobot(byte[] data);
+		
+        /// <summary>
+        /// Transfer a message to robot. This require acknowledgement response from the robot.
+        /// </summary>
+        /// <param name="message">The transmitted message</param>
+        bool sendMessageToRobot(SwarmMessage message);
+		bool sendDataToRobot(byte[] data);
+		
         /// <summary>
         /// Try receiving data from target through the control board 
         /// without transmitting command and data length to other devices.
         /// The received data length is limited to 32 bytes.
         /// </summary>
         /// <return> False if no data is received. Otherwise, return True </return>
-        /// <param name="dataLength">The length of the expected data (NOT transmitted to the target)</param>
-        /// <param name="data">The buffer to hold the received data</param>
-        /// <param name="waitTime">The waiting time for a packet to be received</param>
-        bool tryReceiveBytesFromRobot(UInt32 dataLength, ref byte[] data, UInt32 waitTime);
+        /// <param name="responseDataBuffer">The buffer to hold the received data</param>
+        /// <param name="requestReceivedLength">The length of the expected data (NOT transmitted to the target)</param>
+        /// <param name="delayResponse">The waiting time for a packet to be received</param>
+        bool tryToReceivedDataFromRobot(byte[] responseDataBuffer, UInt32 requestReceivedLength, UInt32 delayResponse);
+		
+        /// <summary>
+        /// Receive data from target through the control board.
+        /// The received data length is limited to 2^32.
+        /// </summary>
+        /// <return> An exception if any errors occur or the number of received data is not enough</return>
+        /// <param name="responseDataBuffer">The buffer to hold the received data</param>
+        /// <param name="requestReceivedLength">The length of the expected data (also transmitted to the target)</param>
+        /// <param name="delayResponse">The waiting time for a packet to be received</param>
+        /// /// <param name="requestMessage">The command to specify what data should the target transmits to the PC</param>
+        bool receivedDataFromRobot(byte[] responseDataBuffer, UInt32 requestReceivedLength, UInt32 delayResponse, SwarmMessage requestMessage);
     }
 }
