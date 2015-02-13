@@ -5,7 +5,7 @@
         xmlns:local="clr-namespace:SwarmRobotControlAndCommunication"
         xmlns:System="clr-namespace:System;assembly=mscorlib" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" x:Name="window" x:Class="SwarmRobotControlAndCommunication.MainWindow"
         Icon="favicon.ico"
-        Title="Swarm Robot Control &amp; Communication" Height="397" Width="312" WindowStartupLocation="CenterScreen" Style="{StaticResource MainWindow}"  Loaded="this_Loaded" SizeToContent="WidthAndHeight" ResizeMode="NoResize">
+        Title="Swarm Robot Control &amp; Communication" Height="423" Width="312" WindowStartupLocation="CenterScreen" Style="{StaticResource MainWindow}"  Loaded="this_Loaded" SizeToContent="WidthAndHeight" ResizeMode="NoResize">
     <Window.Resources>
         <AlternationConverter x:Key="AlternationConverter"/>
         <System:Double x:Key="ellipseRunningWidth">322</System:Double>
@@ -123,7 +123,7 @@
                         <Button x:Name="wakeUpProgramButton" 
                                     Content="Wake Up &amp; Program" Width="150" Height="{Binding Parent.ActualHeight, ElementName=resetProgramButton, Mode=OneWay}" Click="wakeUpAndProgramButton_Click" Style="{StaticResource ProgramButton}"/>
                     </StackPanel>
-                    <ProgressBar x:Name="progressProgramBar" HorizontalAlignment="Left" Height="10" Margin="0,0.6,-0.2,0" VerticalAlignment="Top" Width="301" Grid.Row="3"/>
+                    <ProgressBar x:Name="progressProgramBar" HorizontalAlignment="Left" Height="10" Margin="1,0.6,-0.2,0" VerticalAlignment="Top" Width="298" Grid.Row="3"/>
 
                     <Ellipse x:Name="ellipseProgress1" HorizontalAlignment="Left" Height="9" Width="9" Margin="-10,15.6,0,0" Stroke="Black" VerticalAlignment="Top"  RenderTransformOrigin="1,0.5"  Grid.Row="3">
                         <Ellipse.Fill>
@@ -156,7 +156,7 @@
                         </Ellipse.RenderTransform>
                     </Ellipse>
                     <StackPanel Grid.Row="1" HorizontalAlignment="Left" Height="24" Margin="0,9.4,-11.2,0" VerticalAlignment="Top" Width="{Binding ActualWidth, ElementName=window, Mode=OneWay}" Orientation="Horizontal" Grid.RowSpan="2">
-                        <Label x:Name="label" Content="HEX File" HorizontalAlignment="Left" Margin="0" VerticalAlignment="Top" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Height="{Binding Parent.ActualHeight, ElementName=label, Mode=OneWay}" Width="50"/>
+                        <Label x:Name="label" Content="HEX File" HorizontalAlignment="Left" Margin="0" VerticalAlignment="Top" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Left" Height="{Binding Parent.ActualHeight, ElementName=label, Mode=OneWay}" Width="49"/>
                         <TextBox x:Name="pathOfHexFile" Text="" HorizontalAlignment="Center" Height="18" VerticalAlignment="Center" Width="230" VerticalContentAlignment="Center" Margin="0,3" BorderBrush="Black" Style="{DynamicResource PathTextbox}" ScrollViewer.CanContentScroll="True" SnapsToDevicePixels="True" VerticalScrollBarVisibility="Disabled"/>
                         <Button x:Name="loadHexButton" 
                                 Content="..." Width="20" Style="{StaticResource PathButton}" Margin="0,3" Click="loadHexButton_Click" />
@@ -252,7 +252,7 @@
                         <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
-                        <RowDefinition Height="15"/>
+                        <RowDefinition Height="20"/>
                         <RowDefinition Height="28"/>
                         <RowDefinition/>
                     </Grid.RowDefinitions>
@@ -302,8 +302,7 @@
                                 HorizontalAlignment="Center" VerticalAlignment="Center" FlowDirection="RightToLeft" Style="{DynamicResource ProgramButton}" Click="EepromDataSynchronousButton_Click"/>
                         <Button x:Name="EepromDataReadButton" Content="Read Data" Margin="3,1,0,1" Height="26" Width="147"
                             HorizontalAlignment="Left" VerticalAlignment="Center" FlowDirection="RightToLeft" Click="EepromDataReadButton_Click" />
-                    </StackPanel>
-                   
+                    </StackPanel>               
                     <StackPanel x:Name="tableHeaderPanel" Grid.Column="0" Grid.Row="6" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
                         <Label Content="---------------------- TABLE STATUS ----------------------" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" HorizontalContentAlignment="Center" Width="299"/>
                     </StackPanel>
@@ -315,7 +314,7 @@
                         <TextBox x:Name="ArcSineTableStatusTextBox" Text="invalid" IsEnabled="false" Style="{DynamicResource PathTextbox}" 
                                  VerticalContentAlignment="Center" Padding="2,0,0,0" Width="65" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
                     </StackPanel>
-                    <ProgressBar x:Name="tableVerifyProgramBar" Grid.Column="0" Grid.Row="8" HorizontalAlignment="Left" Height="10" Margin="0,0.6,-0.2,0" VerticalAlignment="Center" Width="301"/>
+                    <ProgressBar x:Name="tableVerifyProgramBar" Grid.Column="0" Grid.Row="8" HorizontalAlignment="Left" Height="10" Margin="5,0.6,-0.2,0" VerticalAlignment="Center" Width="295"/>
                     <StackPanel x:Name="tableButtonPanel" Grid.Column="0" Grid.Row="9" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
                         <Button x:Name="EepromTableUpdatingButton" Content="Update Table" Margin="4,-1,0,-1" Height="26" Width="147"
                                 HorizontalAlignment="Center" VerticalAlignment="Bottom" FlowDirection="RightToLeft" Style="{DynamicResource ProgramButton}" Click="EepromProgramTableButton_Click"/>
