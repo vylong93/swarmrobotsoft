@@ -1027,8 +1027,6 @@ namespace SwarmRobotControlAndCommunication
                     backgroundWorker.RunWorkerAsync((string)buttonClicked.Content);
 
                     buttonClicked.Content = busyContent;
-
-                    setStatusBarContent("EEPROM Table Manipulation: Simulate UI Only...");
                 }
 
             }
@@ -1305,6 +1303,12 @@ namespace SwarmRobotControlAndCommunication
         #endregion
 
         #region Calibration Tab
+        private void ConfigureRFCalibration_Click(object sender, RoutedEventArgs e)
+        {
+            configureRF(this.TXAddressCalibrationSelectBox.Text);
+            setStatusBarContent("Configure RF: Tx " + this.TXAddressCalibrationSelectBox.Text);
+        }
+        
         private void sendCommandButton_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -2332,6 +2336,7 @@ namespace SwarmRobotControlAndCommunication
         }
 
         #endregion
+
     }
 
     #region IValueConverter Members
