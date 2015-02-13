@@ -609,14 +609,16 @@ namespace SwarmRobotControlAndCommunication
 
         private void EepromDataReadButton_Click(object sender, RoutedEventArgs e)
         {
-            byte unit = 3;
+            byte unit = 4;
             byte[] data = new byte[unit * 2 + 1];
             UInt16 ui16WordIndex;
 
-            uint bufferLength = (uint)unit * 6 + 1 + 2;
+            const byte UNIT_STEP = 6;
+            uint bufferLength = (uint)unit * UNIT_STEP + 1 + 2;
             byte rxUnit;
             UInt32 ui32RxData = 0;
             byte[] dataBuffer = new byte[bufferLength];
+            UInt32 dataPointer = 1;
 
             data[0] = unit;
 
@@ -635,6 +637,11 @@ namespace SwarmRobotControlAndCommunication
             data[5] = (byte)((ui16WordIndex >> 8) & 0x0FF);
             data[6] = (byte)(ui16WordIndex & 0x0FF);
 
+            /* 4 */
+            ui16WordIndex = Convert.ToUInt16(this.EepromRandomSequencesWordIndexTextBox.Text);
+            data[7] = (byte)((ui16WordIndex >> 8) & 0x0FF);
+            data[8] = (byte)(ui16WordIndex & 0x0FF);
+
             try
             {
                 SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_EEPROM_DATA_READ);
@@ -649,21 +656,42 @@ namespace SwarmRobotControlAndCommunication
                 {
                     messageContent = rxMessage.getData();
                     rxUnit = messageContent[0];
+
+                    dataPointer = 1;
                     if (rxUnit == unit)
                     {
-                        constructWordIndexAndDataContent(ref ui16WordIndex, ref ui32RxData, messageContent, 1);
+                        /* Robot ID */
+                        constructWordIndexAndDataContent(ref ui16WordIndex, ref ui32RxData, messageContent, dataPointer);
+                        dataPointer += UNIT_STEP;
                         this.EepromRobotIdWordIndexTextBox.Text = ui16WordIndex.ToString();
                         this.EepromRobotIdTextBox.Text = ui32RxData.ToString("X8");
 
-                        constructWordIndexAndDataContent(ref ui16WordIndex, ref ui32RxData, messageContent, 7);
+                        /* Intercept */
+                        constructWordIndexAndDataContent(ref ui16WordIndex, ref ui32RxData, messageContent, dataPointer);
+                        dataPointer += UNIT_STEP;
                         this.EepromInterceptWordIndexTextBox.Text = ui16WordIndex.ToString();
                         float fIntercept = (float)(ui32RxData / 32768.0);
                         this.EepromInterceptTextBox.Text = fIntercept.ToString("0.0000");
 
-                        constructWordIndexAndDataContent(ref ui16WordIndex, ref ui32RxData, messageContent, 13);
+                        /* Slope */
+                        constructWordIndexAndDataContent(ref ui16WordIndex, ref ui32RxData, messageContent, dataPointer);
+                        dataPointer += UNIT_STEP;
                         this.EepromSlopeWordIndexTextBox.Text = ui16WordIndex.ToString();
                         float fSlope = (float)(ui32RxData / 32768.0);
                         this.EepromSlopeTextBox.Text = fSlope.ToString("0.0000");
+
+                        /* Random W */
+                        constructWordIndexAndDataContent(ref ui16WordIndex, ref ui32RxData, messageContent, dataPointer);
+                        dataPointer += UNIT_STEP;
+                        this.EepromRandomSequencesWordIndexTextBox.Text = ui16WordIndex.ToString();
+                        this.EepromRandom7TextBox.Text = Convert.ToString((ui32RxData >> 28) & 0x0F);
+                        this.EepromRandom6TextBox.Text = Convert.ToString((ui32RxData >> 24) & 0x0F);
+                        this.EepromRandom5TextBox.Text = Convert.ToString((ui32RxData >> 20) & 0x0F);
+                        this.EepromRandom4TextBox.Text = Convert.ToString((ui32RxData >> 16) & 0x0F);
+                        this.EepromRandom3TextBox.Text = Convert.ToString((ui32RxData >> 12) & 0x0F);
+                        this.EepromRandom2TextBox.Text = Convert.ToString((ui32RxData >> 8) & 0x0F);
+                        this.EepromRandom1TextBox.Text = Convert.ToString((ui32RxData >> 4) & 0x0F);
+                        this.EepromRandom0TextBox.Text = Convert.ToString((ui32RxData) & 0x0F);
 
                         setStatusBarContent("EEPROM Data Read: OK!");
                     }
@@ -694,26 +722,47 @@ namespace SwarmRobotControlAndCommunication
                 UInt32 ui32Data;
                 float fData;
 
-                byte unit = 3;
-                byte[] data = new byte[unit * 6 + 1];
+                byte unit = 4;
+                const byte UNIT_STEP = 6;
+                byte[] data = new byte[unit * UNIT_STEP + 1];
+           
                 data[0] = unit;
+
+                UInt32 dataPointer = 1;
 
                 /* 1 */
                 ui16WordIndex = Convert.ToUInt16(this.EepromRobotIdWordIndexTextBox.Text);
                 ui32Data = getAddress(this.EepromRobotIdTextBox.Text, 8);
-                fillPairIndexAndWordToByteArray(ui16WordIndex, ui32Data, data, 1);
+                fillPairIndexAndWordToByteArray(ui16WordIndex, ui32Data, data, dataPointer);
+                dataPointer += UNIT_STEP;
 
                 /* 2 */
                 ui16WordIndex = Convert.ToUInt16(this.EepromInterceptWordIndexTextBox.Text);
                 float.TryParse(this.EepromInterceptTextBox.Text, out fData);
                 ui32Data = (UInt32)(fData * 32768);
-                fillPairIndexAndWordToByteArray(ui16WordIndex, ui32Data, data, 7);
+                fillPairIndexAndWordToByteArray(ui16WordIndex, ui32Data, data, dataPointer);
+                dataPointer += UNIT_STEP;
 
                 /* 3 */
                 ui16WordIndex = Convert.ToUInt16(this.EepromSlopeWordIndexTextBox.Text);
                 float.TryParse(this.EepromSlopeTextBox.Text, out fData);
                 ui32Data = (UInt32)(fData * 32768);
-                fillPairIndexAndWordToByteArray(ui16WordIndex, ui32Data, data, 13);
+                fillPairIndexAndWordToByteArray(ui16WordIndex, ui32Data, data, dataPointer);
+                dataPointer += UNIT_STEP;
+
+                /* 4 */
+                ui16WordIndex = Convert.ToUInt16(this.EepromRandomSequencesWordIndexTextBox.Text);
+                ui32Data = (UInt32)((Byte.Parse(this.EepromRandom0TextBox.Text)) |
+                                    ((Byte.Parse(this.EepromRandom1TextBox.Text)) << 4) |
+                                    ((Byte.Parse(this.EepromRandom2TextBox.Text)) << 8) |
+                                    ((Byte.Parse(this.EepromRandom3TextBox.Text)) << 12) |
+                                    ((Byte.Parse(this.EepromRandom4TextBox.Text)) << 16) |
+                                    ((Byte.Parse(this.EepromRandom5TextBox.Text)) << 20) |
+                                    ((Byte.Parse(this.EepromRandom6TextBox.Text)) << 24) |
+                                    ((Byte.Parse(this.EepromRandom7TextBox.Text)) << 28));
+                fillPairIndexAndWordToByteArray(ui16WordIndex, ui32Data, data, dataPointer);
+                dataPointer += UNIT_STEP;
+
 
                 SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_EEPROM_DATA_WRITE);
                 SwarmMessage message = new SwarmMessage(header, data);
@@ -760,6 +809,76 @@ namespace SwarmRobotControlAndCommunication
 
             //TODO: uncomment this line below
             //assignTaskForBackgroundWorker((Button)sender, "Cancel Verify");
+        }
+
+        private void EepromRandomGenButton_Click(object sender, RoutedEventArgs e)
+        {
+            List<int> listRandomValues = GenerateRandom(8, 0, 15);
+            int[] randomBuffer = listRandomValues.ToArray();
+            EepromRandom7TextBox.Text = Convert.ToString(randomBuffer[7]);
+            EepromRandom6TextBox.Text = Convert.ToString(randomBuffer[6]);
+            EepromRandom5TextBox.Text = Convert.ToString(randomBuffer[5]);
+            EepromRandom4TextBox.Text = Convert.ToString(randomBuffer[4]);
+            EepromRandom3TextBox.Text = Convert.ToString(randomBuffer[3]);
+            EepromRandom2TextBox.Text = Convert.ToString(randomBuffer[2]);
+            EepromRandom1TextBox.Text = Convert.ToString(randomBuffer[1]);
+            EepromRandom0TextBox.Text = Convert.ToString(randomBuffer[0]);
+        }
+        private List<int> GenerateRandom(int count, int min, int max)
+        {
+            Random random = new Random((int)DateTime.Now.Ticks);
+
+            //  initialize set S to empty
+            //  for J := N-M + 1 to N do
+            //    T := RandInt(1, J)
+            //    if T is not in S then
+            //      insert T in S
+            //    else
+            //      insert J in S
+            //
+            // adapted for C# which does not have an inclusive Next(..)
+            // and to make it from configurable range not just 1.
+
+            if (max <= min || count < 0 ||
+                // max - min > 0 required to avoid overflow
+                    (count > max - min && max - min > 0))
+            {
+                // need to use 64-bit to support big ranges (negative min, positive max)
+                throw new ArgumentOutOfRangeException("Range " + min + " to " + max +
+                        " (" + ((Int64)max - (Int64)min) + " values), or count " + count + " is illegal");
+            }
+
+            // generate count random values.
+            HashSet<int> candidates = new HashSet<int>();
+
+            // start count values before max, and end at max
+            for (int top = max - count; top < max; top++)
+            {
+                // May strike a duplicate.
+                // Need to add +1 to make inclusive generator
+                // +1 is safe even for MaxVal max value because top < max
+                if (!candidates.Add(random.Next(min, top + 1)))
+                {
+                    // collision, add inclusive max.
+                    // which could not possibly have been added before.
+                    candidates.Add(top);
+                }
+            }
+
+            // load them in to a list, to sort
+            List<int> result = candidates.ToList();
+
+            // shuffle the results because HashSet has messed
+            // with the order, and the algorithm does not produce
+            // random-ordered results (e.g. max-1 will never be the first value)
+            for (int i = result.Count - 1; i > 0; i--)
+            {
+                int k = random.Next(i + 1);
+                int tmp = result[k];
+                result[k] = result[i];
+                result[i] = tmp;
+            }
+            return result;
         }
 
         #region EEPROM backgroundWorker
