@@ -71,6 +71,9 @@
     <Compile Include="AboutWindow.xaml.cs">
       <DependentUpon>AboutWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="OxyplotWindowTwoChart.xaml.cs">
+      <DependentUpon>OxyplotWindowTwoChart.xaml</DependentUpon>
+    </Compile>
     <Compile Include="PlotWindowModel.cs" />
     <Compile Include="OxyplotWindow.xaml.cs">
       <DependentUpon>OxyplotWindow.xaml</DependentUpon>
@@ -107,6 +110,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="AboutWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="OxyplotWindowTwoChart.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
