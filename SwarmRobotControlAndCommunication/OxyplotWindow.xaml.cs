@@ -67,10 +67,9 @@ namespace SwarmRobotControlAndCommunication
         private Button closeButtonPlotWindow = new Button();
         private Button minimizeButtonPlotWindow = new Button();
         private Button maximizeButtonPlotWindow = new Button();
+        private FrameworkElement titleButtonMainWindow = new FrameworkElement();
 
         private WindowState previousWindowState = new WindowState();
-
-        private FrameworkElement titleButtonMainWindow = new FrameworkElement();
 
         private void OxyplotWindow_Loaded(object sender, RoutedEventArgs e)
         {
@@ -97,7 +96,6 @@ namespace SwarmRobotControlAndCommunication
             {
                 this.titleButtonMainWindow.MouseLeftButtonDown += PlotWindowTitle_MouseLeftButtonDown;
             }
-
         }
         private void PlotWindowMaximizeApplicationWindow(object sender, RoutedEventArgs e)
         {
@@ -193,7 +191,7 @@ namespace SwarmRobotControlAndCommunication
             var plotModel1 = new PlotModel();
             plotModel1.Title = Title;
             var linearAxis1 = new LinearAxis();
-            linearAxis1.Maximum = 300;
+            linearAxis1.Maximum = data.Length;
             linearAxis1.Minimum = 0;
             linearAxis1.Position = AxisPosition.Bottom;
             plotModel1.Axes.Add(linearAxis1);

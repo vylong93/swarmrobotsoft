@@ -81,7 +81,7 @@
                           Header="RF Mode" 
                           IsCheckable="True" Template="{StaticResource SubMenuItem}"
                           VerticalAlignment="Center"  HorizontalAlignment="Center" 
-                          VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                          VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch" Click="viewRfMode_Click"
                            />
             </MenuItem>
             <MenuItem Header="_Help">
@@ -376,7 +376,7 @@
                     <StackPanel x:Name="motor1SpeedStackPanel" Grid.Column="0" Grid.Row="4" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="24" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
                         <Button x:Name="stopMotor1Button" Content="Stop Motor 1" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc1StackPanel}" Width="100" Click="stopMotor1Button_Click"/>
                         <Label Content="Backward:" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Height="24"/>
-                        <CheckBox x:Name="motor1ReverseCheckBox" IsChecked="False" Margin="0,3,5,3" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <CheckBox x:Name="motor1ReverseCheckBox" IsChecked="False" Margin="0,6,5,6" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         <Label Content="Speed (8-bit):" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Height="24"/>
                         <TextBox x:Name="motor1SpeedTextBox"  local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="255" local:TextBoxHelpers.MinValue="0" Text="50" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
                     </StackPanel>
@@ -386,6 +386,21 @@
                         <CheckBox x:Name="motor2ReverseCheckBox" IsChecked="False" Margin="0,3,5,3" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         <Label Content="Speed (8-bit):" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Height="24"/>
                         <TextBox x:Name="motor2SpeedTextBox"  local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="255" local:TextBoxHelpers.MinValue="0" Text="50" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                    </StackPanel>
+                    <StackPanel x:Name="PIDPanel" Grid.Column="0" Grid.Row="6" 
+                        Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1.8,0" Grid.ColumnSpan="2">
+                        <Label Content="P" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,1"/>
+                        <TextBox x:Name="PIDkPTextBox" Text="0.8" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                        <Label Content="I" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,1"/>
+                        <TextBox x:Name="PIDkITextBox" Text="0.01" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                        <Label Content="D" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,1"/>
+                        <TextBox x:Name="PIDkDTextBox" Text="0.0" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                        <Label Content="ref" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,1"/>
+                        <TextBox x:Name="PIDrefTextBox" Text="0" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                        <Label Content="run" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,1"/>
+                        <CheckBox x:Name="runPIDCheckBox" IsChecked="true" Margin="0,6,5,6" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Button x:Name="SetPIDParameterButton" Content="Set" Grid.Column="1" Grid.Row="4" 
+                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="40" HorizontalAlignment="Left" Click="SetPIDParameterButton_Click"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
