@@ -45,6 +45,7 @@ namespace SwarmRobotControlAndCommunication
 
         //--------------------Commands definitions--------------------//
         private const byte CONFIGURE_RF = 0x31;
+        private const byte CONFIGURE_RF_TX_ADDRESS = 0x37;
         private const byte CONFIGURE_SPI = 0x32;
 
         private const byte TRANSMIT_DATA_TO_ROBOT = 0x33;
@@ -65,6 +66,7 @@ namespace SwarmRobotControlAndCommunication
         private const byte CONFIGURE_RF_OK = 0x26;
         private const byte CONFIGURE_SPI_OK = 0x27;
         private const byte CONFIGURE_RECEIVE_DATA_FAILED = 0x28;
+        private const byte CONFIGURE_RF_TX_ADDRESS_OK = 0x29;
 
         private const byte TRANSMIT_DATA_TO_ROBOT_DONE = 0xAA;
         private const byte TRANSMIT_DATA_TO_ROBOT_FAILED = 0xFA;
@@ -131,6 +133,29 @@ namespace SwarmRobotControlAndCommunication
             catch (Exception ex)
             {
                 throw new Exception("Control Board Configure RF: " + ex.Message);
+            }
+        }
+
+        public void configureRF_TxAddress(byte[] setupData)
+        {
+            try
+            {
+                byte[] ConfigPacket = new byte[1 + setupData.Length];
+
+                ConfigPacket[0] = CONFIGURE_RF_TX_ADDRESS;
+
+                for (int i = 0; i < setupData.Length; i++)
+                {
+                    ConfigPacket[1 + i] = setupData[i];
+                }
+
+                sendPacketToControlBoard(ConfigPacket);
+
+                isOperationFinishOk(CONFIGURE_RF_TX_ADDRESS_OK);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Control Board Configure RF Tx Address: " + ex.Message);
             }
         }
 

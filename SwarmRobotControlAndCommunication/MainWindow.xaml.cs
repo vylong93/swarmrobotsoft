@@ -46,7 +46,7 @@ namespace SwarmRobotControlAndCommunication
         //-------------------------------------------------Control board
 
         //------------Commands from Robots---------------------
-        private const byte ROBOT_RESPONSE_OK = 0x0A;
+        private const byte ROBOT_RESPONSE_TO_HOST_OK = 0x0A;
         //---------------------------------Commands from Robots
 
         //------------Commands to control all Robots---------------------
@@ -73,6 +73,7 @@ namespace SwarmRobotControlAndCommunication
         private const byte COMMAND_EEPROM_DATA_WRITE_BULK = 0x13;
 
         private const byte COMMAND_CONFIG_PID_CONTROLLER = 0x14;
+        private const byte COMMAND_CALIBRATE_TDOA_TX = 0x15;
         //==== out
 
         private const byte COMMAND_SET_RUNNING_STATUS = 0xC3;
@@ -383,6 +384,8 @@ namespace SwarmRobotControlAndCommunication
 
             filterAndPlotResults("VyLong 1", data1);
             filterAndPlotResults("VyLong 2", data2);
+
+            plotPeakResultFromFile();
         }
 
         private void aboutMenuItem_Click(object sender, RoutedEventArgs e)
@@ -626,12 +629,6 @@ namespace SwarmRobotControlAndCommunication
 
                 // Get Tx address - 4 bytes
                 byte[] rfTXAddress = new byte[RF_ADDRESS_WIDTH];
-                // string TX_ADDRstring = this.TXAdrrTextBox.Text;
-                if (TX_ADDRstring.Length != (2 * RF_ADDRESS_WIDTH))
-                {
-                    string msg = String.Format("TX address must have {0} characters!", 2 * RF_ADDRESS_WIDTH);
-                    throw new Exception(msg);
-                }
                 address = getAddress(TX_ADDRstring, 2 * RF_ADDRESS_WIDTH);
                 rfTXAddress[0] = (byte)address;
                 rfTXAddress[1] = (byte)(address >> 8);
@@ -641,11 +638,6 @@ namespace SwarmRobotControlAndCommunication
                 // Get Rx address - 4 bytes
                 byte[] rfRXAddress = new byte[RF_ADDRESS_WIDTH];
                 string RX_ADDRstring = this.Pipe0AddressTextBox.Text;
-                if (RX_ADDRstring.Length != (2 * RF_ADDRESS_WIDTH))
-                {
-                    string msg = String.Format("RX address must have {0} characters!", 2 * RF_ADDRESS_WIDTH);
-                    throw new Exception(msg);
-                }
                 address = getAddress(RX_ADDRstring, 2 * RF_ADDRESS_WIDTH);
                 rfRXAddress[0] = (byte)address;
                 rfRXAddress[1] = (byte)(address >> 8);
@@ -671,9 +663,29 @@ namespace SwarmRobotControlAndCommunication
                 defaultExceptionHandle(new Exception("Configure RF: " + ex.Message + ex.StackTrace));
             }
         }
+        private void setTxAddress(string Tx_ADDRstring)
+        {
+            const byte RF_ADDRESS_WIDTH = 4;
 
+            // Get Tx address - 4 bytes
+            byte[] rfTXAddress = new byte[RF_ADDRESS_WIDTH];
+            UInt32 address = getAddress(Tx_ADDRstring, 2 * RF_ADDRESS_WIDTH);
+            rfTXAddress[0] = (byte)(address >> 24);
+            rfTXAddress[1] = (byte)(address >> 16);
+            rfTXAddress[2] = (byte)(address >> 8);
+            rfTXAddress[3] = (byte)address;
+           
+            // Send
+            theControlBoard.configureRF_TxAddress(rfTXAddress);
+        }
         private UInt32 getAddress(string addrString, uint addrWidth)
         {
+            if (addrString.Length != addrWidth)
+            {
+                string msg = String.Format("Rf address {1} must have {0} characters!", addrWidth, addrString);
+                throw new Exception(msg);
+            }
+
             UInt32 address = 0;
             for (int i = 0; i < addrWidth; i++)
             {
@@ -682,6 +694,8 @@ namespace SwarmRobotControlAndCommunication
             }
             return address;
         }
+
+        
 
         private void configureRF_Click(object sender, RoutedEventArgs e)
         {
@@ -763,7 +777,7 @@ namespace SwarmRobotControlAndCommunication
                 SwarmMessage rxMessage = SwarmMessage.ConstructFromByteArray(dataBuffer);
                 byte[] messageContent;
                 if (rxMessage.getHeader().getMessageType() == e_MessageType.MESSAGE_TYPE_ROBOT_RESPONSE
-                    && rxMessage.getHeader().getCmd() == ROBOT_RESPONSE_OK)
+                    && rxMessage.getHeader().getCmd() == ROBOT_RESPONSE_TO_HOST_OK)
                 {
                     messageContent = rxMessage.getData();
                     rxUnit = messageContent[0];
@@ -826,6 +840,10 @@ namespace SwarmRobotControlAndCommunication
 
         private void EepromDataSynchronousButton_Click(object sender, RoutedEventArgs e)
         {
+            MessageBoxResult result = MessageBox.Show("This action will change robot's EEPROM data!", "Do you want to continue", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (result == MessageBoxResult.No)
+                return;
+
             // <DataNum><2b word index><4b data><2b word index><4b data>...<2b word index><4b data>
             try
             {
@@ -900,6 +918,10 @@ namespace SwarmRobotControlAndCommunication
 
         private void EepromProgramTableButton_Click(object sender, RoutedEventArgs e)
         {
+            MessageBoxResult result = MessageBox.Show("This action will change robot's EEPROM data!", "Do you want to continue", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (result == MessageBoxResult.No)
+                return;
+
             assignTaskForBackgroundWorker((Button)sender, "Cancel Update");
         }
 
@@ -1099,7 +1121,7 @@ namespace SwarmRobotControlAndCommunication
                     byte[] messageContent;
 
                     if (rxMessage.getHeader().getMessageType() == e_MessageType.MESSAGE_TYPE_ROBOT_RESPONSE
-                        && rxMessage.getHeader().getCmd() == ROBOT_RESPONSE_OK)
+                        && rxMessage.getHeader().getCmd() == ROBOT_RESPONSE_TO_HOST_OK)
                     {
                         messageContent = rxMessage.getData();
                         UInt16[] pui16TableContent = listTupeEepromTable[currentBlock - 1].Item2;
@@ -1329,7 +1351,7 @@ namespace SwarmRobotControlAndCommunication
             double maxEnvelope = 0;
             getDistance(fFilteredData, ref peakEnvelope, ref maxEnvelope);
 
-            string output = String.Format("Peak = {0}, Max = {1}", peakEnvelope, maxEnvelope);
+            string output = String.Format("Peak = {0}, Max = {1}", peakEnvelope, maxEnvelope * VOLT);
 
             OxyplotWindowTwoChart oxyplotWindowTwoChart = new OxyplotWindowTwoChart(title, "Sampling Data", fdata, "Filtered Data: " + output, filteredPlotData, OxyplotWindowTwoChart.PolylineMonoY);
             oxyplotWindowTwoChart.Show();
@@ -1507,8 +1529,8 @@ namespace SwarmRobotControlAndCommunication
 
         private void ConfigureRFCalibration_Click(object sender, RoutedEventArgs e)
         {
-            configureRF(this.TXAddressCalibrationSelectBox.Text);
-            setStatusBarContent("Configure RF: Tx " + this.TXAddressCalibrationSelectBox.Text);
+            setTxAddress(this.TXAddressCalibrationSelectBox.Text);
+            setStatusBarContent("Set RF Tx Address: " + this.TXAddressCalibrationSelectBox.Text);
         }
         
         private void sendCommandButton_Click(object sender, RoutedEventArgs e)
@@ -1635,7 +1657,7 @@ namespace SwarmRobotControlAndCommunication
                 theControlBoard.tryToReceivedDataFromRobot(dataBuffer, bufferLength, 1000);
                 SwarmMessage rxMessage = SwarmMessage.ConstructFromByteArray(dataBuffer);
                 if (rxMessage.getHeader().getMessageType() == e_MessageType.MESSAGE_TYPE_ROBOT_RESPONSE
-                    && rxMessage.getHeader().getCmd() == ROBOT_RESPONSE_OK)
+                    && rxMessage.getHeader().getCmd() == ROBOT_RESPONSE_TO_HOST_OK)
                 {
                     setStatusBarContent("Robot's RF Reciever OK!");
                 }
@@ -1743,7 +1765,7 @@ namespace SwarmRobotControlAndCommunication
 
                 SwarmMessage rxMessage = SwarmMessage.ConstructFromByteArray(receivedData);
                 if (rxMessage.getHeader().getMessageType() == e_MessageType.MESSAGE_TYPE_ROBOT_RESPONSE
-                    && rxMessage.getHeader().getCmd() == ROBOT_RESPONSE_OK)
+                    && rxMessage.getHeader().getCmd() == ROBOT_RESPONSE_TO_HOST_OK)
                 {
                     adcData = (rxMessage.getData()[1] << 8) | rxMessage.getData()[0];
                     BatteryVoltage = (adcData * 3330) / 2048;
@@ -1775,6 +1797,7 @@ namespace SwarmRobotControlAndCommunication
             setStatusBarContent("Broadcast Command: Pause right motor");
         }
 
+        #region Testing Only
         private void SetPIDParameterButton_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -1845,6 +1868,319 @@ namespace SwarmRobotControlAndCommunication
                 throw new Exception("Set PID Button: " + ex.Message);
             }
         }
+
+        public const UInt32 TESTING_BUFFER_SIZE = 1024;
+
+        public UInt16 g_ui16TDOABufferPointer1 = 0;
+        public float[] g_fdisctanceResultMic1X = new float[TESTING_BUFFER_SIZE];
+        public float[] g_fdisctanceResultMic1Y = new float[TESTING_BUFFER_SIZE];
+
+        public UInt16 g_ui16TDOABufferPointer2 = 0;
+        public float[] g_fdisctanceResultMic2X = new float[TESTING_BUFFER_SIZE];
+        public float[] g_fdisctanceResultMic2Y = new float[TESTING_BUFFER_SIZE];
+
+        public string fileNameMic1 = "";
+        public string fileNameMic2 = "";
+
+        private void testDistacneSensingButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (isUserConfirmCalibrateTDOA() == false)
+                    return;
+
+                const byte RF_ADDRESS_WIDTH = 4;
+                UInt32 rxAddress = getAddress(micsRobotTextBox.Text, 2 * RF_ADDRESS_WIDTH);
+                byte testTime = Convert.ToByte(testTimesTextBox.Text);
+                UInt32 delay = Convert.ToUInt32(delayTestingTextBox.Text);
+
+                setTxAddress(speakerRobotTextBox.Text);
+
+                uint dataLength = 9;
+                byte[] messageData = new byte[dataLength];
+
+                messageData[0] = (byte)(rxAddress >> 24);
+                messageData[1] = (byte)(rxAddress >> 16);
+                messageData[2] = (byte)(rxAddress >> 8);
+                messageData[3] = (byte)(rxAddress);
+                messageData[4] = testTime;
+                messageData[5] = (byte)(delay >> 24);
+                messageData[6] = (byte)(delay >> 16);
+                messageData[7] = (byte)(delay >> 8);
+                messageData[8] = (byte)(delay);
+
+                SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_CALIBRATE_TDOA_TX);
+                SwarmMessage message = new SwarmMessage(header, messageData);
+
+                uint bufferLength = (uint)testTime * 4;
+                byte[] dataBuffer = new byte[bufferLength];
+                theControlBoard.receivedDataFromRobot(dataBuffer, bufferLength, 5000 * (uint)testTime, message);
+
+                uint length = (uint)testTime * 2;
+                float[] Mic1 = new float[testTime];
+                float[] Mic2 = new float[testTime];
+
+                String fileContent1 = "";
+                bool isNewData1 = false;
+
+                String fileContent2 = "";
+                bool isNewData2 = false;
+
+                for (int i = 0; i < dataBuffer.Length; i += 4)
+                {
+                    Mic1[(int)(i / 4)] = (float)((UInt16)((dataBuffer[i] << 8) | dataBuffer[i + 1]) / 256.0);
+                    fileContent1 += distanceTextBox.Text + " " + Mic1[(int)(i / 4)].ToString() + "\n";
+
+                    Mic2[(int)(i / 4)] = (float)((UInt16)((dataBuffer[i + 2] << 8) | dataBuffer[i + 3]) / 256.0);
+                    fileContent2 += distanceTextBox.Text + " " + Mic2[(int)(i / 4)].ToString() + "\n";
+                }
+
+                float avr1 = 0, avr2 = 0;
+                float maxMic1 = 0, minMic1 = 500;
+                float maxMic2 = 0, minMic2 = 500;
+
+                for (int i = 0; i < testTime; i++)
+                {
+                    avr1 += Mic1[i];
+                    avr2 += Mic2[i];
+
+                    maxMic1 = (maxMic1 >= Mic1[i]) ? (maxMic1) : (Mic1[i]);
+                    minMic1 = (minMic1 <= Mic1[i]) ? (minMic1) : (Mic1[i]);
+
+                    maxMic2 = (maxMic2 >= Mic2[i]) ? (maxMic2) : (Mic2[i]);
+                    minMic2 = (minMic2 <= Mic2[i]) ? (minMic2) : (Mic2[i]);
+                }
+
+                if (minMic1 == 0 || minMic2 == 0)
+                {
+                    MessageBox.Show("Command transmition failed! Please try again...\n", "RF false", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                avr1 = (float)(avr1 / 10.0);
+                avr2 = (float)(avr2 / 10.0);
+
+                String mess = String.Format("Mic1 = {0} [{1}; {2}], var = {3} \nMic2 = {4} [{5}; {6}], var = {7}", avr1, minMic1, maxMic1, maxMic1 - minMic1, avr2, minMic2, maxMic2, maxMic2 - minMic2);
+
+                MessageBoxResult result;
+
+                if ((maxMic1 - minMic1) > 5 || (maxMic2 - minMic2) > 5)
+                {
+                    result = MessageBox.Show("Bad result! Do you want to keep append this data?\n" + mess, "oh...Sorry :(", MessageBoxButton.YesNo, MessageBoxImage.Error);
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        isNewData1 = true;
+                        isNewData2 = true;
+                    }
+                    else
+                    {
+                        isNewData1 = false;
+                        isNewData2 = false;
+                    }
+                }
+                else if ((maxMic1 - minMic1) > 3 || (maxMic2 - minMic2) > 3)
+                {
+                    result = MessageBox.Show("Bad result! Do you want to keep append this data?\n" + mess, "oh...Sorry :(", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        isNewData1 = true;
+                        isNewData2 = true;
+                    }
+                    else
+                    {
+                        isNewData1 = false;
+                        isNewData2 = false;
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Good result:\n" + mess, "Nice :)", MessageBoxButton.OK, MessageBoxImage.Information);
+                    isNewData1 = true;
+                    isNewData2 = true;
+                }
+
+                if (isNewData1)
+                    File.AppendAllText(@fileNameMic1, fileContent1);
+
+                if (isNewData2)
+                    File.AppendAllText(@fileNameMic2, fileContent2);
+            }
+            catch (Exception ex)
+            {
+                defaultExceptionHandle(ex);
+            }
+            finally
+            {
+                setTxAddress(this.TXAddressCalibrationSelectBox.Text);
+                setStatusBarContent("Set Tx Address to " + this.TXAddressCalibrationSelectBox.Text);
+            }
+        }
+
+        private bool isUserConfirmCalibrateTDOA()
+        {
+            MessageBoxResult result;
+
+            result = MessageBox.Show("WATCHOUT:\nIf you want to create a new storage for TDOA testing result, click YES to confirm! \nClick NO to append data to the current file!",
+                                                  "Create a new file?", MessageBoxButton.YesNoCancel, MessageBoxImage.None);
+            if (result == MessageBoxResult.Cancel)
+            {
+                return false;
+            }
+
+            if (result == MessageBoxResult.Yes)
+            {
+                result = MessageBox.Show("Are you sure you want to make a new storage? ",
+                      "Please confirm...", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (result == MessageBoxResult.Yes)
+                {
+                    DirectoryInfo fileDir = new DirectoryInfo(".");
+                    fileDir = fileDir.CreateSubdirectory("Output " + String.Format("{0:yyyy'-'MM'-'dd}", System.DateTime.Now.Date));
+
+                    String currentTime = System.DateTime.Now.ToString();
+
+                    String title = speakerRobotTextBox.Text;
+
+                    fileNameMic1 = currentTime + "_Mic1_" + title + ".txt";
+                    fileNameMic1 = fileNameMic1.Replace('/', '-');
+                    fileNameMic1 = fileNameMic1.Replace(':', '_');
+                    fileNameMic1 = fileDir.FullName + "\\" + fileNameMic1;
+
+                    fileNameMic2 = currentTime + "_Mic2_" + title + ".txt";
+                    fileNameMic2 = fileNameMic2.Replace('/', '-');
+                    fileNameMic2 = fileNameMic2.Replace(':', '_');
+                    fileNameMic2 = fileDir.FullName + "\\" + fileNameMic2;
+                }
+            }
+            else
+            {
+                while (fileNameMic1.Equals(""))
+                {
+                    var userInputWindow = new UserInputTextWindow();
+                    userInputWindow.setMessage("First FULL FILE PATH include extention for Mic 1:");
+                    if (userInputWindow.ShowDialog() == false)
+                    {
+                        if (userInputWindow.UserConfirm)
+                        {
+                            fileNameMic1 = userInputWindow.inputText;
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
+                }
+
+                while (fileNameMic2.Equals(""))
+                {
+                    var userInputWindow = new UserInputTextWindow();
+                    userInputWindow.setMessage("Second FULL FILE PATH include extention for Mic 2:");
+                    if (userInputWindow.ShowDialog() == false)
+                    {
+                        if (userInputWindow.UserConfirm)
+                        {
+                            fileNameMic2 = userInputWindow.inputText;
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        private void getDistanceResultToBuffer(byte command, byte testTimes, byte testDisctance)
+        {
+
+            uint length = (uint)testTimes * 2;
+
+            Byte[] receivedData = new Byte[length];
+
+            uint[] disctanceData = new uint[testTimes];
+
+            try
+            {
+                //theControlBoard.receiveBytesFromRobot(command, length, ref receivedData, 1000);
+
+                uint i = 0;
+                for (uint pointer = 0; pointer < testTimes; pointer++)
+                {
+                    disctanceData[pointer] = receivedData[i + 1];
+                    disctanceData[pointer] = (disctanceData[pointer] << 8) | receivedData[i];
+
+                    //if (command == COMMAND_GET_DISTANCE_RESULT_A)
+                    {
+                        g_fdisctanceResultMic1Y[g_ui16TDOABufferPointer1] = disctanceData[pointer] / 256.0f;
+                        g_fdisctanceResultMic1X[g_ui16TDOABufferPointer1] = testDisctance * 1.0f;
+                        g_ui16TDOABufferPointer1++;
+                    }
+                    //else if (command == COMMAND_GET_DISTANCE_RESULT_B)
+                    {
+                        g_fdisctanceResultMic2Y[g_ui16TDOABufferPointer2] = disctanceData[pointer] / 256.0f;
+                        g_fdisctanceResultMic2X[g_ui16TDOABufferPointer2] = testDisctance * 1.0f;
+                        g_ui16TDOABufferPointer2++;
+                    }
+
+                    i += 2;
+                }
+            }
+            catch (Exception ex)
+            {
+                defaultExceptionHandle(ex);
+            }
+        }
+
+        private void plotPeakResultFromFile()
+        {
+            bool isValidFile = false;
+            OpenFileDialog dlg = new OpenFileDialog();
+            dlg.Title = "Select your file";
+            dlg.Filter = "Text files (*.TXT)|*.TXT" + "|All files (*.*)|*.*";
+
+            // Process open file dialog box results 
+            if (dlg.ShowDialog() == true)
+            {
+                string pathToFile = dlg.FileName;
+
+                System.IO.StreamReader file = new System.IO.StreamReader(@pathToFile);
+
+                string title = dlg.SafeFileName;
+
+                List<float> xAxis = new List<float>();
+                List<float> yAxis = new List<float>();
+
+                string line;
+                while ((line = file.ReadLine()) != null)
+                {
+                    Match match = Regex.Match(line, @"(\d+)\s([0-9]*(?:\.[0-9]+)?)", RegexOptions.IgnoreCase);
+
+                    if (match.Success)
+                    {
+                        xAxis.Add(float.Parse(match.Groups[1].Value));
+                        yAxis.Add(float.Parse(match.Groups[2].Value));
+
+                        isValidFile = true;
+                    }
+                }
+
+                file.Close();
+
+                if (isValidFile)
+                {
+                    float[] Plot_dataX = new float[xAxis.Count];
+                    float[] Plot_dataY = new float[yAxis.Count];
+
+                    xAxis.CopyTo(Plot_dataX);
+                    yAxis.CopyTo(Plot_dataY);
+
+                    OxyplotWindow oxyplotWindow = new OxyplotWindow(Plot_dataX, Plot_dataY, title, OxyplotWindow.ScatterPointPlot);
+                    oxyplotWindow.Show();
+                }
+            }
+        }
+        #endregion
 
         #endregion
 
@@ -2608,6 +2944,7 @@ namespace SwarmRobotControlAndCommunication
         }
 
         #endregion
+
 
     }
 

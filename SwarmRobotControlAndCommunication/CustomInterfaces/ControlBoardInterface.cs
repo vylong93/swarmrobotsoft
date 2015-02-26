@@ -34,6 +34,7 @@ namespace SwarmRobotControlAndCommunication.CustomInterfaces
         /// Command to configure the SPI module of the control board
         /// </summary>
         void configureSPI(byte[] setupData);
+        void configureRF_TxAddress(byte[] setupData);
 
         /// <summary>
         /// Command to configure the RF module of the control board
