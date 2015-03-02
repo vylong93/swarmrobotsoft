@@ -244,14 +244,7 @@ namespace SwarmRobotControlAndCommunication
 
             plotModel1.Series.Add(scatterSeries);
 
-            //var polylineAnnotation1 = new PolylineAnnotation();
-
-            //uint[] data = { 35, 65, 85, 115, 145, 175, 225 };
-            //for (uint i = 0; i < data.Length; i++)
-            //{
-            //    polylineAnnotation1.Points.Add(new DataPoint((double)(i + 1) * 10, (double)data[i]));
-            //}
-            //plotModel1.Annotations.Add(polylineAnnotation1);
+            // Least-Square calculation
 
             Int32 n = dataX.Length;
 
@@ -275,11 +268,19 @@ namespace SwarmRobotControlAndCommunication
             float detAIntercept = (sumY * sumX2) - (sumXY * sumX);
             float detASlope = (n * sumXY) - (sumX * sumY);
 
-
             var lineAnnotation1 = new LineAnnotation();
             lineAnnotation1.Intercept = detAIntercept / detA; // b
             lineAnnotation1.Slope = detASlope / detA; // a
-            lineAnnotation1.Text = "Intercept(" + lineAnnotation1.Intercept.ToString() + "); Slope(" + lineAnnotation1.Slope.ToString() + ")";
+
+            double errorVariance = 0;
+            double sqrt_e_i = 0;
+            for (int i = 0; i < n; i++)
+            {
+                sqrt_e_i = dataY[i] - lineAnnotation1.Intercept - lineAnnotation1.Slope * dataX[i];
+                errorVariance += Math.Pow(sqrt_e_i, 2.0);
+            }
+
+            lineAnnotation1.Text = "Intercept " + lineAnnotation1.Intercept.ToString("0.00000") + ", Slope " + lineAnnotation1.Slope.ToString("0.00000") + "Var " + errorVariance.ToString("0.00000");
             plotModel1.Annotations.Add(lineAnnotation1);
 
             return plotModel1;

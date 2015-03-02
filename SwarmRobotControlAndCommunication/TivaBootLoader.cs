@@ -164,6 +164,11 @@ namespace SwarmRobotControlAndCommunication
 
         public event programmingProgressUpdate currentProgrammingPercentEvent;
 
+        public UInt32 getLastTransferSize()
+        {
+            return transferSize;
+        }
+
         /// <summary>
         /// Verifye the format and calculate the number of lines of a HEX file.
         /// !!! This function also updates internal variables of the bootloader

@@ -42,5 +42,6 @@ namespace SwarmRobotControlAndCommunication.CustomInterfaces
         /// <param name="cts">A cancel token to stop the programming process</param>
         void startProgramming(string fileName, CancellationTokenSource cts);
 
+        UInt32 getLastTransferSize();
     }
 }
