@@ -384,7 +384,10 @@ namespace SwarmRobotControlAndCommunication
 
             filterAndPlotResults("VyLong 1", data1);
             filterAndPlotResults("VyLong 2", data2);
+        }
 
+        private void plotTDOA_Click(object sender, RoutedEventArgs e)
+        {
             plotPeakResultFromFile();
         }
 
@@ -481,7 +484,7 @@ namespace SwarmRobotControlAndCommunication
         {
             theControlBoard.broadcastCommandToRobot(COMMAND_WAKE_UP);
 
-            Thread.Sleep(10);
+            Thread.Sleep(500);
 
             theControlBoard.broadcastCommandToRobot(COMMAND_RESET);
 
@@ -541,6 +544,10 @@ namespace SwarmRobotControlAndCommunication
                         ellipseProgressEffect.Stop();
                         this.progressProgramBar.Value = 0;
                         setStatusBarAndButtonsAppearanceFromDeviceState();
+                        //this.statusDeviceAttached.Dispatcher.Invoke((Action)(() =>
+                        //{
+                        setStatusBarContent(String.Format("Program Size = {0:0.0000} KB", bootLoader.getLastTransferSize() / 1024.0));
+                        //}));
                     }
                     );
                 }
@@ -583,6 +590,10 @@ namespace SwarmRobotControlAndCommunication
                 {
                     string hexFilePath = getFilePath();
                     bootLoader.startProgramming(hexFilePath, cts);
+
+                    this.statusDeviceAttached.Dispatcher.Invoke((Action)(() => {
+                        setStatusBarContent(String.Format("Program Size = {0:0.0000} KB", bootLoader.getLastTransferSize() / 1024.0));
+                    }));
                 }
                 catch (OperationCanceledException)
                 {
@@ -2134,52 +2145,94 @@ namespace SwarmRobotControlAndCommunication
 
         private void plotPeakResultFromFile()
         {
-            bool isValidFile = false;
-            OpenFileDialog dlg = new OpenFileDialog();
-            dlg.Title = "Select your file";
-            dlg.Filter = "Text files (*.TXT)|*.TXT" + "|All files (*.*)|*.*";
+            string title = "";
 
-            // Process open file dialog box results 
+            List<float> xAxis1 = new List<float>();
+            List<float> yAxis1 = new List<float>();
+
+            List<float> xAxis2 = new List<float>();
+            List<float> yAxis2 = new List<float>();
+
+            OpenFileDialog dlg = new OpenFileDialog();
+            dlg.Filter = "Text files (*.TXT)|*.TXT" + "|All files (*.*)|*.*";
+            dlg.Title = "Select Mic 1's Data file:";
             if (dlg.ShowDialog() == true)
             {
+                title = dlg.SafeFileName;
                 string pathToFile = dlg.FileName;
 
-                System.IO.StreamReader file = new System.IO.StreamReader(@pathToFile);
+                if (getTDOADataFromFile(pathToFile, xAxis1, yAxis1) == false)
+                    return;
+            }
+            else
+                return;
 
-                string title = dlg.SafeFileName;
+            dlg.Title = "Select Mic 2's Data file:";
+            if (dlg.ShowDialog() == true)
+            {
+                 title = dlg.SafeFileName;
+                string pathToFile = dlg.FileName;
 
-                List<float> xAxis = new List<float>();
-                List<float> yAxis = new List<float>();
+                if (getTDOADataFromFile(pathToFile, xAxis2, yAxis2) == false)
+                    return;
+            }
+            else
+                return;
 
-                string line;
-                while ((line = file.ReadLine()) != null)
+            if (xAxis1.Count == yAxis1.Count && xAxis1.Count == xAxis2.Count && yAxis1.Count == yAxis2.Count)
+            {
+                int dataLength = xAxis1.Count;
+
+                float[] dataX1 = new float[dataLength];
+                float[] dataY1 = new float[dataLength];
+                float[] dataX2 = new float[dataLength];
+                float[] dataY2 = new float[dataLength];
+
+                float[] Plot_dataX = new float[dataLength];
+                float[] Plot_dataY = new float[dataLength];
+
+                xAxis1.CopyTo(dataX1);
+                yAxis1.CopyTo(dataY1);
+
+                xAxis2.CopyTo(dataX2);
+                yAxis2.CopyTo(dataY2);
+
+                for (int i = 0; i < dataLength; i++)
                 {
-                    Match match = Regex.Match(line, @"(\d+)\s([0-9]*(?:\.[0-9]+)?)", RegexOptions.IgnoreCase);
-
-                    if (match.Success)
-                    {
-                        xAxis.Add(float.Parse(match.Groups[1].Value));
-                        yAxis.Add(float.Parse(match.Groups[2].Value));
-
-                        isValidFile = true;
-                    }
+                    Plot_dataX[i] = (dataX1[i] + dataX2[i]) / 2f;
+                    Plot_dataY[i] = (dataY1[i] + dataY2[i]) / 2f;
                 }
 
-                file.Close();
-
-                if (isValidFile)
-                {
-                    float[] Plot_dataX = new float[xAxis.Count];
-                    float[] Plot_dataY = new float[yAxis.Count];
-
-                    xAxis.CopyTo(Plot_dataX);
-                    yAxis.CopyTo(Plot_dataY);
-
-                    OxyplotWindow oxyplotWindow = new OxyplotWindow(Plot_dataX, Plot_dataY, title, OxyplotWindow.ScatterPointPlot);
-                    oxyplotWindow.Show();
-                }
+                OxyplotWindow oxyplotWindow = new OxyplotWindow(Plot_dataX, Plot_dataY, title, OxyplotWindow.ScatterPointPlot);
+                oxyplotWindow.Show();
             }
         }
+
+        private bool getTDOADataFromFile(string pathToFile, List<float> xAxis, List<float> yAxis)
+        {
+            System.IO.StreamReader file = new System.IO.StreamReader(@pathToFile);
+
+            string line;
+            while ((line = file.ReadLine()) != null)
+            {
+                Match match = Regex.Match(line, @"([0-9]*(?:\.[0-9]+)?)\s([0-9]*(?:\.[0-9]+)?)", RegexOptions.IgnoreCase);
+
+                if (match.Success)
+                {
+                    xAxis.Add(float.Parse(match.Groups[1].Value));
+                    yAxis.Add(float.Parse(match.Groups[2].Value));
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
+            file.Close();
+
+            return true;
+        }
+        
         #endregion
 
         #endregion
