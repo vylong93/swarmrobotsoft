@@ -74,6 +74,8 @@ namespace SwarmRobotControlAndCommunication
 
         private const byte COMMAND_CONFIG_PID_CONTROLLER = 0x14;
         private const byte COMMAND_CALIBRATE_TDOA_TX = 0x15;
+
+        private const byte COMMAND_INDICATE_BATT_VOLT = 0x16;
         //==== out
 
         private const byte COMMAND_SET_RUNNING_STATUS = 0xC3;
@@ -1582,6 +1584,10 @@ namespace SwarmRobotControlAndCommunication
 
                     case "Read Battery Voltage":
                         readBatteryVoltage();
+                        break;
+
+                    case "Indicate Battery Voltage":
+                        theControlBoard.broadcastCommandToRobot(COMMAND_INDICATE_BATT_VOLT);
                         break;
 
                     default:
