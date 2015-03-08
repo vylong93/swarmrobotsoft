@@ -76,11 +76,13 @@ namespace SwarmRobotControlAndCommunication
         private const byte COMMAND_CALIBRATE_TDOA_TX = 0x15;
 
         private const byte COMMAND_INDICATE_BATT_VOLT = 0x16;
-        //==== out
 
+        private const byte COMMAND_START_LOCALIZATION = 0x17;
+        private const byte COMMAND_READ_NEIGHBORS_TABLE = 0x18;
+
+        //==== command below is out of date ===================================
         private const byte COMMAND_SET_RUNNING_STATUS = 0xC3;
         private const byte COMMAND_DISTANCE_SENSING = 0xA2;
-        private const byte COMMAND_READ_NEIGHBORS_TABLE = 0xA6;
         private const byte COMMAND_READ_ONEHOP_TABLE = 0xA7;
         private const byte COMMAND_READ_LOCS_TABLE = 0xA8;
 
@@ -88,7 +90,6 @@ namespace SwarmRobotControlAndCommunication
         private const byte COMMAND_WRITE_EEPROM = 0xE1;
         private const byte COMMAND_SET_ADDRESS_EEROM = 0xE2;
 
-        private const byte COMMAND_MEASURE_DISTANCE = 0xB0;
         private const byte COMMAND_READ_VECTOR = 0xB1;
         private const byte COMMAND_SET_LOCAL_LOOP_STOP = 0xB2;
         private const byte COMMAND_SET_STEPSIZE = 0xB3;
@@ -2251,6 +2252,12 @@ namespace SwarmRobotControlAndCommunication
 
         #region Debug Tab
 
+        private void configureRFDebug_Click_1(object sender, RoutedEventArgs e)
+        {
+            setTxAddress(this.TXAdrrTextBoxDebug.Text);
+            setStatusBarContent("Set RF Tx Address: " + this.TXAdrrTextBoxDebug.Text);
+        }
+
         private void sendDebugCommandButton_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -2261,20 +2268,33 @@ namespace SwarmRobotControlAndCommunication
 
                 switch (command)
                 {
-                    case "Start Measuring Distance":
-                        measureDistance();
+                    case "Start Localization":
+                        theControlBoard.broadcastCommandToRobot(COMMAND_START_LOCALIZATION);
                         break;
 
+                    case "Read Neighbors Table":
+                        readNeighborsTable();
+                        break;
+
+                    //<ComboBoxItem Content="Scan Robots Vector"/>
+                    //<ComboBoxItem Content="Read One Hop Neighbors Table"/>
+                    //<ComboBoxItem Content="Draw Coordination Table"/>
+                    //<ComboBoxItem Content="Draw Coordination From File..."/>
+                    //<ComboBoxItem Content="Calculate Average Vector From Files..."/>
+                    //<ComboBoxItem Content="Goto Locomotion State"/>
+                    //<ComboBoxItem Content="Scan Robots Oriented Angle"/>
+                    //<ComboBoxItem Content="Rotate Correction Angle"/>
+                    //<ComboBoxItem Content="Goto T Shape State"/>
+                    //<ComboBoxItem Content="Rotate Correction Angle Different"/>
+                    //<ComboBoxItem Content="Rotate Correction Angle Same"/>
+
+                    // ===== cases below is out of date ======================================
                     case "Scan Robots Vector":
                         scanRobotsVector();
                         break;
 
                     case "Scan Robots Oriented Angle":
                         scanCorrectionAngleAndOriented();
-                        break;
-
-                    case "Read Neighbors Table":
-                        ReadNeighbor();
                         break;
 
                     case "Read One Hop Neighbors Table":
@@ -2323,11 +2343,48 @@ namespace SwarmRobotControlAndCommunication
             }
         }
 
-        private void measureDistance()
+        private void readNeighborsTable()
         {
-            theControlBoard.broadcastCommandToRobot(COMMAND_MEASURE_DISTANCE);
+            uint length = 60;
+
+            String title = "Robot [" + this.TXAdrrTextBoxDebug.Text + "] neighbors table";
+            String table = "Neighbors Table of Robot [0x" + this.TXAdrrTextBoxDebug.Text + "]:\n";
+
+            SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_READ_NEIGHBORS_TABLE);
+            SwarmMessage requestMessage = new SwarmMessage(header);
+
+            byte[] receivedData = new byte[length];
+            try
+            {
+                theControlBoard.receivedDataFromRobot(receivedData, length, 1000, requestMessage);
+
+                int[] ID = new int[10];
+                int[] distance = new int[10];
+                int pointer = 0;
+
+                double distanceInCm = 0;
+
+                for (int i = 0; i < 10; i++)
+                {
+                    ID[i] = (receivedData[pointer] << 24) | (receivedData[pointer + 1] << 16) | (receivedData[pointer + 2] << 8) | receivedData[pointer + 3];
+                    distance[i] = (receivedData[pointer + 4] << 8) | receivedData[pointer + 5];
+
+                    pointer += 6;
+
+                    distanceInCm = distance[i] / 256.0;
+                    if (ID[i] != 0 || distance[i] != 0)
+                        table += String.Format("Robot [0x{0}] :: {1} cm\n", ID[i].ToString("X6"), distanceInCm.ToString("G6"));
+                }
+            }
+            catch (Exception ex)
+            {
+                defaultExceptionHandle(ex);
+            }
+
+            MessageBox.Show(table, title, MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
+        // === The funtions below is out of date ========================================
         private void scanRobotsVector()
         {
             uint length = 8;
@@ -2435,44 +2492,6 @@ namespace SwarmRobotControlAndCommunication
             }
 
             MessageBox.Show(message, "Scan results", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        private void ReadNeighbor()
-        {
-            uint length = 60;
-            Byte[] receivedData = new Byte[length];
-
-            String title = "Robot [" + this.TXAdrrTextBoxDebug.Text + "] neighbors table";
-            String table = "Neighbors Table of Robot [0x" + this.TXAdrrTextBoxDebug.Text + "]:\n";
-
-            int[] ID = new int[10];
-            int[] distance = new int[10];
-            int pointer = 0;
-
-            double distanceInCm = 0;
-            try
-            {
-                //.receiveBytesFromRobot(COMMAND_READ_NEIGHBORS_TABLE, null, length, ref receivedData, 1000);
-
-                for (int i = 0; i < 10; i++)
-                {
-                    ID[i] = (receivedData[pointer] << 24) | (receivedData[pointer + 1] << 16) | (receivedData[pointer + 2] << 8) | receivedData[pointer + 3];
-                    distance[i] = (receivedData[pointer + 4] << 8) | receivedData[pointer + 5];
-
-                    pointer += 6;
-
-                    distanceInCm = distance[i] / 256.0;
-                    if (ID[i] != 0 || distance[i] != 0)
-                        table += String.Format("Robot [0x{0}] :: {1} cm\n", ID[i].ToString("X6"), distanceInCm.ToString("G6"));
-                }
-
-            }
-            catch (Exception ex)
-            {
-                defaultExceptionHandle(ex);
-            }
-
-            MessageBox.Show(table, title, MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void ReadOneHopNeighbor()
@@ -2816,12 +2835,6 @@ namespace SwarmRobotControlAndCommunication
             return fileFullPath;
         }
 
-
-        private void configureRFDebug_Click(object sender, RoutedEventArgs e)
-        {
-            configureRF(this.TXAdrrTextBoxDebug.Text);
-        }
-
         private void setLocalLoopButton_Click(object sender, RoutedEventArgs e)
         {
             Byte[] transmittedData = new Byte[5]; // <set stop loop command><value>
@@ -3009,6 +3022,7 @@ namespace SwarmRobotControlAndCommunication
         }
 
         #endregion
+
 
 
     }
