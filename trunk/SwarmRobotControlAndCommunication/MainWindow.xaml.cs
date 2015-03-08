@@ -755,6 +755,7 @@ namespace SwarmRobotControlAndCommunication
             uint bufferLength = (uint)unit * UNIT_STEP + 1 + 2;
             byte rxUnit;
             UInt32 ui32RxData = 0;
+            Int32 i32RxData = 0;
             byte[] dataBuffer = new byte[bufferLength];
             UInt32 dataPointer = 1;
 
@@ -807,15 +808,17 @@ namespace SwarmRobotControlAndCommunication
                         /* Intercept */
                         constructWordIndexAndDataContent(ref ui16WordIndex, ref ui32RxData, messageContent, dataPointer);
                         dataPointer += UNIT_STEP;
+                        i32RxData = (Int32)ui32RxData; 
                         this.EepromInterceptWordIndexTextBox.Text = ui16WordIndex.ToString();
-                        float fIntercept = (float)(ui32RxData / 32768.0);
+                        float fIntercept = (float)(i32RxData / 32768.0);
                         this.EepromInterceptTextBox.Text = fIntercept.ToString("0.0000");
 
                         /* Slope */
                         constructWordIndexAndDataContent(ref ui16WordIndex, ref ui32RxData, messageContent, dataPointer);
                         dataPointer += UNIT_STEP;
+                        i32RxData = (Int32)ui32RxData;
                         this.EepromSlopeWordIndexTextBox.Text = ui16WordIndex.ToString();
-                        float fSlope = (float)(ui32RxData / 32768.0);
+                        float fSlope = (float)(i32RxData / 32768.0);
                         this.EepromSlopeTextBox.Text = fSlope.ToString("0.0000");
 
                         /* Random W */
@@ -862,6 +865,7 @@ namespace SwarmRobotControlAndCommunication
             {
                 UInt16 ui16WordIndex;
                 UInt32 ui32Data;
+                Int32 i32Data;
                 float fData;
 
                 byte unit = 4;
@@ -881,14 +885,16 @@ namespace SwarmRobotControlAndCommunication
                 /* 2 */
                 ui16WordIndex = Convert.ToUInt16(this.EepromInterceptWordIndexTextBox.Text);
                 float.TryParse(this.EepromInterceptTextBox.Text, out fData);
-                ui32Data = (UInt32)(fData * 32768);
+                i32Data = (Int32)(fData * 32768);
+                ui32Data = (UInt32)i32Data;
                 fillPairIndexAndWordToByteArray(ui16WordIndex, ui32Data, data, dataPointer);
                 dataPointer += UNIT_STEP;
 
                 /* 3 */
                 ui16WordIndex = Convert.ToUInt16(this.EepromSlopeWordIndexTextBox.Text);
                 float.TryParse(this.EepromSlopeTextBox.Text, out fData);
-                ui32Data = (UInt32)(fData * 32768);
+                i32Data = (Int32)(fData * 32768);
+                ui32Data = (UInt32)i32Data;
                 fillPairIndexAndWordToByteArray(ui16WordIndex, ui32Data, data, dataPointer);
                 dataPointer += UNIT_STEP;
 
