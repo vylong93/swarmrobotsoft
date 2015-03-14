@@ -46,7 +46,7 @@ namespace SwarmRobotControlAndCommunication
         //-------------------------------------------------Control board
 
         //------------Commands from Robots---------------------
-        private const byte ROBOT_RESPONSE_TO_HOST_OK = 0x0A;
+        private const byte ROBOT_RESPONSE_OK = 0x0A;
         //---------------------------------Commands from Robots
 
         //------------Commands to control all Robots---------------------
@@ -69,20 +69,13 @@ namespace SwarmRobotControlAndCommunication
 
         private const byte COMMAND_EEPROM_DATA_READ = 0x10;
         private const byte COMMAND_EEPROM_DATA_WRITE = 0x11;
-        private const byte COMMAND_EEPROM_DATA_READ_BULK = 0x12;
-        private const byte COMMAND_EEPROM_DATA_WRITE_BULK = 0x13;
+        private const byte COMMAND_EEPROM_TABLE_READ = 0x12;
+        private const byte COMMAND_EEPROM_TABLE_UPDATE = 0x13;
+        //==== out
 
-        private const byte COMMAND_CONFIG_PID_CONTROLLER = 0x14;
-        private const byte COMMAND_CALIBRATE_TDOA_TX = 0x15;
-
-        private const byte COMMAND_INDICATE_BATT_VOLT = 0x16;
-
-        private const byte COMMAND_START_LOCALIZATION = 0x17;
-        private const byte COMMAND_READ_NEIGHBORS_TABLE = 0x18;
-
-        //==== command below is out of date ===================================
         private const byte COMMAND_SET_RUNNING_STATUS = 0xC3;
         private const byte COMMAND_DISTANCE_SENSING = 0xA2;
+        private const byte COMMAND_READ_NEIGHBORS_TABLE = 0xA6;
         private const byte COMMAND_READ_ONEHOP_TABLE = 0xA7;
         private const byte COMMAND_READ_LOCS_TABLE = 0xA8;
 
@@ -90,6 +83,7 @@ namespace SwarmRobotControlAndCommunication
         private const byte COMMAND_WRITE_EEPROM = 0xE1;
         private const byte COMMAND_SET_ADDRESS_EEROM = 0xE2;
 
+        private const byte COMMAND_MEASURE_DISTANCE = 0xB0;
         private const byte COMMAND_READ_VECTOR = 0xB1;
         private const byte COMMAND_SET_LOCAL_LOOP_STOP = 0xB2;
         private const byte COMMAND_SET_STEPSIZE = 0xB3;
@@ -109,103 +103,6 @@ namespace SwarmRobotControlAndCommunication
         private const byte MOTOR_FORWARD_DIRECTION = 0x00;
         private const byte MOTOR_REVERSE_DIRECTION = 0x01;
         //---------------------------------Commands to control all Robots
-        #endregion
-
-        #region EEPROM Table
-     
-        #region Sine Table Initilization - [0 ---> 1] step = 0.5 degree, offset *32768
-     
-        private UInt16[] SineTableBlock0 = {	// EEPROM start address Block 2 = 0x0080
-	        0,    286,  572,  858,  1144, 1429, 1715, 2000,
-	        2286, 2571, 2856, 3141, 3425, 3709, 3993, 4277,
-	        4560, 4843, 5126, 5408, 5690, 5971, 6252, 6533,
-	        6813, 7092, 7371, 7650, 7927, 8204, 8481, 8757
-        };
-
-        private UInt16[] SineTableBlock1 = {	// EEPROM start address Block 3 = 0x00c0
-	        9032,  9307,  9580,  9854,  10126, 10397, 10668, 10938,
-	        11207, 11476, 11743, 12010, 12275, 12540, 12803, 13066,
-	        13328, 13589, 13848, 14107, 14365, 14621, 14876, 15131,
-	        15384, 15636, 15886, 16136, 16384, 16631, 16877, 17121
-        };
-
-        private UInt16[] SineTableBlock2 = {	// EEPROM start address Block 4 = 0x0100
-	        17364, 17606, 17847, 18086, 18324, 18560, 18795, 19028,
-	        19261, 19491, 19720, 19948, 20174, 20399, 20622, 20843,
-	        21063, 21281, 21498, 21713, 21926, 22138, 22348, 22556,
-	        22763, 22967, 23170, 23372, 23571, 23769, 23965, 24159
-        };
-
-        private UInt16[] SineTableBlock3 = {	// EEPROM start address Block 5 = 0x0140
-	        24351, 24542, 24730, 24917, 25102, 25285, 25466, 25645,
-	        25822, 25997, 26170, 26341, 26510, 26677, 26842, 27005,
-	        27166, 27325, 27482, 27636, 27789, 27939, 28088, 28234,
-	        28378, 28520, 28660, 28797, 28932, 29066, 29197, 29325
-        };
-
-        private UInt16[] SineTableBlock4 = {	// EEPROM start address Block 6 = 0x0180
-	        29452, 29576, 29698, 29818, 29935, 30050, 30163, 30274,
-	        30382, 30488, 30592, 30693, 30792, 30888, 30983, 31075,
-	        31164, 31251, 31336, 31419, 31499, 31576, 31651, 31724,
-	        31795, 31863, 31928, 31991, 32052, 32110, 32166, 32219
-        };
-
-        private UInt16[] SineTableBlock5 = {	// EEPROM start address Block 7 = 0x01c0
-	        32270, 32319, 32365, 32408, 32449, 32488, 32524, 32557,
-	        32588, 32617, 32643, 32667, 32688, 32707, 32723, 32737,
-	        32748, 32757, 32763, 32767, 32768, 0,     0,     0,
-	        0, 	   0, 	  0,     0,     0,     0,     0,     0
-        };
-
-        #endregion
-
-        #region ArcSine Table Initilization - [0 ---> pi / 2] step = 1/180, offset *32768
-
-        private UInt16[] ArcSineTableBlock0 = {	// EEPROM start address Block 8 = 0x0200
-	        0,    182,  364,  546,  728,  910,  1092, 1275,
-	        1457, 1639, 1821, 2004, 2186, 2369, 2551, 2734,
-	        2917, 3099, 3282, 3465, 3648, 3832, 4015, 4199,
-	        4382, 4566, 4750, 4934, 5118, 5302, 5487, 5672
-        };
-
-        private UInt16[] ArcSineTableBlock1 = {	// EEPROM start address Block 9 = 0x0240
-	        5857,  6042,  6227,  6412,  6598,  6784,  6970,  7156,
-	        7343,  7530,  7717,  7904,  8092,  8280,  8468,  8656,
-	        8845,  9034,  9224,  9413,  9603,  9794,  9984,  10175,
-	        10367, 10558, 10750, 10943, 11136, 11329, 11523, 11717
-        };
-
-        private UInt16[] ArcSineTableBlock2 = {	// EEPROM start address Block 10 = 0x0280
-	        11911, 12106, 12302, 12498, 12694, 12891, 13088, 13286,
-	        13485, 13683, 13883, 14083, 14283, 14485, 14686, 14889,
-	        15091, 15295, 15499, 15704, 15909, 16116, 16323, 16530,
-	        16738, 16947, 17157, 17368, 17579, 17791, 18005, 18218
-        };
-
-        private UInt16[] ArcSineTableBlock3 = {	// EEPROM start address Block 11 = 0x02c0
-	        18433, 18649, 18865, 19083, 19301, 19521, 19741, 19963,
-	        20185, 20409, 20633, 20859, 21086, 21314, 21544, 21774,
-	        22006, 22239, 22474, 22710, 22947, 23186, 23426, 23668,
-	        23912, 24157, 24404, 24652, 24902, 25154, 25408, 25664
-        };
-
-        private UInt16[] ArcSineTableBlock4 = {	// EEPROM start address Block 12 = 0x0300
-	        25922, 26182, 26444, 26708, 26975, 27244, 27515, 27789,
-	        28066, 28345, 28627, 28912, 29200, 29492, 29786, 30084,
-	        30386, 30691, 31000, 31313, 31631, 31953, 32280, 32612,
-	        32949, 33292, 33640, 33995, 34357, 34725, 35101, 35485
-        };
-
-        private UInt16[] ArcSineTableBlock5 = {	// EEPROM start address Block 13 = 0x0340
-	        35878, 36280, 36693, 37116, 37551, 38000, 38463, 38942,
-	        39439, 39957, 40498, 41066, 41666, 42303, 42988, 43730,
-	        44551, 45481, 46583, 48016, 51472, 0,     0,     0,
-	        0, 	   0, 	  0,     0,     0,     0,     0,     0
-        };
-        #endregion
-
-        private List<Tuple<UInt32, UInt16[]>> listTupeEepromTable;
-
         #endregion
 
         #region Constructors
@@ -235,22 +132,6 @@ namespace SwarmRobotControlAndCommunication
             this.TXAdrrTextBox.Text = DEFAULT_TX_ADDRESS;
             this.Pipe0AddressTextBox.Text = DEFAULT_RX_ADDRESS;
             this.TXAdrrTextBoxDebug.Text = DEFAULT_TX_ADDRESS;
-
-            listTupeEepromTable = new List<Tuple<UInt32, UInt16[]>>();
-
-            listTupeEepromTable.Add(new Tuple<uint, ushort[]>(0x0080, SineTableBlock0));
-            listTupeEepromTable.Add(new Tuple<uint, ushort[]>(0x00c0, SineTableBlock1));
-            listTupeEepromTable.Add(new Tuple<uint, ushort[]>(0x0100, SineTableBlock2));
-            listTupeEepromTable.Add(new Tuple<uint, ushort[]>(0x0140, SineTableBlock3));
-            listTupeEepromTable.Add(new Tuple<uint, ushort[]>(0x0180, SineTableBlock4));
-            listTupeEepromTable.Add(new Tuple<uint, ushort[]>(0x01c0, SineTableBlock5));
-
-            listTupeEepromTable.Add(new Tuple<uint, ushort[]>(0x0200, ArcSineTableBlock0));
-            listTupeEepromTable.Add(new Tuple<uint, ushort[]>(0x0240, ArcSineTableBlock1));
-            listTupeEepromTable.Add(new Tuple<uint, ushort[]>(0x0280, ArcSineTableBlock2));
-            listTupeEepromTable.Add(new Tuple<uint, ushort[]>(0x02C0, ArcSineTableBlock3));
-            listTupeEepromTable.Add(new Tuple<uint, ushort[]>(0x0300, ArcSineTableBlock4));
-            listTupeEepromTable.Add(new Tuple<uint, ushort[]>(0x0340, ArcSineTableBlock5));
         }
 
         private void usbEvent_receiver(object o, EventArgs e)
@@ -377,23 +258,6 @@ namespace SwarmRobotControlAndCommunication
         #endregion
 
         #region Menu Items
-        private void viewRfMode_Click(object sender, RoutedEventArgs e)
-        {
-            //uint[] data1 = new uint[] { 1199, 1178, 1174, 1185, 1179, 1176, 1173, 1177, 1178, 1183, 1174, 1180, 1174, 1184, 1180, 1170, 1181, 1168, 1179, 1189, 1179, 1175, 1171, 1172, 1167, 1186, 1182, 1177, 1176, 1177, 1178, 1183, 1189, 1183, 1185, 1176, 1175, 1178, 1180, 1187, 1190, 1178, 1170, 1171, 1175, 1168, 1177, 1177, 1170, 1166, 1174, 1170, 1168, 1171, 1172, 1181, 1179, 1171, 1174, 1173, 1176, 1181, 1178, 1184, 1184, 1185, 1192, 1202, 1217, 1223, 1198, 1164, 1116, 1076, 1060, 1069, 1100, 1152, 1203, 1229, 1257, 1248, 1237, 1192, 1147, 1103, 1092, 1110, 1155, 1240, 1311, 1349, 1344, 1307, 1237, 1149, 1082, 1042, 1038, 1064, 1134, 1180, 1251, 1294, 1310, 1290, 1238, 1185, 1124, 1066, 1050, 1075, 1127, 1187, 1237, 1280, 1284, 1278, 1246, 1201, 1140, 1106, 1114, 1119, 1150, 1189, 1209, 1223, 1208, 1192, 1179, 1159, 1147, 1124, 1141, 1156, 1169, 1185, 1176, 1175, 1175, 1157, 1153, 1145, 1145, 1143, 1166, 1172, 1194, 1208, 1202, 1210, 1191, 1181, 1159, 1135, 1101, 1095, 1101, 1115, 1141, 1164, 1180, 1190, 1183, 1196, 1173, 1145, 1123, 1120, 1122, 1139, 1163, 1185, 1213, 1221, 1238, 1228, 1210, 1193, 1176, 1166, 1157, 1165, 1159, 1182, 1189, 1208, 1214, 1210, 1195, 1185, 1172, 1169, 1165, 1159, 1167, 1165, 1175, 1193, 1199, 1196, 1191, 1176, 1176, 1174, 1171, 1187, 1201, 1208, 1220, 1212, 1209, 1198, 1182, 1167, 1159, 1160, 1163, 1167, 1177, 1180, 1185, 1187, 1197, 1196, 1193, 1179, 1161, 1152, 1159, 1162, 1166, 1169, 1184, 1200, 1202, 1201, 1204, 1187, 1191, 1180, 1165, 1169, 1171, 1182, 1186, 1200, 1199, 1189, 1183, 1170, 1157, 1150, 1151, 1162, 1164, 1170, 1175, 1178, 1180, 1178, 1179, 1172, 1161, 1153, 1153, 1164, 1173, 1170, 1171, 1177, 1176, 1175, 1182, 1181, 1169, 1164, 1158, 1157, 1160, 1157, 1173, 1172, 1178, 1177, 1165, 1177, 1172, 1170, 1169, 1184, 1177, 1175, 1181, 1171, 1172, 1173, 1188, 1188, 1184, 1177, 1168, 1171, 1163, 1165, 1161, 1170, 1164, 1175, 1173, 1176, 1178, 1170, 1172, 1158, 1166, 1154, 1161, 1177, 1183, 1190, 1200, 1193, 1194, 1186, 1187, 1176, 1172, 1174, 1176, 1175, 1175, 1185, 1177, 1181, 1176, 1167, 1160, 1162, 1157, 1170, 1172, 1176, 1181, 1179, 1179, 1182, 1176, 1179, 1179, 1182, 1192, 1198, 1193, 1199, 1204, 1200, 1198, 1188, 1189, 1187, 1185, 1189, 1178, 1180, 1181, 1181, 1191, 1184, 1181, 1187, 1175, 1175, 1158, 1160, 1169, 1169, 1177, 1176, 1190, 1198, 1198, 1187, 1197, 1188, 1184, 1182, 1178, 1179, 1183, 1194, 1199, 1197, 1189, 1184, 1179, 1158, 1159, 1163, 1169, 1158, 1160, 1166, 1171, 1166, 1179, 1181, 1165, 1166, 1160, 1151, 1161, 1157, 1160, 1167, 1181, 1180, 1181, 1177, 1186, 1174, 1169, 1164, 1147, 1142, 1149, 1155, 1169, 1181, 1185, 1187, 1180, 1174, 1167, 1160, 1161, 1166, 1165, 1175, 1170, 1182, 1198, 1192, 1193, 1188, 1168, 1156, 1163, 1155, 1170, 1166, 1184, 1188, 1188, 1190, 1188, 1183, 1170, 1164, 1150, 1155, 1158, 1167, 1169, 1179, 1190, 1189, 1192, 1191, 1178, 1168, 1155, 1162, 1177, 1181, 1190, 1189, 1186, 1179, 1178, 1174, 1184, 1176, 1178, 1180, 1170, 1166, 1179, 1171, 1170, 1177, 1174, 1170, 1183, 1184, 1187, 1192, 1186, 1191 };
-            //uint[] data2 = new uint[] { 1182, 1168, 1174, 1182, 1185, 1173, 1177, 1168, 1161, 1170, 1168, 1167, 1169, 1166, 1166, 1162, 1161, 1171, 1177, 1174, 1176, 1167, 1163, 1170, 1169, 1171, 1163, 1159, 1176, 1175, 1184, 1170, 1170, 1165, 1167, 1176, 1178, 1172, 1166, 1164, 1164, 1177, 1182, 1177, 1179, 1169, 1177, 1174, 1171, 1165, 1170, 1173, 1170, 1163, 1177, 1172, 1176, 1172, 1167, 1168, 1161, 1160, 1165, 1161, 1171, 1172, 1186, 1198, 1194, 1200, 1190, 1165, 1131, 1094, 1065, 1069, 1089, 1134, 1182, 1226, 1253, 1261, 1241, 1203, 1143, 1096, 1086, 1094, 1134, 1199, 1263, 1311, 1316, 1308, 1243, 1167, 1092, 1028, 1020, 1035, 1100, 1173, 1237, 1291, 1320, 1306, 1256, 1183, 1107, 1064, 1052, 1066, 1103, 1164, 1219, 1274, 1298, 1283, 1250, 1199, 1149, 1106, 1088, 1102, 1142, 1154, 1174, 1197, 1206, 1202, 1172, 1164, 1136, 1128, 1141, 1139, 1153, 1161, 1167, 1167, 1160, 1153, 1151, 1148, 1147, 1161, 1179, 1178, 1188, 1192, 1192, 1187, 1183, 1166, 1147, 1118, 1104, 1092, 1107, 1114, 1132, 1141, 1160, 1166, 1160, 1160, 1156, 1136, 1128, 1123, 1127, 1139, 1159, 1179, 1197, 1199, 1200, 1201, 1199, 1187, 1185, 1188, 1189, 1178, 1177, 1176, 1183, 1192, 1190, 1196, 1184, 1175, 1172, 1165, 1164, 1161, 1150, 1153, 1149, 1166, 1161, 1178, 1171, 1172, 1181, 1183, 1175, 1175, 1184, 1194, 1204, 1206, 1206, 1213, 1200, 1193, 1189, 1181, 1155, 1164, 1156, 1172, 1182, 1175, 1170, 1170, 1166, 1172, 1157, 1147, 1143, 1141, 1156, 1167, 1168, 1183, 1186, 1181, 1182, 1180, 1183, 1181, 1177, 1176, 1177, 1184, 1180, 1174, 1181, 1181, 1179, 1179, 1165, 1162, 1173, 1156, 1161, 1160, 1165, 1172, 1165, 1163, 1172, 1163, 1163, 1161, 1151, 1156, 1150, 1148, 1148, 1150, 1148, 1153, 1144, 1146, 1138, 1135, 1139, 1146, 1160, 1177, 1191, 1195, 1184, 1180, 1175, 1172, 1160, 1159, 1156, 1159, 1170, 1173, 1186, 1179, 1180, 1169, 1156, 1150, 1146, 1142, 1137, 1148, 1168, 1161, 1165, 1163, 1170, 1159, 1156, 1152, 1166, 1156, 1164, 1170, 1177, 1180, 1175, 1181, 1182, 1179, 1177, 1180, 1176, 1176, 1182, 1173, 1171, 1172, 1179, 1168, 1172, 1168, 1165, 1158, 1166, 1163, 1162, 1158, 1163, 1163, 1158, 1159, 1158, 1160, 1166, 1165, 1176, 1188, 1186, 1187, 1183, 1179, 1183, 1169, 1165, 1167, 1166, 1180, 1197, 1204, 1202, 1211, 1207, 1204, 1182, 1169, 1148, 1154, 1163, 1168, 1172, 1188, 1203, 1200, 1194, 1184, 1183, 1159, 1155, 1150, 1150, 1156, 1165, 1181, 1190, 1188, 1195, 1187, 1176, 1160, 1159, 1151, 1155, 1159, 1171, 1173, 1182, 1176, 1174, 1180, 1159, 1163, 1151, 1152, 1153, 1154, 1156, 1154, 1151, 1157, 1151, 1158, 1152, 1140, 1156, 1151, 1162, 1164, 1155, 1167, 1164, 1160, 1160, 1164, 1175, 1184, 1176, 1170, 1172, 1158, 1162, 1144, 1142, 1151, 1155, 1169, 1180, 1176, 1173, 1169, 1167, 1151, 1156, 1144, 1145, 1158, 1155, 1176, 1181, 1187, 1184, 1186, 1180, 1180, 1173, 1158, 1156, 1163, 1161, 1166, 1176, 1179, 1180, 1185, 1188, 1173, 1165, 1165, 1157, 1154, 1154, 1144, 1154, 1165, 1178, 1175, 1180, 1171, 1167, 1160, 1158, 1159, 1161, 1167, 1169, 1166, 1179, 1183, 1185, 1177, 1168, 1171, 1166, 1170, 1169, 1177, 1181, 1178 };
-
-            uint[] data1 = new uint[] { 1163, 1172, 1165, 1160, 1171, 1168, 1181, 1184, 1174, 1173, 1170, 1166, 1157, 1171, 1170, 1166, 1168, 1169, 1170, 1175, 1170, 1169, 1178, 1168, 1175, 1169, 1174, 1170, 1181, 1173, 1172, 1170, 1163, 1168, 1169, 1167, 1167, 1178, 1174, 1173, 1162, 1169, 1167, 1163, 1168, 1163, 1172, 1172, 1172, 1165, 1178, 1169, 1165, 1168, 1170, 1176, 1180, 1190, 1206, 1233, 1242, 1209, 1159, 1101, 1037, 998, 967, 964, 1011, 1079, 1160, 1240, 1304, 1337, 1340, 1317, 1262, 1190, 1138, 1105, 1140, 1214, 1307, 1408, 1484, 1485, 1451, 1359, 1222, 1080, 956, 846, 810, 857, 971, 1115, 1265, 1368, 1401, 1336, 1206, 1045, 888, 802, 811, 909, 1077, 1279, 1469, 1594, 1653, 1619, 1502, 1324, 1138, 968, 875, 865, 925, 1045, 1201, 1335, 1398, 1408, 1332, 1213, 1050, 907, 805, 775, 811, 907, 1054, 1208, 1345, 1412, 1438, 1388, 1299, 1207, 1114, 1056, 1056, 1092, 1153, 1220, 1286, 1326, 1324, 1278, 1203, 1110, 1030, 955, 931, 931, 970, 1050, 1139, 1204, 1252, 1276, 1268, 1224, 1182, 1167, 1149, 1144, 1190, 1230, 1279, 1315, 1346, 1353, 1332, 1285, 1231, 1185, 1149, 1118, 1096, 1104, 1120, 1137, 1136, 1132, 1129, 1129, 1129, 1132, 1141, 1150, 1176, 1204, 1223, 1232, 1241, 1246, 1237, 1206, 1196, 1189, 1183, 1181, 1183, 1187, 1199, 1210, 1212, 1190, 1179, 1166, 1144, 1125, 1109, 1090, 1101, 1115, 1135, 1151, 1172, 1192, 1202, 1211, 1215, 1204, 1201, 1204, 1192, 1186, 1176, 1168, 1159, 1144, 1141, 1137, 1131, 1134, 1122, 1135, 1135, 1130, 1144, 1142, 1155, 1172, 1175, 1177, 1195, 1189, 1202, 1195, 1176, 1174, 1163, 1161, 1163, 1164, 1167, 1157, 1172, 1172, 1159, 1160, 1148, 1134, 1131, 1129, 1121, 1111, 1128, 1135, 1156, 1166, 1174, 1177, 1174, 1186, 1186, 1176, 1183, 1165, 1164, 1164, 1152, 1157, 1163, 1167, 1167, 1160, 1163, 1151, 1162, 1157, 1158, 1160, 1160, 1159, 1169, 1178, 1185, 1199, 1206, 1203, 1206, 1203, 1193, 1194, 1189, 1184, 1174, 1177, 1183, 1175, 1176, 1178, 1180, 1172, 1167, 1164, 1166, 1169, 1177, 1175, 1195, 1196, 1207, 1216, 1211, 1204, 1200, 1193, 1194, 1200, 1196, 1192, 1203, 1195, 1193, 1199, 1189, 1170, 1154, 1150, 1145, 1141, 1135, 1134, 1128, 1118, 1139, 1152, 1167, 1182, 1183, 1185, 1187, 1191, 1187, 1197, 1201, 1216, 1219, 1219, 1233, 1231, 1220, 1194, 1189, 1167, 1144, 1137, 1135, 1147, 1153, 1168, 1171, 1175, 1154, 1142, 1112, 1090, 1093, 1095, 1106, 1144, 1172, 1196, 1205, 1205, 1200, 1183, 1171, 1150, 1139, 1135, 1157, 1179, 1212, 1241, 1245, 1245, 1213, 1158, 1122, 1089, 1062, 1052, 1070, 1095, 1136, 1178, 1199, 1229, 1230, 1212, 1179, 1138, 1112, 1097, 1100, 1118, 1168, 1201, 1238, 1241, 1254, 1234, 1210, 1168, 1129, 1106, 1106, 1114, 1129, 1158, 1187, 1218, 1236, 1242, 1210, 1190, 1153, 1116, 1103, 1113, 1113, 1146, 1172, 1200, 1224, 1248, 1249, 1227, 1204, 1189, 1161, 1138, 1129, 1139, 1157, 1157, 1186, 1196, 1222, 1225, 1208, 1193, 1195, 1175, 1153, 1153, 1158, 1154, 1183, 1190, 1198, 1204, 1203, 1201, 1187, 1172, 1159, 1161, 1150, 1161, 1179, 1181, 1194, 1199, 1210, 1197, 1195, 1187, 1156, 1150, 1141, 1139, 1141, 1155 };
-            uint[] data2 = new uint[] { 1194, 1177, 1173, 1177, 1182, 1180, 1178, 1178, 1181, 1168, 1181, 1176, 1181, 1169, 1176, 1172, 1167, 1172, 1173, 1161, 1167, 1171, 1168, 1160, 1151, 1164, 1160, 1166, 1171, 1167, 1159, 1154, 1165, 1170, 1167, 1177, 1171, 1166, 1170, 1173, 1168, 1164, 1171, 1166, 1166, 1159, 1152, 1158, 1168, 1167, 1165, 1162, 1166, 1162, 1169, 1179, 1193, 1184, 1181, 1182, 1170, 1177, 1183, 1181, 1185, 1211, 1247, 1265, 1242, 1193, 1091, 984, 893, 852, 891, 998, 1184, 1376, 1529, 1619, 1625, 1548, 1364, 1143, 948, 822, 804, 890, 1089, 1325, 1506, 1577, 1524, 1340, 1090, 822, 614, 548, 609, 799, 1095, 1399, 1675, 1801, 1780, 1602, 1315, 987, 689, 511, 511, 665, 938, 1251, 1547, 1756, 1805, 1736, 1554, 1317, 1088, 914, 830, 858, 959, 1095, 1239, 1367, 1422, 1403, 1321, 1195, 1078, 966, 893, 889, 925, 1022, 1138, 1264, 1337, 1366, 1340, 1260, 1167, 1056, 983, 946, 975, 1067, 1163, 1270, 1347, 1368, 1358, 1304, 1223, 1149, 1093, 1075, 1100, 1166, 1228, 1305, 1320, 1290, 1241, 1166, 1110, 1044, 1033, 1042, 1089, 1149, 1216, 1257, 1282, 1271, 1228, 1164, 1096, 1056, 1043, 1057, 1093, 1142, 1200, 1252, 1287, 1291, 1287, 1256, 1221, 1178, 1146, 1125, 1134, 1146, 1170, 1193, 1226, 1227, 1209, 1177, 1129, 1090, 1063, 1050, 1073, 1088, 1120, 1151, 1195, 1214, 1225, 1217, 1205, 1192, 1170, 1157, 1151, 1150, 1157, 1184, 1196, 1211, 1216, 1197, 1184, 1167, 1142, 1113, 1109, 1104, 1105, 1117, 1124, 1137, 1151, 1158, 1158, 1156, 1135, 1140, 1149, 1147, 1166, 1191, 1224, 1233, 1261, 1264, 1254, 1240, 1214, 1190, 1162, 1139, 1118, 1098, 1089, 1092, 1103, 1121, 1133, 1140, 1155, 1149, 1136, 1134, 1121, 1117, 1112, 1130, 1153, 1176, 1207, 1227, 1234, 1239, 1223, 1202, 1184, 1163, 1151, 1150, 1148, 1158, 1170, 1157, 1152, 1159, 1151, 1144, 1139, 1135, 1154, 1175, 1191, 1216, 1246, 1250, 1240, 1229, 1226, 1208, 1192, 1183, 1186, 1176, 1187, 1205, 1212, 1224, 1229, 1225, 1201, 1174, 1141, 1118, 1098, 1089, 1094, 1105, 1128, 1149, 1164, 1187, 1220, 1236, 1223, 1216, 1194, 1173, 1160, 1144, 1140, 1145, 1148, 1165, 1177, 1196, 1196, 1198, 1183, 1160, 1146, 1124, 1126, 1132, 1136, 1176, 1192, 1219, 1244, 1239, 1216, 1195, 1164, 1133, 1115, 1108, 1124, 1152, 1188, 1234, 1248, 1245, 1236, 1202, 1165, 1131, 1101, 1091, 1085, 1113, 1163, 1203, 1230, 1248, 1235, 1182, 1134, 1100, 1055, 1038, 1048, 1077, 1111, 1166, 1212, 1235, 1235, 1215, 1179, 1146, 1118, 1110, 1117, 1146, 1182, 1217, 1243, 1257, 1273, 1264, 1234, 1199, 1157, 1127, 1089, 1092, 1090, 1105, 1132, 1163, 1187, 1208, 1212, 1199, 1178, 1144, 1123, 1112, 1110, 1121, 1148, 1180, 1205, 1233, 1240, 1217, 1210, 1185, 1160, 1143, 1150, 1163, 1182, 1193, 1208, 1205, 1201, 1186, 1172, 1156, 1146, 1138, 1144, 1160, 1167, 1179, 1189, 1190, 1177, 1158, 1146, 1144, 1152, 1160, 1193, 1210, 1219, 1216, 1226, 1214, 1191, 1161, 1153, 1152, 1160, 1179, 1197, 1209, 1220, 1196, 1159, 1144, 1109, 1084, 1072, 1083, 1103, 1136, 1171, 1222, 1242, 1247, 1231, 1211, 1173, 1149, 1148, 1128, 1152, 1174, 1203, 1215, 1218, 1216 };
-
-            filterAndPlotResults("VyLong 1", data1);
-            filterAndPlotResults("VyLong 2", data2);
-        }
-
-        private void plotTDOA_Click(object sender, RoutedEventArgs e)
-        {
-            plotPeakResultFromFile();
-        }
-
         private void aboutMenuItem_Click(object sender, RoutedEventArgs e)
         {
             AboutWindow aboutWindow = new AboutWindow();
@@ -442,22 +306,22 @@ namespace SwarmRobotControlAndCommunication
 
         private void sleepButton_Click(object sender, RoutedEventArgs e)
         {
-            theControlBoard.broadcastCommandToRobot(COMMAND_SLEEP);
+            theControlBoard.sendCommandToRobot(COMMAND_SLEEP);
         }
 
         private void deepsleepButton_Click(object sender, RoutedEventArgs e)
         {
-            theControlBoard.broadcastCommandToRobot(COMMAND_DEEP_SLEEP);
+            theControlBoard.sendCommandToRobot(COMMAND_DEEP_SLEEP);
         }
 
         private void wakeUpButton_Click(object sender, RoutedEventArgs e)
         {
-            theControlBoard.broadcastCommandToRobot(COMMAND_WAKE_UP);
+            theControlBoard.sendCommandToRobot(COMMAND_WAKE_UP);
         }
 
         private void resetButton_Click(object sender, RoutedEventArgs e)
         {
-            theControlBoard.broadcastCommandToRobot(COMMAND_RESET);
+            theControlBoard.sendCommandToRobot(COMMAND_RESET);
         }
 
         private void loadHexButton_Click(object sender, RoutedEventArgs e)
@@ -485,11 +349,11 @@ namespace SwarmRobotControlAndCommunication
         }
         private void wakeUpAndProgramButton_Click(object sender, RoutedEventArgs e)
         {
-            theControlBoard.broadcastCommandToRobot(COMMAND_WAKE_UP);
+            theControlBoard.sendCommandToRobot(COMMAND_WAKE_UP);
 
-            Thread.Sleep(500);
+            Thread.Sleep(10);
 
-            theControlBoard.broadcastCommandToRobot(COMMAND_RESET);
+            theControlBoard.sendCommandToRobot(COMMAND_RESET);
 
             Thread.Sleep(500);
 
@@ -529,6 +393,8 @@ namespace SwarmRobotControlAndCommunication
                     toggleAllButtonStatusExceptSelected(buttonClicked);
                     setStatusBarContentAndColor("Busy", Brushes.Indigo);
 
+                    theControlBoard.configureBootloadProtocol();
+
                     cancelProgramProcess = new CancellationTokenSource();
                     await programRobotsAsync(cancelProgramProcess);
                 }
@@ -547,13 +413,10 @@ namespace SwarmRobotControlAndCommunication
                         ellipseProgressEffect.Stop();
                         this.progressProgramBar.Value = 0;
                         setStatusBarAndButtonsAppearanceFromDeviceState();
-                        //this.statusDeviceAttached.Dispatcher.Invoke((Action)(() =>
-                        //{
-                        setStatusBarContent(String.Format("Program Size = {0:0.0000} KB", bootLoader.getLastTransferSize() / 1024.0));
-                        //}));
                     }
                     );
                 }
+                theControlBoard.configureNormalProtocol();
             }
         }
         private void toggleAllButtonStatusExceptSelected(Button buttonClicked)
@@ -593,10 +456,6 @@ namespace SwarmRobotControlAndCommunication
                 {
                     string hexFilePath = getFilePath();
                     bootLoader.startProgramming(hexFilePath, cts);
-
-                    this.statusDeviceAttached.Dispatcher.Invoke((Action)(() => {
-                        setStatusBarContent(String.Format("Program Size = {0:0.0000} KB", bootLoader.getLastTransferSize() / 1024.0));
-                    }));
                 }
                 catch (OperationCanceledException)
                 {
@@ -635,14 +494,20 @@ namespace SwarmRobotControlAndCommunication
 
                 // Get channel - 1 byte
                 byte channel = Convert.ToByte(this.rfChannelTextBox.Text);
-                if ((channel > 125) || (channel < 0))
-                    throw new Exception("The choosen channel is out of range");
+                if ((channel > 3) || (channel < 0))
+                    throw new Exception("The chosen channel is out of range");
 
-                // Get output power index - 1 byte
+                // Get output power inder - 1 byte
                 byte powerIndex = (byte)(this.TXPowerComboBox.SelectedIndex);
 
                 // Get Tx address - 4 bytes
                 byte[] rfTXAddress = new byte[RF_ADDRESS_WIDTH];
+                // string TX_ADDRstring = this.TXAdrrTextBox.Text;
+                if (TX_ADDRstring.Length != (2 * RF_ADDRESS_WIDTH))
+                {
+                    string msg = String.Format("TX address must have {0} characters!", 2 * RF_ADDRESS_WIDTH);
+                    throw new Exception(msg);
+                }
                 address = getAddress(TX_ADDRstring, 2 * RF_ADDRESS_WIDTH);
                 rfTXAddress[0] = (byte)address;
                 rfTXAddress[1] = (byte)(address >> 8);
@@ -652,6 +517,11 @@ namespace SwarmRobotControlAndCommunication
                 // Get Rx address - 4 bytes
                 byte[] rfRXAddress = new byte[RF_ADDRESS_WIDTH];
                 string RX_ADDRstring = this.Pipe0AddressTextBox.Text;
+                if (RX_ADDRstring.Length != (2 * RF_ADDRESS_WIDTH))
+                {
+                    string msg = String.Format("RX address must have {0} characters!", 2 * RF_ADDRESS_WIDTH);
+                    throw new Exception(msg);
+                }
                 address = getAddress(RX_ADDRstring, 2 * RF_ADDRESS_WIDTH);
                 rfRXAddress[0] = (byte)address;
                 rfRXAddress[1] = (byte)(address >> 8);
@@ -677,29 +547,9 @@ namespace SwarmRobotControlAndCommunication
                 defaultExceptionHandle(new Exception("Configure RF: " + ex.Message + ex.StackTrace));
             }
         }
-        private void setTxAddress(string Tx_ADDRstring)
-        {
-            const byte RF_ADDRESS_WIDTH = 4;
 
-            // Get Tx address - 4 bytes
-            byte[] rfTXAddress = new byte[RF_ADDRESS_WIDTH];
-            UInt32 address = getAddress(Tx_ADDRstring, 2 * RF_ADDRESS_WIDTH);
-            rfTXAddress[0] = (byte)(address >> 24);
-            rfTXAddress[1] = (byte)(address >> 16);
-            rfTXAddress[2] = (byte)(address >> 8);
-            rfTXAddress[3] = (byte)address;
-           
-            // Send
-            theControlBoard.configureRF_TxAddress(rfTXAddress);
-        }
         private UInt32 getAddress(string addrString, uint addrWidth)
         {
-            if (addrString.Length != addrWidth)
-            {
-                string msg = String.Format("Rf address {1} must have {0} characters!", addrWidth, addrString);
-                throw new Exception(msg);
-            }
-
             UInt32 address = 0;
             for (int i = 0; i < addrWidth; i++)
             {
@@ -709,12 +559,9 @@ namespace SwarmRobotControlAndCommunication
             return address;
         }
 
-        
-
         private void configureRF_Click(object sender, RoutedEventArgs e)
         {
             configureRF(this.TXAdrrTextBox.Text);
-            setStatusBarContent("Configure RF: OK!");
         }
         private void TXAdrrTextBox_KeyDown(object sender, KeyEventArgs e)
         {
@@ -728,10 +575,8 @@ namespace SwarmRobotControlAndCommunication
         {
             this.TXAdrrTextBox.Text = DEFAULT_TX_ADDRESS;
             this.Pipe0AddressTextBox.Text = DEFAULT_RX_ADDRESS;
-            this.rfChannelTextBox.Text = "51";
-            this.TXPowerComboBox.SelectedIndex = 0;
-
-            setStatusBarContent("Default Rf configuration parameter.");
+            this.rfChannelTextBox.Text = "0";
+            this.TXPowerComboBox.SelectedIndex = 1;
         }
         #endregion
 
@@ -745,20 +590,33 @@ namespace SwarmRobotControlAndCommunication
             SINE_ERROR_ARCSINE_OK = 3,
             SINE_ERROR_ARCSINE_ERROR = 4
         }
-       
+        
+        private void setAddressEeprom()
+        {
+            //Byte[] transmittedData = new Byte[5]; // <set address command>< address>
+            //Int32 readAddress;
+
+            //transmittedData[0] = COMMAND_SET_ADDRESS_EEROM;
+
+            //readAddress = Convert.ToInt32(this.EepromAddressTextBox.Text);
+            //transmittedData[1] = (Byte)(readAddress >> 24);
+            //transmittedData[2] = (Byte)(readAddress >> 16);
+            //transmittedData[3] = (Byte)(readAddress >> 8);
+            //transmittedData[4] = (Byte)(readAddress & 0xFF);
+
+            //theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
+        }
+
         private void EepromDataReadButton_Click(object sender, RoutedEventArgs e)
         {
-            byte unit = 4;
+            byte unit = 3;
             byte[] data = new byte[unit * 2 + 1];
             UInt16 ui16WordIndex;
 
-            const byte UNIT_STEP = 6;
-            uint bufferLength = (uint)unit * UNIT_STEP + 1 + 2;
+            uint bufferLength = (uint)unit * 6 + 1 + 2;
             byte rxUnit;
             UInt32 ui32RxData = 0;
-            Int32 i32RxData = 0;
             byte[] dataBuffer = new byte[bufferLength];
-            UInt32 dataPointer = 1;
 
             data[0] = unit;
 
@@ -777,63 +635,32 @@ namespace SwarmRobotControlAndCommunication
             data[5] = (byte)((ui16WordIndex >> 8) & 0x0FF);
             data[6] = (byte)(ui16WordIndex & 0x0FF);
 
-            /* 4 */
-            ui16WordIndex = Convert.ToUInt16(this.EepromRandomSequencesWordIndexTextBox.Text);
-            data[7] = (byte)((ui16WordIndex >> 8) & 0x0FF);
-            data[8] = (byte)(ui16WordIndex & 0x0FF);
-
             try
             {
-                SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_EEPROM_DATA_READ);
-                SwarmMessage message = new SwarmMessage(header, data);
-
-                theControlBoard.receivedDataFromRobot(dataBuffer, bufferLength, 1000, message);
+                theControlBoard.receiveBytesFromRobot(COMMAND_EEPROM_DATA_READ, data, bufferLength, ref dataBuffer, 1000);
 
                 SwarmMessage rxMessage = SwarmMessage.ConstructFromByteArray(dataBuffer);
                 byte[] messageContent;
                 if (rxMessage.getHeader().getMessageType() == e_MessageType.MESSAGE_TYPE_ROBOT_RESPONSE
-                    && rxMessage.getHeader().getCmd() == ROBOT_RESPONSE_TO_HOST_OK)
+                    && rxMessage.getHeader().getCmd() == ROBOT_RESPONSE_OK)
                 {
                     messageContent = rxMessage.getData();
                     rxUnit = messageContent[0];
-
-                    dataPointer = 1;
                     if (rxUnit == unit)
                     {
-                        /* Robot ID */
-                        constructWordIndexAndDataContent(ref ui16WordIndex, ref ui32RxData, messageContent, dataPointer);
-                        dataPointer += UNIT_STEP;
+                        constructWordIndexAndDataContent(ref ui16WordIndex, ref ui32RxData, messageContent, 1);
                         this.EepromRobotIdWordIndexTextBox.Text = ui16WordIndex.ToString();
                         this.EepromRobotIdTextBox.Text = ui32RxData.ToString("X8");
 
-                        /* Intercept */
-                        constructWordIndexAndDataContent(ref ui16WordIndex, ref ui32RxData, messageContent, dataPointer);
-                        dataPointer += UNIT_STEP;
-                        i32RxData = (Int32)ui32RxData; 
+                        constructWordIndexAndDataContent(ref ui16WordIndex, ref ui32RxData, messageContent, 7);
                         this.EepromInterceptWordIndexTextBox.Text = ui16WordIndex.ToString();
-                        float fIntercept = (float)(i32RxData / 32768.0);
+                        float fIntercept = (float)(ui32RxData / 32768.0);
                         this.EepromInterceptTextBox.Text = fIntercept.ToString("0.0000");
 
-                        /* Slope */
-                        constructWordIndexAndDataContent(ref ui16WordIndex, ref ui32RxData, messageContent, dataPointer);
-                        dataPointer += UNIT_STEP;
-                        i32RxData = (Int32)ui32RxData;
+                        constructWordIndexAndDataContent(ref ui16WordIndex, ref ui32RxData, messageContent, 13);
                         this.EepromSlopeWordIndexTextBox.Text = ui16WordIndex.ToString();
-                        float fSlope = (float)(i32RxData / 32768.0);
+                        float fSlope = (float)(ui32RxData / 32768.0);
                         this.EepromSlopeTextBox.Text = fSlope.ToString("0.0000");
-
-                        /* Random W */
-                        constructWordIndexAndDataContent(ref ui16WordIndex, ref ui32RxData, messageContent, dataPointer);
-                        dataPointer += UNIT_STEP;
-                        this.EepromRandomSequencesWordIndexTextBox.Text = ui16WordIndex.ToString();
-                        this.EepromRandom7TextBox.Text = Convert.ToString((ui32RxData >> 28) & 0x0F);
-                        this.EepromRandom6TextBox.Text = Convert.ToString((ui32RxData >> 24) & 0x0F);
-                        this.EepromRandom5TextBox.Text = Convert.ToString((ui32RxData >> 20) & 0x0F);
-                        this.EepromRandom4TextBox.Text = Convert.ToString((ui32RxData >> 16) & 0x0F);
-                        this.EepromRandom3TextBox.Text = Convert.ToString((ui32RxData >> 12) & 0x0F);
-                        this.EepromRandom2TextBox.Text = Convert.ToString((ui32RxData >> 8) & 0x0F);
-                        this.EepromRandom1TextBox.Text = Convert.ToString((ui32RxData >> 4) & 0x0F);
-                        this.EepromRandom0TextBox.Text = Convert.ToString((ui32RxData) & 0x0F);
 
                         setStatusBarContent("EEPROM Data Read: OK!");
                     }
@@ -857,69 +684,39 @@ namespace SwarmRobotControlAndCommunication
 
         private void EepromDataSynchronousButton_Click(object sender, RoutedEventArgs e)
         {
-            MessageBoxResult result = MessageBox.Show("This action will change robot's EEPROM data!", "Do you want to continue", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-            if (result == MessageBoxResult.No)
-                return;
-
             // <DataNum><2b word index><4b data><2b word index><4b data>...<2b word index><4b data>
             try
             {
                 UInt16 ui16WordIndex;
                 UInt32 ui32Data;
-                Int32 i32Data;
                 float fData;
 
-                byte unit = 4;
-                const byte UNIT_STEP = 6;
-                byte[] data = new byte[unit * UNIT_STEP + 1];
-           
+                byte unit = 3;
+                byte[] data = new byte[unit * 6 + 1];
                 data[0] = unit;
-
-                UInt32 dataPointer = 1;
 
                 /* 1 */
                 ui16WordIndex = Convert.ToUInt16(this.EepromRobotIdWordIndexTextBox.Text);
                 ui32Data = getAddress(this.EepromRobotIdTextBox.Text, 8);
-                fillPairIndexAndWordToByteArray(ui16WordIndex, ui32Data, data, dataPointer);
-                dataPointer += UNIT_STEP;
+                fillPairIndexAndWordToByteArray(ui16WordIndex, ui32Data, data, 1);
 
                 /* 2 */
                 ui16WordIndex = Convert.ToUInt16(this.EepromInterceptWordIndexTextBox.Text);
                 float.TryParse(this.EepromInterceptTextBox.Text, out fData);
-                i32Data = (Int32)(fData * 32768);
-                ui32Data = (UInt32)i32Data;
-                fillPairIndexAndWordToByteArray(ui16WordIndex, ui32Data, data, dataPointer);
-                dataPointer += UNIT_STEP;
+                ui32Data = (UInt32)(fData * 32768);
+                fillPairIndexAndWordToByteArray(ui16WordIndex, ui32Data, data, 7);
 
                 /* 3 */
                 ui16WordIndex = Convert.ToUInt16(this.EepromSlopeWordIndexTextBox.Text);
                 float.TryParse(this.EepromSlopeTextBox.Text, out fData);
-                i32Data = (Int32)(fData * 32768);
-                ui32Data = (UInt32)i32Data;
-                fillPairIndexAndWordToByteArray(ui16WordIndex, ui32Data, data, dataPointer);
-                dataPointer += UNIT_STEP;
-
-                /* 4 */
-                ui16WordIndex = Convert.ToUInt16(this.EepromRandomSequencesWordIndexTextBox.Text);
-                ui32Data = (UInt32)((Byte.Parse(this.EepromRandom0TextBox.Text)) |
-                                    ((Byte.Parse(this.EepromRandom1TextBox.Text)) << 4) |
-                                    ((Byte.Parse(this.EepromRandom2TextBox.Text)) << 8) |
-                                    ((Byte.Parse(this.EepromRandom3TextBox.Text)) << 12) |
-                                    ((Byte.Parse(this.EepromRandom4TextBox.Text)) << 16) |
-                                    ((Byte.Parse(this.EepromRandom5TextBox.Text)) << 20) |
-                                    ((Byte.Parse(this.EepromRandom6TextBox.Text)) << 24) |
-                                    ((Byte.Parse(this.EepromRandom7TextBox.Text)) << 28));
-                fillPairIndexAndWordToByteArray(ui16WordIndex, ui32Data, data, dataPointer);
-                dataPointer += UNIT_STEP;
-
+                ui32Data = (UInt32)(fData * 32768);
+                fillPairIndexAndWordToByteArray(ui16WordIndex, ui32Data, data, 13);
 
                 SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_EEPROM_DATA_WRITE);
                 SwarmMessage message = new SwarmMessage(header, data);
+                theControlBoard.transmitBytesToRobot(message.toByteArray(), message.getSize(), 1);
 
-                if (theControlBoard.sendMessageToRobot(message))
-                    setStatusBarContent("EEPROM Data is synchronized!");
-                else
-                    setStatusBarContent("Failed to synchronized EEPROM...");
+                setStatusBarContent("EEPROM Data is synchronized!");
             }
             catch (Exception ex)
             {
@@ -938,86 +735,12 @@ namespace SwarmRobotControlAndCommunication
 
         private void EepromProgramTableButton_Click(object sender, RoutedEventArgs e)
         {
-            MessageBoxResult result = MessageBox.Show("This action will change robot's EEPROM data!", "Do you want to continue", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-            if (result == MessageBoxResult.No)
-                return;
-
             assignTaskForBackgroundWorker((Button)sender, "Cancel Update");
         }
 
         private void EepromTableVerifyButton_Click(object sender, RoutedEventArgs e)
         {
             assignTaskForBackgroundWorker((Button)sender, "Cancel Verify");
-        }
-
-        private void EepromRandomGenButton_Click(object sender, RoutedEventArgs e)
-        {
-            List<int> listRandomValues = GenerateRandom(8, 0, 15);
-            int[] randomBuffer = listRandomValues.ToArray();
-            EepromRandom7TextBox.Text = Convert.ToString(randomBuffer[7]);
-            EepromRandom6TextBox.Text = Convert.ToString(randomBuffer[6]);
-            EepromRandom5TextBox.Text = Convert.ToString(randomBuffer[5]);
-            EepromRandom4TextBox.Text = Convert.ToString(randomBuffer[4]);
-            EepromRandom3TextBox.Text = Convert.ToString(randomBuffer[3]);
-            EepromRandom2TextBox.Text = Convert.ToString(randomBuffer[2]);
-            EepromRandom1TextBox.Text = Convert.ToString(randomBuffer[1]);
-            EepromRandom0TextBox.Text = Convert.ToString(randomBuffer[0]);
-        }
-        private List<int> GenerateRandom(int count, int min, int max)
-        {
-            Random random = new Random((int)DateTime.Now.Ticks);
-
-            //  initialize set S to empty
-            //  for J := N-M + 1 to N do
-            //    T := RandInt(1, J)
-            //    if T is not in S then
-            //      insert T in S
-            //    else
-            //      insert J in S
-            //
-            // adapted for C# which does not have an inclusive Next(..)
-            // and to make it from configurable range not just 1.
-
-            if (max <= min || count < 0 ||
-                // max - min > 0 required to avoid overflow
-                    (count > max - min && max - min > 0))
-            {
-                // need to use 64-bit to support big ranges (negative min, positive max)
-                throw new ArgumentOutOfRangeException("Range " + min + " to " + max +
-                        " (" + ((Int64)max - (Int64)min) + " values), or count " + count + " is illegal");
-            }
-
-            // generate count random values.
-            HashSet<int> candidates = new HashSet<int>();
-
-            // start count values before max, and end at max
-            for (int top = max - count; top < max; top++)
-            {
-                // May strike a duplicate.
-                // Need to add +1 to make inclusive generator
-                // +1 is safe even for MaxVal max value because top < max
-                if (!candidates.Add(random.Next(min, top + 1)))
-                {
-                    // collision, add inclusive max.
-                    // which could not possibly have been added before.
-                    candidates.Add(top);
-                }
-            }
-
-            // load them in to a list, to sort
-            List<int> result = candidates.ToList();
-
-            // shuffle the results because HashSet has messed
-            // with the order, and the algorithm does not produce
-            // random-ordered results (e.g. max-1 will never be the first value)
-            for (int i = result.Count - 1; i > 0; i--)
-            {
-                int k = random.Next(i + 1);
-                int tmp = result[k];
-                result[k] = result[i];
-                result[i] = tmp;
-            }
-            return result;
         }
 
         #region EEPROM backgroundWorker
@@ -1067,6 +790,8 @@ namespace SwarmRobotControlAndCommunication
                     backgroundWorker.RunWorkerAsync((string)buttonClicked.Content);
 
                     buttonClicked.Content = busyContent;
+
+                    setStatusBarContent("EEPROM Table Manipulation: Simulate UI Only...");
                 }
 
             }
@@ -1103,105 +828,12 @@ namespace SwarmRobotControlAndCommunication
         }
         private void tableVerifying_DoWork(object sender, DoWorkEventArgs e)
         {
-            const byte TOTAL_BLOCK = 12; // 1->6 in Sine Table; 7->12 is ArcSine Table
-            const byte NUMBER_OF_WORD = 16;
-            byte currentBlock = 1;
-            byte[] data = new byte[1 + 4];
-            data[0] = NUMBER_OF_WORD;
+            //TODO: put your task here
 
-            UInt32 bufferLength = 2 + 1 + 4 + 4 * NUMBER_OF_WORD;
-            byte[] dataBuffer = new byte[bufferLength];
-            UInt32 rxAddress;
-
-            try
-            {
-                for (currentBlock = 1; currentBlock <= TOTAL_BLOCK; currentBlock++)
-                {
-                    if (backgroundWorker.CancellationPending)
-                    {
-                        e.Cancel = true;
-                        break;
-                    }
-
-                    UInt32 address = listTupeEepromTable[currentBlock - 1].Item1;
-
-                    // fill Address
-                    data[1] = (byte)(address >> 24);
-                    data[2] = (byte)(address >> 16);
-                    data[3] = (byte)(address >> 8);
-                    data[4] = (byte)address;
-
-                    SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_EEPROM_DATA_READ_BULK);
-                    SwarmMessage message = new SwarmMessage(header, data);
-
-                    theControlBoard.receivedDataFromRobot(dataBuffer, bufferLength, 1000, message);
-
-                    SwarmMessage rxMessage = SwarmMessage.ConstructFromByteArray(dataBuffer);
-
-                    byte[] messageContent;
-
-                    if (rxMessage.getHeader().getMessageType() == e_MessageType.MESSAGE_TYPE_ROBOT_RESPONSE
-                        && rxMessage.getHeader().getCmd() == ROBOT_RESPONSE_TO_HOST_OK)
-                    {
-                        messageContent = rxMessage.getData();
-                        UInt16[] pui16TableContent = listTupeEepromTable[currentBlock - 1].Item2;
-
-                        rxAddress = (UInt32)((messageContent[1] << 24) | (messageContent[2] << 16) | 
-                                    (messageContent[3] << 8) | messageContent[4]);
-
-                        if (messageContent[0] == NUMBER_OF_WORD && rxAddress == listTupeEepromTable[currentBlock - 1].Item1)
-                        { 
-                            UInt16[] referenceContent = listTupeEepromTable[currentBlock - 1].Item2;
-                            UInt32 contentPointer = 5;
-                            for (int i = 0; i < referenceContent.Length; i++)
-                            {
-                                if ((messageContent[contentPointer] != (referenceContent[i] & 0xFF)) ||
-                                    (messageContent[contentPointer + 1] != ((referenceContent[i] >> 8)& 0xFF)))
-                                {
-                                    if (currentBlock > (TOTAL_BLOCK / 2))
-                                        e.Result = e_VerifyTableReturn.SINE_OK_ARCSINE_ERROR;
-                                    else
-                                        e.Result = e_VerifyTableReturn.SINE_ERROR_ARCSINE_ERROR;
-                                    return;
-                                }
-
-                                contentPointer += 2;
-                            }
-                        }
-                        else
-                        {
-                            break;
-                        }
-  
-                        backgroundWorker.ReportProgress(currentBlock * 100 / TOTAL_BLOCK);
-
-                        System.Threading.Thread.Sleep(500);
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                defaultExceptionHandle(ex);
-            }
-
-            if (currentBlock >= TOTAL_BLOCK)
-                e.Result = e_VerifyTableReturn.SINE_OK_ARCSINE_OK;
-            else
-                e.Result = e_VerifyTableReturn.SINE_ERROR_ARCSINE_ERROR;
-        }
-        private void tableProgramming_DoWork(object sender, DoWorkEventArgs e)
-        {
-            const byte TOTAL_BLOCK = 12; // 1->6 in Sine Table; 7->12 is ArcSine Table
-            const byte NUMBER_OF_WORD = 16;
-            byte currentBlock = 1;
-            byte[] data = new byte[1 + 4 + 4 * NUMBER_OF_WORD];
-            data[0] = NUMBER_OF_WORD;
-
-            for (currentBlock = 1; currentBlock <= TOTAL_BLOCK; currentBlock++)
+            //Test only-------------------------------------------------------
+            int count = 10; 
+            int sum = 0;
+            for (int i = 1; i <= count; i++)
             {
                 if (backgroundWorker.CancellationPending)
                 {
@@ -1209,33 +841,40 @@ namespace SwarmRobotControlAndCommunication
                     break;
                 }
 
-                UInt32 address = listTupeEepromTable[currentBlock - 1].Item1;
-                UInt16[] pui16Data = listTupeEepromTable[currentBlock - 1].Item2;
+                sum += i;
 
-                fillStartAddressAndWordContent(address, pui16Data, data, 1);
+                backgroundWorker.ReportProgress(i * 100 / count);
 
-                SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_EEPROM_DATA_WRITE_BULK);
-                SwarmMessage message = new SwarmMessage(header, data);
-
-                if (!theControlBoard.sendMessageToRobot(message))
-                {
-                    if (currentBlock > (TOTAL_BLOCK / 2))
-                        e.Result = e_VerifyTableReturn.SINE_OK_ARCSINE_ERROR;
-                    else
-                        e.Result = e_VerifyTableReturn.SINE_ERROR_ARCSINE_ERROR;
-
-                    return;
-                }
-
-                backgroundWorker.ReportProgress(currentBlock  * 100 / TOTAL_BLOCK);
-
-                System.Threading.Thread.Sleep(500);
+                System.Threading.Thread.Sleep(300);
             }
 
-            if(currentBlock >= TOTAL_BLOCK)
-                e.Result = e_VerifyTableReturn.SINE_OK_ARCSINE_OK;
-            else
-                e.Result = e_VerifyTableReturn.SINE_ERROR_ARCSINE_ERROR;
+            e.Result = e_VerifyTableReturn.SINE_ERROR_ARCSINE_ERROR;
+            //-------------------------------------------------------Test only
+        }
+        private void tableProgramming_DoWork(object sender, DoWorkEventArgs e)
+        {
+            //TODO: put your task here
+
+            //Test only-------------------------------------------------------
+            int count = 28;
+            int sum = 0;
+            for (int i = 1; i <= count; i++)
+            {
+                if (backgroundWorker.CancellationPending)
+                {
+                    e.Cancel = true;
+                    break;
+                }
+
+                sum += i;
+
+                backgroundWorker.ReportProgress(i * 100 / count);
+
+                System.Threading.Thread.Sleep(300);
+            }
+
+            e.Result = e_VerifyTableReturn.SINE_ERROR_ARCSINE_ERROR;
+            //-------------------------------------------------------Test only
         }
 
         private void backgroundWorkerTableManipulation_ProgressChanged(object sender, ProgressChangedEventArgs e)
@@ -1324,235 +963,9 @@ namespace SwarmRobotControlAndCommunication
         }
         #endregion
 
-        private void fillStartAddressAndWordContent(UInt32 address, UInt16[] pui16ContentBuffer, byte[] data, uint offset)
-        {
-            // fill Address
-            data[offset++] = (byte)(address >> 24);
-            data[offset++] = (byte)(address >> 16);
-            data[offset++] = (byte)(address >> 8);
-            data[offset++] = (byte)address;
-           
-            // fill Word content
-            for (int i = 0; i < pui16ContentBuffer.Length; i++)
-            {
-                data[offset++] = (byte)(pui16ContentBuffer[i] & 0xFF);
-                data[offset++] = (byte)((pui16ContentBuffer[i] >> 8) & 0xFF);
-            }
-        }
-
         #endregion
 
         #region Calibration Tab
-
-        #region TDOA
-        private const int START_SAMPLES_POSTITION = 32;
-        private const int FILTER_ORDER = 34;
-        private float VOLT = 3.3f / (float)Math.Pow(2, 12);
-
-        private float[] FilterCoefficient = new float[FILTER_ORDER] { -0.003472f, 0.000573f, 0.006340f, 0.014220f, 0.022208f, 0.025940f, 0.020451f, 0.002990f, -0.024527f, -0.054834f, -0.077140f, -0.081033f, -0.060950f, -0.019268f, 0.033526f, 0.081934f, 0.110796f, 0.110796f, 0.081934f, 0.033526f, -0.019268f, -0.060950f, -0.081033f, -0.077140f, -0.054834f, -0.024527f, 0.002990f, 0.020451f, 0.025940f, 0.022208f, 0.014220f, 0.006340f, 0.000573f, -0.003472f };
-
-        private void filterAndPlotResults(string title, uint[] data)
-        {
-            float[] fdata = new float[data.Length];
-            for (int j = 0; j < fdata.Length; j++)
-            {
-                fdata[j] = data[j] / 1.0f;
-            }
-
-            float[] fFilteredData = filtering(fdata, FilterCoefficient);
-
-            float[] filteredPlotData = new float[data.Length - START_SAMPLES_POSTITION];
-            for (int j = 0; j < filteredPlotData.Length; j++)
-            {
-                filteredPlotData[j] = fFilteredData[j + START_SAMPLES_POSTITION] * VOLT;
-            }
-
-            double peakEnvelope = 0;
-            double maxEnvelope = 0;
-            getDistance(fFilteredData, ref peakEnvelope, ref maxEnvelope);
-
-            string output = String.Format("Peak = {0}, Max = {1}", peakEnvelope, maxEnvelope * VOLT);
-
-            OxyplotWindowTwoChart oxyplotWindowTwoChart = new OxyplotWindowTwoChart(title, "Sampling Data", fdata, "Filtered Data: " + output, filteredPlotData, OxyplotWindowTwoChart.PolylineMonoY);
-            oxyplotWindowTwoChart.Show();
-        }
-
-        private float[] filtering(float[] data, float[] H)
-        {
-            float[] output = new float[data.Length + H.Length - 1];
-            for (uint n = 0; n < data.Length + H.Length - 1; n++)
-            {
-                uint kmin, kmax, k;
-                output[n] = 0;
-                kmin = (n >= H.Length - 1) ? (uint)(n - (H.Length - 1)) : (0);
-                kmax = (n < data.Length - 1) ? (n) : (uint)(data.Length - 1);
-                for (k = kmin; k <= kmax; k++)
-                {
-                    output[n] += data[k] * H[n - k];
-                }
-            }
-            float[] outputCutoff = new float[data.Length];
-            for (int i = 0; i < outputCutoff.Length; i++)
-            {
-                outputCutoff[i] = output[i ];
-            }
-            return outputCutoff;
-        }
-
-        private void getDistance(float[] fData, ref double peakEnvelope, ref double maxEnvelope)
-        { 
-        	float step = 0.125f;
-
-	        double[] localPeaksPosition = new double[3]{ 0, 0, 0 };
-            double[] localMaxValue = new double[3]{ 0, 0, 0 };
-
-            float[] fTemp = new float[fData.Length - START_SAMPLES_POSTITION];
-            for (int j = 0; j < fTemp.Length; j++)
-            {
-                fTemp[j] = fData[j + START_SAMPLES_POSTITION - 1];
-            }
-            fData = fTemp;
-
-            find3LocalPeaks(fData, localPeaksPosition);
-	        if (localPeaksPosition[0] != 0 && localPeaksPosition[1] != 0 && localPeaksPosition[2] != 0) {
-                double[] PositionsArray = new double[3]{ 0, 0, 0 };
-                double[] ValuesArray = new double[3]{ 0, 0, 0 };
-		        int i;
-		        for (i = 0; i < 3; i++) {
-			        PositionsArray[0] = localPeaksPosition[i] - 1;
-			        PositionsArray[1] = localPeaksPosition[i];
-			        PositionsArray[2] = localPeaksPosition[i] + 1;
-                    ValuesArray[0] = fData[(int)PositionsArray[0]];
-                    ValuesArray[1] = fData[(int)PositionsArray[1]]; 
-                    ValuesArray[2] = fData[(int)PositionsArray[2]];
-                    localMaxValue[i] = fData[(int)localPeaksPosition[i]]; 
-			        interPeak(PositionsArray, ValuesArray, localPeaksPosition[i], localMaxValue[i], step, ref localPeaksPosition[i], ref localMaxValue[i]);
-		        }
-		        interPeak(localPeaksPosition, localMaxValue, localPeaksPosition[1], localMaxValue[1], step, ref peakEnvelope, ref maxEnvelope);
-                peakEnvelope = peakEnvelope + START_SAMPLES_POSTITION;
-	        }
-        }
-        private void find3LocalPeaks(float[] fData, double[] LocalPeaksStoragePointer)
-        {
-            int SamplePosition = 0;
-
-            int maxSamplePosition = 0;
-            int i;
-            for (i = START_SAMPLES_POSTITION; i < fData.Length; i++)
-            {
-                if (fData[i] > fData[maxSamplePosition])
-                {
-                    maxSamplePosition = i;
-                }
-            }
-            LocalPeaksStoragePointer[1] = maxSamplePosition;
-
-            SamplePosition = reachBottom(fData, (int)LocalPeaksStoragePointer[1], -1);
-            if (SamplePosition != 0)
-            {
-                LocalPeaksStoragePointer[0] = reachPeak(fData, SamplePosition, -1);
-            }
-
-            SamplePosition = reachBottom(fData, (int)LocalPeaksStoragePointer[1], 1);
-            if (SamplePosition != 0)
-            {
-                LocalPeaksStoragePointer[2] = reachPeak(fData, SamplePosition, 1);
-            }
-        }
-        private int reachBottom(float[] fData, int PeakPosition, int PointerIncreaseNumber) 
-        {
-	        int SamplePosition = PeakPosition;
-
-            while (SamplePosition > 1 && SamplePosition < fData.Length)
-            {
-		        if (fData[SamplePosition] < fData[SamplePosition + PointerIncreaseNumber]) 
-                {
-			        return SamplePosition;
-		        }
-		        else 
-                {
-			        SamplePosition += PointerIncreaseNumber;
-		        }
-	        }
-
-	        return 0;
-        }
-        private int reachPeak(float[] fData, int PeakPosition, int PointerIncreaseNumber)
-        {
-	        int SamplePosition = PeakPosition;
-
-            while (SamplePosition > 1 && SamplePosition < fData.Length)
-            {
-		        if (fData[SamplePosition] > fData[SamplePosition + PointerIncreaseNumber]) 
-                {
-			        return SamplePosition;
-		        }
-		        else 
-                {
-			        SamplePosition += PointerIncreaseNumber;
-		        }
-	        }
-
-	        return 0;
-        }
-        private void interPeak(double[] PositionsArray, double[] ValuesArray, double UserPosition, double UserMaxValue, float step, ref double ReturnPosition, ref double ReturnValue) 
-        {
-	        double realLocalPeak = UserPosition;
-	        double realLocalMax = UserMaxValue;
-            double samplePosition = realLocalPeak - step;
-            double interpolateValue = larange(PositionsArray, ValuesArray, samplePosition);
-	        int PointerDirection = 0;
-	        if (interpolateValue > UserMaxValue) 
-            {
-		        PointerDirection = -1;
-		        realLocalPeak = samplePosition;
-		        realLocalMax = interpolateValue;
-	        }
-	        else 
-            {
-		        PointerDirection = 1;
-	        }
-	        bool flag = true;
-	        while (flag) 
-            {
-		        samplePosition = realLocalPeak + step*PointerDirection;
-		        interpolateValue = larange(PositionsArray, ValuesArray, samplePosition);
-		        if (interpolateValue >= realLocalMax) 
-                {
-			        realLocalMax = interpolateValue;
-			        realLocalPeak = samplePosition;
-		        }
-		        else 
-                {
-			        ReturnPosition = realLocalPeak;
-			        ReturnValue = realLocalMax;
-			        flag = false;
-		        }
-	        }
-        }
-        private double larange(double[] PositionsArray, double[] ValuesArray, double interpolatePoint) 
-        {
-	        double result = 0;
-	        int i, j;
-            double temp;
-	        for (j = 0; j < 3; j++) {
-		        temp = 1;
-		        for (i = 0; i < 3; i++) {
-			        if (i != j)
-                        temp = (interpolatePoint - PositionsArray[i]) * temp / (PositionsArray[j] - PositionsArray[i]);
-		        }
-		        result = result + (ValuesArray[j] * temp);
-	        }
-	        return result;
-        }
-        #endregion
-
-        private void ConfigureRFCalibration_Click(object sender, RoutedEventArgs e)
-        {
-            setTxAddress(this.TXAddressCalibrationSelectBox.Text);
-            setStatusBarContent("Set RF Tx Address: " + this.TXAddressCalibrationSelectBox.Text);
-        }
-        
         private void sendCommandButton_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -1574,15 +987,15 @@ namespace SwarmRobotControlAndCommunication
                         break;
 
                     case "Toggle All Status Leds":
-                        theControlBoard.broadcastCommandToRobot(COMMAND_TOGGLE_LEDS);
+                        theControlBoard.sendCommandToRobot(COMMAND_TOGGLE_LEDS);
                         break;
 
                     case "Start Sampling Mics Signals":
-                        theControlBoard.broadcastCommandToRobot(COMMAND_SAMPLE_MICS_SIGNALS);
+                        theControlBoard.sendCommandToRobot(COMMAND_SAMPLE_MICS_SIGNALS);
                         break;
 
                     case "Test Speaker":
-                        theControlBoard.broadcastCommandToRobot(COMMAND_TEST_SPEAKER);
+                        theControlBoard.sendCommandToRobot(COMMAND_TEST_SPEAKER);
                         break;
 
                     case "Change Motors Speed":
@@ -1591,10 +1004,6 @@ namespace SwarmRobotControlAndCommunication
 
                     case "Read Battery Voltage":
                         readBatteryVoltage();
-                        break;
-
-                    case "Indicate Battery Voltage":
-                        theControlBoard.broadcastCommandToRobot(COMMAND_INDICATE_BATT_VOLT);
                         break;
 
                     default:
@@ -1616,15 +1025,12 @@ namespace SwarmRobotControlAndCommunication
             commandContent[2] = (byte)((length >> 8) & 0xFF);
             commandContent[3] = (byte)(length & 0xFF);
 
-            SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_TEST_RF_TRANSMISTER);
-            SwarmMessage requestMessage = new SwarmMessage(header, commandContent);
-
             byte[] receivedData = new byte[length];
             UInt16 data = new UInt16();
             UInt16 value = 0;
             try
             {
-                theControlBoard.receivedDataFromRobot(receivedData, length, 1000, requestMessage);
+                theControlBoard.receiveBytesFromRobot(Command, commandContent, length, ref receivedData, 1000);
                 uint i = 0;
                 while (true)
                 {
@@ -1656,32 +1062,34 @@ namespace SwarmRobotControlAndCommunication
         {
             try
             {
-                UInt32 length = 600;
+                //TODO: for large length (>32) 
+                // we need implement a function transmitBytesToRobotWithACK(...)
+                // to replace the function theControlBoard.transmitBytesToRobot(...)
 
-                byte[] commandContent = new byte[4];
-                commandContent[0] = (byte)((length >> 24) & 0x0FF);
-                commandContent[1] = (byte)((length >> 16) & 0x0FF);
-                commandContent[2] = (byte)((length >> 8) & 0x0FF);
-                commandContent[3] = (byte)(length & 0x0FF);
+                UInt32 length = 32;
 
+                Byte[] data = new Byte[4];
+                data[0] = (byte)((length >> 24) & 0x0FF);
+                data[1] = (byte)((length >> 16) & 0x0FF);
+                data[2] = (byte)((length >> 8) & 0x0FF);
+                data[3] = (byte)(length & 0x0FF);
                 SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, commandNumber);
-                SwarmMessage message = new SwarmMessage(header, commandContent);
+                SwarmMessage message = new SwarmMessage(header, data);
+                theControlBoard.transmitBytesToRobot(message.toByteArray(), message.getSize(), 1);
 
-                theControlBoard.sendMessageToRobot(message);
-
-                byte[] data = new byte[length];
+                data = new byte[length];
                 byte value = 0;
                 for (int i = 0; i < length; i++)
                     data[i] = value++;
 
-                theControlBoard.broadcastDataToRobot(data);
+                theControlBoard.transmitBytesToRobot(data, length, 0);
 
                 uint bufferLength = 2;
-                byte[] dataBuffer = new byte[bufferLength];
-                theControlBoard.tryToReceivedDataFromRobot(dataBuffer, bufferLength, 1000);
+                Byte[] dataBuffer = new Byte[bufferLength];
+                theControlBoard.receiveBytesFromRobot(bufferLength, ref dataBuffer, 1000);
                 SwarmMessage rxMessage = SwarmMessage.ConstructFromByteArray(dataBuffer);
                 if (rxMessage.getHeader().getMessageType() == e_MessageType.MESSAGE_TYPE_ROBOT_RESPONSE
-                    && rxMessage.getHeader().getCmd() == ROBOT_RESPONSE_TO_HOST_OK)
+                    && rxMessage.getHeader().getCmd() == ROBOT_RESPONSE_OK)
                 {
                     setStatusBarContent("Robot's RF Reciever OK!");
                 }
@@ -1720,7 +1128,7 @@ namespace SwarmRobotControlAndCommunication
 
                 SwarmMessage message = new SwarmMessage(header, data);
 
-                theControlBoard.broadcastMessageToRobot(message);
+                theControlBoard.transmitBytesToRobot(message.toByteArray(), message.getSize(), 1);
             }
             catch (Exception ex)
             {
@@ -1730,17 +1138,17 @@ namespace SwarmRobotControlAndCommunication
 
         private void readAdc1Button_Click(object sender, RoutedEventArgs e)
         {
-            readADC(COMMAND_READ_ADC1, this.readAdc1TextBox, "Mic 1");
+            readADC(COMMAND_READ_ADC1, this.readAdc1TextBox);
             setStatusBarContent("Read ADC1 successful!");
         }
 
         private void readAdc2Button_Click(object sender, RoutedEventArgs e)
         {
-            readADC(COMMAND_READ_ADC2, this.readAdc2TextBox, "Mic 2");
+            readADC(COMMAND_READ_ADC2, this.readAdc2TextBox);
             setStatusBarContent("Read ADC2 successful!");
         }
 
-        private void readADC(byte Command, TextBox tBox, string comment)
+        private void readADC(byte Command, TextBox tBox)
         {
             uint length = 600;
             byte[] receivedData = new byte[length];
@@ -1748,11 +1156,7 @@ namespace SwarmRobotControlAndCommunication
             tBox.Text = "";
             try
             {
-                SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, Command);
-                SwarmMessage message = new SwarmMessage(header);
-
-                theControlBoard.receivedDataFromRobot(receivedData, length, 1000, message);
-
+                theControlBoard.receiveBytesFromRobot(Command, null, length, ref receivedData, 1000);
                 uint i = 0;
                 for (uint pointer = 0; pointer < length / 2; pointer++)
                 {
@@ -1765,7 +1169,8 @@ namespace SwarmRobotControlAndCommunication
                     tBox.Text += ", ";
                 }
 
-                filterAndPlotResults(comment, adcData);
+                OxyplotWindow oxyplotWindow = new OxyplotWindow(adcData, "Sampling Data", OxyplotWindow.PolylineMonoY);
+                oxyplotWindow.Show();
             }
             catch (Exception ex)
             {
@@ -1782,19 +1187,15 @@ namespace SwarmRobotControlAndCommunication
 
             try
             {
-                SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_REQUEST_BATTERY_VOLT);
-                SwarmMessage message = new SwarmMessage(header);
-
-                theControlBoard.receivedDataFromRobot(receivedData, length, 1000, message);
-
+                theControlBoard.receiveBytesFromRobot(COMMAND_REQUEST_BATTERY_VOLT, null, length, ref receivedData, 1000);
                 SwarmMessage rxMessage = SwarmMessage.ConstructFromByteArray(receivedData);
                 if (rxMessage.getHeader().getMessageType() == e_MessageType.MESSAGE_TYPE_ROBOT_RESPONSE
-                    && rxMessage.getHeader().getCmd() == ROBOT_RESPONSE_TO_HOST_OK)
+                    && rxMessage.getHeader().getCmd() == ROBOT_RESPONSE_OK)
                 {
                     adcData = (rxMessage.getData()[1] << 8) | rxMessage.getData()[0];
                     BatteryVoltage = (adcData * 3330) / 2048;
-                    string mess = BatteryVoltage.ToString() + "mV (ADCvalue = " + adcData.ToString() + ")";
-                    setStatusBarContent("Robot's V_batt = " + mess);
+                    string message = BatteryVoltage.ToString() + "mV (ADCvalue = " + adcData.ToString() + ")";
+                    setStatusBarContent("Robot's V_batt = " + message);
                 }
                 else 
                 {
@@ -1811,452 +1212,19 @@ namespace SwarmRobotControlAndCommunication
 
         private void stopMotor1Button_Click(object sender, RoutedEventArgs e)
         {
-            theControlBoard.broadcastCommandToRobot(COMMAND_STOP_MOTOR1);
+            theControlBoard.sendCommandToRobot(COMMAND_STOP_MOTOR1);
             setStatusBarContent("Broadcast Command: Pause left motor");
         }
 
         private void stopMotor2Button_Click(object sender, RoutedEventArgs e)
         {
-            theControlBoard.broadcastCommandToRobot(COMMAND_STOP_MOTOR2);
+            theControlBoard.sendCommandToRobot(COMMAND_STOP_MOTOR2);
             setStatusBarContent("Broadcast Command: Pause right motor");
         }
-
-        #region Testing Only
-        private void SetPIDParameterButton_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                byte[] messageContent = new byte[17];
-                float fData;
-                Int32 i32Data;
-
-                /* P */
-                float.TryParse(this.PIDkPTextBox.Text, out fData);
-                i32Data = (Int32)(fData * 65536);
-                messageContent[0] = (byte)((i32Data >> 24) & 0xFF);
-                messageContent[1] = (byte)((i32Data >> 16) & 0xFF);
-                messageContent[2] = (byte)((i32Data >> 8) & 0xFF);
-                messageContent[3] = (byte)(i32Data & 0xFF);
-
-                /* I */
-                float.TryParse(this.PIDkITextBox.Text, out fData);
-                i32Data = (Int32)(fData * 65536);
-                messageContent[4] = (byte)((i32Data >> 24) & 0xFF);
-                messageContent[5] = (byte)((i32Data >> 16) & 0xFF);
-                messageContent[6] = (byte)((i32Data >> 8) & 0xFF);
-                messageContent[7] = (byte)(i32Data & 0xFF);
-
-                /* D */
-                float.TryParse(this.PIDkDTextBox.Text, out fData);
-                i32Data = (Int32)(fData * 65536);
-                messageContent[8] = (byte)((i32Data >> 24) & 0xFF);
-                messageContent[9] = (byte)((i32Data >> 16) & 0xFF);
-                messageContent[10] = (byte)((i32Data >> 8) & 0xFF);
-                messageContent[11] = (byte)(i32Data & 0xFF);
-
-                /* ref */
-                float.TryParse(this.PIDrefTextBox.Text, out fData);
-                i32Data = (Int32)(fData * 65536);
-                messageContent[12] = (byte)((i32Data >> 24) & 0xFF);
-                messageContent[13] = (byte)((i32Data >> 16) & 0xFF);
-                messageContent[14] = (byte)((i32Data >> 8) & 0xFF);
-                messageContent[15] = (byte)(i32Data & 0xFF);
-
-                /* Run flag */
-                if (this.runPIDCheckBox.IsChecked == true)
-                {
-                    messageContent[16] = 1;
-                    this.runPIDCheckBox.IsChecked = false;
-                }
-                else 
-                {
-                    messageContent[16] = 0;
-                    this.runPIDCheckBox.IsChecked = true;
-                }
-
-                SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_CONFIG_PID_CONTROLLER);
-                SwarmMessage message = new SwarmMessage(header, messageContent);
-
-                if (theControlBoard.sendMessageToRobot(message))
-                {
-                    setStatusBarContent("PID Controller tx susscess! Toggle Run Flag");
-                }
-                else
-                {
-                    setStatusBarContent("Failed to configure PID Controller...");
-                    this.runPIDCheckBox.IsChecked = true;
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Set PID Button: " + ex.Message);
-            }
-        }
-
-        public const UInt32 TESTING_BUFFER_SIZE = 1024;
-
-        public UInt16 g_ui16TDOABufferPointer1 = 0;
-        public float[] g_fdisctanceResultMic1X = new float[TESTING_BUFFER_SIZE];
-        public float[] g_fdisctanceResultMic1Y = new float[TESTING_BUFFER_SIZE];
-
-        public UInt16 g_ui16TDOABufferPointer2 = 0;
-        public float[] g_fdisctanceResultMic2X = new float[TESTING_BUFFER_SIZE];
-        public float[] g_fdisctanceResultMic2Y = new float[TESTING_BUFFER_SIZE];
-
-        public string fileNameMic1 = "";
-        public string fileNameMic2 = "";
-
-        private void testDistacneSensingButton_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                if (isUserConfirmCalibrateTDOA() == false)
-                    return;
-
-                const byte RF_ADDRESS_WIDTH = 4;
-                UInt32 rxAddress = getAddress(micsRobotTextBox.Text, 2 * RF_ADDRESS_WIDTH);
-                byte testTime = Convert.ToByte(testTimesTextBox.Text);
-                UInt32 delay = Convert.ToUInt32(delayTestingTextBox.Text);
-
-                setTxAddress(speakerRobotTextBox.Text);
-
-                uint dataLength = 9;
-                byte[] messageData = new byte[dataLength];
-
-                messageData[0] = (byte)(rxAddress >> 24);
-                messageData[1] = (byte)(rxAddress >> 16);
-                messageData[2] = (byte)(rxAddress >> 8);
-                messageData[3] = (byte)(rxAddress);
-                messageData[4] = testTime;
-                messageData[5] = (byte)(delay >> 24);
-                messageData[6] = (byte)(delay >> 16);
-                messageData[7] = (byte)(delay >> 8);
-                messageData[8] = (byte)(delay);
-
-                SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_CALIBRATE_TDOA_TX);
-                SwarmMessage message = new SwarmMessage(header, messageData);
-
-                uint bufferLength = (uint)testTime * 4;
-                byte[] dataBuffer = new byte[bufferLength];
-                theControlBoard.receivedDataFromRobot(dataBuffer, bufferLength, 5000 * (uint)testTime, message);
-
-                uint length = (uint)testTime * 2;
-                float[] Mic1 = new float[testTime];
-                float[] Mic2 = new float[testTime];
-
-                String fileContent1 = "";
-                bool isNewData1 = false;
-
-                String fileContent2 = "";
-                bool isNewData2 = false;
-
-                for (int i = 0; i < dataBuffer.Length; i += 4)
-                {
-                    Mic1[(int)(i / 4)] = (float)((UInt16)((dataBuffer[i] << 8) | dataBuffer[i + 1]) / 256.0);
-                    fileContent1 += distanceTextBox.Text + " " + Mic1[(int)(i / 4)].ToString() + "\n";
-
-                    Mic2[(int)(i / 4)] = (float)((UInt16)((dataBuffer[i + 2] << 8) | dataBuffer[i + 3]) / 256.0);
-                    fileContent2 += distanceTextBox.Text + " " + Mic2[(int)(i / 4)].ToString() + "\n";
-                }
-
-                float avr1 = 0, avr2 = 0;
-                float maxMic1 = 0, minMic1 = 500;
-                float maxMic2 = 0, minMic2 = 500;
-
-                for (int i = 0; i < testTime; i++)
-                {
-                    avr1 += Mic1[i];
-                    avr2 += Mic2[i];
-
-                    maxMic1 = (maxMic1 >= Mic1[i]) ? (maxMic1) : (Mic1[i]);
-                    minMic1 = (minMic1 <= Mic1[i]) ? (minMic1) : (Mic1[i]);
-
-                    maxMic2 = (maxMic2 >= Mic2[i]) ? (maxMic2) : (Mic2[i]);
-                    minMic2 = (minMic2 <= Mic2[i]) ? (minMic2) : (Mic2[i]);
-                }
-
-                if (minMic1 == 0 || minMic2 == 0)
-                {
-                    MessageBox.Show("Command transmition failed! Please try again...\n", "RF false", MessageBoxButton.OK, MessageBoxImage.Error);
-                    return;
-                }
-
-                avr1 = (float)(avr1 / 10.0);
-                avr2 = (float)(avr2 / 10.0);
-
-                String mess = String.Format("Mic1 = {0} [{1}; {2}], var = {3} \nMic2 = {4} [{5}; {6}], var = {7}", avr1, minMic1, maxMic1, maxMic1 - minMic1, avr2, minMic2, maxMic2, maxMic2 - minMic2);
-
-                MessageBoxResult result;
-
-                if ((maxMic1 - minMic1) > 5 || (maxMic2 - minMic2) > 5)
-                {
-                    result = MessageBox.Show("Bad result! Do you want to keep append this data?\n" + mess, "oh...Sorry :(", MessageBoxButton.YesNo, MessageBoxImage.Error);
-                    if (result == MessageBoxResult.Yes)
-                    {
-                        isNewData1 = true;
-                        isNewData2 = true;
-                    }
-                    else
-                    {
-                        isNewData1 = false;
-                        isNewData2 = false;
-                    }
-                }
-                else if ((maxMic1 - minMic1) > 3 || (maxMic2 - minMic2) > 3)
-                {
-                    result = MessageBox.Show("Bad result! Do you want to keep append this data?\n" + mess, "oh...Sorry :(", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-                    if (result == MessageBoxResult.Yes)
-                    {
-                        isNewData1 = true;
-                        isNewData2 = true;
-                    }
-                    else
-                    {
-                        isNewData1 = false;
-                        isNewData2 = false;
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("Good result:\n" + mess, "Nice :)", MessageBoxButton.OK, MessageBoxImage.Information);
-                    isNewData1 = true;
-                    isNewData2 = true;
-                }
-
-                if (isNewData1)
-                    File.AppendAllText(@fileNameMic1, fileContent1);
-
-                if (isNewData2)
-                    File.AppendAllText(@fileNameMic2, fileContent2);
-            }
-            catch (Exception ex)
-            {
-                defaultExceptionHandle(ex);
-            }
-            finally
-            {
-                setTxAddress(this.TXAddressCalibrationSelectBox.Text);
-                setStatusBarContent("Set Tx Address to " + this.TXAddressCalibrationSelectBox.Text);
-            }
-        }
-
-        private bool isUserConfirmCalibrateTDOA()
-        {
-            MessageBoxResult result;
-
-            result = MessageBox.Show("WATCHOUT:\nIf you want to create a new storage for TDOA testing result, click YES to confirm! \nClick NO to append data to the current file!",
-                                                  "Create a new file?", MessageBoxButton.YesNoCancel, MessageBoxImage.None);
-            if (result == MessageBoxResult.Cancel)
-            {
-                return false;
-            }
-
-            if (result == MessageBoxResult.Yes)
-            {
-                result = MessageBox.Show("Are you sure you want to make a new storage? ",
-                      "Please confirm...", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                if (result == MessageBoxResult.Yes)
-                {
-                    DirectoryInfo fileDir = new DirectoryInfo(".");
-                    fileDir = fileDir.CreateSubdirectory("Output " + String.Format("{0:yyyy'-'MM'-'dd}", System.DateTime.Now.Date));
-
-                    String currentTime = System.DateTime.Now.ToString();
-
-                    String title = speakerRobotTextBox.Text;
-
-                    fileNameMic1 = currentTime + "_Mic1_" + title + ".txt";
-                    fileNameMic1 = fileNameMic1.Replace('/', '-');
-                    fileNameMic1 = fileNameMic1.Replace(':', '_');
-                    fileNameMic1 = fileDir.FullName + "\\" + fileNameMic1;
-
-                    fileNameMic2 = currentTime + "_Mic2_" + title + ".txt";
-                    fileNameMic2 = fileNameMic2.Replace('/', '-');
-                    fileNameMic2 = fileNameMic2.Replace(':', '_');
-                    fileNameMic2 = fileDir.FullName + "\\" + fileNameMic2;
-                }
-            }
-            else
-            {
-                while (fileNameMic1.Equals(""))
-                {
-                    var userInputWindow = new UserInputTextWindow();
-                    userInputWindow.setMessage("First FULL FILE PATH include extention for Mic 1:");
-                    if (userInputWindow.ShowDialog() == false)
-                    {
-                        if (userInputWindow.UserConfirm)
-                        {
-                            fileNameMic1 = userInputWindow.inputText;
-                        }
-                        else
-                        {
-                            return false;
-                        }
-                    }
-                }
-
-                while (fileNameMic2.Equals(""))
-                {
-                    var userInputWindow = new UserInputTextWindow();
-                    userInputWindow.setMessage("Second FULL FILE PATH include extention for Mic 2:");
-                    if (userInputWindow.ShowDialog() == false)
-                    {
-                        if (userInputWindow.UserConfirm)
-                        {
-                            fileNameMic2 = userInputWindow.inputText;
-                        }
-                        else
-                        {
-                            return false;
-                        }
-                    }
-                }
-            }
-
-            return true;
-        }
-
-        private void getDistanceResultToBuffer(byte command, byte testTimes, byte testDisctance)
-        {
-
-            uint length = (uint)testTimes * 2;
-
-            Byte[] receivedData = new Byte[length];
-
-            uint[] disctanceData = new uint[testTimes];
-
-            try
-            {
-                //theControlBoard.receiveBytesFromRobot(command, length, ref receivedData, 1000);
-
-                uint i = 0;
-                for (uint pointer = 0; pointer < testTimes; pointer++)
-                {
-                    disctanceData[pointer] = receivedData[i + 1];
-                    disctanceData[pointer] = (disctanceData[pointer] << 8) | receivedData[i];
-
-                    //if (command == COMMAND_GET_DISTANCE_RESULT_A)
-                    {
-                        g_fdisctanceResultMic1Y[g_ui16TDOABufferPointer1] = disctanceData[pointer] / 256.0f;
-                        g_fdisctanceResultMic1X[g_ui16TDOABufferPointer1] = testDisctance * 1.0f;
-                        g_ui16TDOABufferPointer1++;
-                    }
-                    //else if (command == COMMAND_GET_DISTANCE_RESULT_B)
-                    {
-                        g_fdisctanceResultMic2Y[g_ui16TDOABufferPointer2] = disctanceData[pointer] / 256.0f;
-                        g_fdisctanceResultMic2X[g_ui16TDOABufferPointer2] = testDisctance * 1.0f;
-                        g_ui16TDOABufferPointer2++;
-                    }
-
-                    i += 2;
-                }
-            }
-            catch (Exception ex)
-            {
-                defaultExceptionHandle(ex);
-            }
-        }
-
-        private void plotPeakResultFromFile()
-        {
-            string title = "";
-
-            List<float> xAxis1 = new List<float>();
-            List<float> yAxis1 = new List<float>();
-
-            List<float> xAxis2 = new List<float>();
-            List<float> yAxis2 = new List<float>();
-
-            OpenFileDialog dlg = new OpenFileDialog();
-            dlg.Filter = "Text files (*.TXT)|*.TXT" + "|All files (*.*)|*.*";
-            dlg.Title = "Select Mic 1's Data file:";
-            if (dlg.ShowDialog() == true)
-            {
-                title = dlg.SafeFileName;
-                string pathToFile = dlg.FileName;
-
-                if (getTDOADataFromFile(pathToFile, xAxis1, yAxis1) == false)
-                    return;
-            }
-            else
-                return;
-
-            dlg.Title = "Select Mic 2's Data file:";
-            if (dlg.ShowDialog() == true)
-            {
-                 title = dlg.SafeFileName;
-                string pathToFile = dlg.FileName;
-
-                if (getTDOADataFromFile(pathToFile, xAxis2, yAxis2) == false)
-                    return;
-            }
-            else
-                return;
-
-            if (xAxis1.Count == yAxis1.Count && xAxis1.Count == xAxis2.Count && yAxis1.Count == yAxis2.Count)
-            {
-                int dataLength = xAxis1.Count;
-
-                float[] dataX1 = new float[dataLength];
-                float[] dataY1 = new float[dataLength];
-                float[] dataX2 = new float[dataLength];
-                float[] dataY2 = new float[dataLength];
-
-                float[] Plot_dataX = new float[dataLength];
-                float[] Plot_dataY = new float[dataLength];
-
-                xAxis1.CopyTo(dataX1);
-                yAxis1.CopyTo(dataY1);
-
-                xAxis2.CopyTo(dataX2);
-                yAxis2.CopyTo(dataY2);
-
-                for (int i = 0; i < dataLength; i++)
-                {
-                    Plot_dataX[i] = (dataX1[i] + dataX2[i]) / 2f;
-                    Plot_dataY[i] = (dataY1[i] + dataY2[i]) / 2f;
-                }
-
-                OxyplotWindow oxyplotWindow = new OxyplotWindow(Plot_dataX, Plot_dataY, title, OxyplotWindow.ScatterPointPlot);
-                oxyplotWindow.Show();
-            }
-        }
-
-        private bool getTDOADataFromFile(string pathToFile, List<float> xAxis, List<float> yAxis)
-        {
-            System.IO.StreamReader file = new System.IO.StreamReader(@pathToFile);
-
-            string line;
-            while ((line = file.ReadLine()) != null)
-            {
-                Match match = Regex.Match(line, @"([0-9]*(?:\.[0-9]+)?)\s([0-9]*(?:\.[0-9]+)?)", RegexOptions.IgnoreCase);
-
-                if (match.Success)
-                {
-                    xAxis.Add(float.Parse(match.Groups[1].Value));
-                    yAxis.Add(float.Parse(match.Groups[2].Value));
-                }
-                else
-                {
-                    return false;
-                }
-            }
-
-            file.Close();
-
-            return true;
-        }
-        
-        #endregion
 
         #endregion
 
         #region Debug Tab
-
-        private void configureRFDebug_Click_1(object sender, RoutedEventArgs e)
-        {
-            setTxAddress(this.TXAdrrTextBoxDebug.Text);
-            setStatusBarContent("Set RF Tx Address: " + this.TXAdrrTextBoxDebug.Text);
-        }
 
         private void sendDebugCommandButton_Click(object sender, RoutedEventArgs e)
         {
@@ -2268,33 +1236,20 @@ namespace SwarmRobotControlAndCommunication
 
                 switch (command)
                 {
-                    case "Start Localization":
-                        theControlBoard.broadcastCommandToRobot(COMMAND_START_LOCALIZATION);
+                    case "Start Measuring Distance":
+                        measureDistance();
                         break;
 
-                    case "Read Neighbors Table":
-                        readNeighborsTable();
-                        break;
-
-                    //<ComboBoxItem Content="Scan Robots Vector"/>
-                    //<ComboBoxItem Content="Read One Hop Neighbors Table"/>
-                    //<ComboBoxItem Content="Draw Coordination Table"/>
-                    //<ComboBoxItem Content="Draw Coordination From File..."/>
-                    //<ComboBoxItem Content="Calculate Average Vector From Files..."/>
-                    //<ComboBoxItem Content="Goto Locomotion State"/>
-                    //<ComboBoxItem Content="Scan Robots Oriented Angle"/>
-                    //<ComboBoxItem Content="Rotate Correction Angle"/>
-                    //<ComboBoxItem Content="Goto T Shape State"/>
-                    //<ComboBoxItem Content="Rotate Correction Angle Different"/>
-                    //<ComboBoxItem Content="Rotate Correction Angle Same"/>
-
-                    // ===== cases below is out of date ======================================
                     case "Scan Robots Vector":
                         scanRobotsVector();
                         break;
 
                     case "Scan Robots Oriented Angle":
                         scanCorrectionAngleAndOriented();
+                        break;
+
+                    case "Read Neighbors Table":
+                        ReadNeighbor();
                         break;
 
                     case "Read One Hop Neighbors Table":
@@ -2343,48 +1298,11 @@ namespace SwarmRobotControlAndCommunication
             }
         }
 
-        private void readNeighborsTable()
+        private void measureDistance()
         {
-            uint length = 60;
-
-            String title = "Robot [" + this.TXAdrrTextBoxDebug.Text + "] neighbors table";
-            String table = "Neighbors Table of Robot [0x" + this.TXAdrrTextBoxDebug.Text + "]:\n";
-
-            SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_READ_NEIGHBORS_TABLE);
-            SwarmMessage requestMessage = new SwarmMessage(header);
-
-            byte[] receivedData = new byte[length];
-            try
-            {
-                theControlBoard.receivedDataFromRobot(receivedData, length, 1000, requestMessage);
-
-                int[] ID = new int[10];
-                int[] distance = new int[10];
-                int pointer = 0;
-
-                double distanceInCm = 0;
-
-                for (int i = 0; i < 10; i++)
-                {
-                    ID[i] = (receivedData[pointer] << 24) | (receivedData[pointer + 1] << 16) | (receivedData[pointer + 2] << 8) | receivedData[pointer + 3];
-                    distance[i] = (receivedData[pointer + 4] << 8) | receivedData[pointer + 5];
-
-                    pointer += 6;
-
-                    distanceInCm = distance[i] / 256.0;
-                    if (ID[i] != 0 || distance[i] != 0)
-                        table += String.Format("Robot [0x{0}] :: {1} cm\n", ID[i].ToString("X6"), distanceInCm.ToString("G6"));
-                }
-            }
-            catch (Exception ex)
-            {
-                defaultExceptionHandle(ex);
-            }
-
-            MessageBox.Show(table, title, MessageBoxButton.OK, MessageBoxImage.Information);
+            theControlBoard.transmitBytesToRobot(COMMAND_MEASURE_DISTANCE);
         }
 
-        // === The funtions below is out of date ========================================
         private void scanRobotsVector()
         {
             uint length = 8;
@@ -2405,12 +1323,12 @@ namespace SwarmRobotControlAndCommunication
                 configureRF(Plot_id[i].ToString("X6"));
 
                 Thread.Sleep(50);
-                //theControlBoard.transmitBytesToRobot(COMMAND_TOGGLE_LEDS);
+                theControlBoard.transmitBytesToRobot(COMMAND_TOGGLE_LEDS);
                 Thread.Sleep(50);
 
                 try
                 {
-                    //theControlBoard.receiveBytesFromRobot(COMMAND_READ_VECTOR, null, length, ref receivedData, 1000);
+                    theControlBoard.receiveBytesFromRobot(COMMAND_READ_VECTOR, null, length, ref receivedData, 1000);
 
                     temp = (float)((Int32)((receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3]) / 65536.0);
                     xAxis.Add(temp);
@@ -2461,12 +1379,12 @@ namespace SwarmRobotControlAndCommunication
                 configureRF(Plot_id[i].ToString("X6"));
 
                 Thread.Sleep(50);
-                //theControlBoard.transmitBytesToRobot(COMMAND_TOGGLE_LEDS);
+                theControlBoard.transmitBytesToRobot(COMMAND_TOGGLE_LEDS);
                 Thread.Sleep(50);
 
                 try
                 {
-                    //theControlBoard.receiveBytesFromRobot(COMMAND_READ_CORRECTION_ANGLE, null, length, ref receivedData, 1000);
+                    theControlBoard.receiveBytesFromRobot(COMMAND_READ_CORRECTION_ANGLE, null, length, ref receivedData, 1000);
 
                     correctionAngleInRadian = (float)((Int32)((receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3]) / 65536.0);
                     lstAngle.Add(correctionAngleInRadian);
@@ -2494,6 +1412,44 @@ namespace SwarmRobotControlAndCommunication
             MessageBox.Show(message, "Scan results", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
+        private void ReadNeighbor()
+        {
+            uint length = 60;
+            Byte[] receivedData = new Byte[length];
+
+            String title = "Robot [" + this.TXAdrrTextBoxDebug.Text + "] neighbors table";
+            String table = "Neighbors Table of Robot [0x" + this.TXAdrrTextBoxDebug.Text + "]:\n";
+
+            int[] ID = new int[10];
+            int[] distance = new int[10];
+            int pointer = 0;
+
+            double distanceInCm = 0;
+            try
+            {
+                theControlBoard.receiveBytesFromRobot(COMMAND_READ_NEIGHBORS_TABLE, null, length, ref receivedData, 1000);
+
+                for (int i = 0; i < 10; i++)
+                {
+                    ID[i] = (receivedData[pointer] << 24) | (receivedData[pointer + 1] << 16) | (receivedData[pointer + 2] << 8) | receivedData[pointer + 3];
+                    distance[i] = (receivedData[pointer + 4] << 8) | receivedData[pointer + 5];
+
+                    pointer += 6;
+
+                    distanceInCm = distance[i] / 256.0;
+                    if (ID[i] != 0 || distance[i] != 0)
+                        table += String.Format("Robot [0x{0}] :: {1} cm\n", ID[i].ToString("X6"), distanceInCm.ToString("G6"));
+                }
+
+            }
+            catch (Exception ex)
+            {
+                defaultExceptionHandle(ex);
+            }
+
+            MessageBox.Show(table, title, MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
         private void ReadOneHopNeighbor()
         {
             uint length = 640;
@@ -2511,7 +1467,7 @@ namespace SwarmRobotControlAndCommunication
 
             try
             {
-               // theControlBoard.receiveBytesFromRobot(COMMAND_READ_ONEHOP_TABLE, null, length, ref receivedData, 1000);
+                theControlBoard.receiveBytesFromRobot(COMMAND_READ_ONEHOP_TABLE, null, length, ref receivedData, 1000);
 
                 for (int i = 0; i < 10; i++)
                 {
@@ -2586,7 +1542,7 @@ namespace SwarmRobotControlAndCommunication
             float[] dataY = new float[10];
             try
             {
-                //theControlBoard.receiveBytesFromRobot(COMMAND_READ_LOCS_TABLE, null,length, ref receivedData, 1000);
+                theControlBoard.receiveBytesFromRobot(COMMAND_READ_LOCS_TABLE, null,length, ref receivedData, 1000);
 
                 for (int i = 0; i < 10; i++)
                 {
@@ -2775,7 +1731,7 @@ namespace SwarmRobotControlAndCommunication
 
             transmittedData[1] = 0x06;
 
-            //theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
+            theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
         }
 
         private void requestRotateCorrectionAngle()
@@ -2785,7 +1741,7 @@ namespace SwarmRobotControlAndCommunication
 
             transmittedData[0] = COMMAND_ROTATE_CORRECTION_ANGLE;
 
-            //theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
+            theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
         }
 
         private void requestRotateCorrectionAngleDifferent()
@@ -2795,7 +1751,7 @@ namespace SwarmRobotControlAndCommunication
 
             transmittedData[0] = COMMAND_ROTATE_CORRECTION_ANGLE_DIFF;
 
-            //theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
+            theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
         }
 
         private void requestRotateCorrectionAngleSame()
@@ -2805,7 +1761,7 @@ namespace SwarmRobotControlAndCommunication
 
             transmittedData[0] = COMMAND_ROTATE_CORRECTION_ANGLE_SAME;
 
-            //theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
+            theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
         }
 
         private void requestGotoTShapeState()
@@ -2817,7 +1773,7 @@ namespace SwarmRobotControlAndCommunication
 
             transmittedData[1] = 0x07;
 
-            //theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
+            theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
         }
 
         private String exportTextFile(String folderHeaderText, String fileFullName, String content)
@@ -2835,6 +1791,12 @@ namespace SwarmRobotControlAndCommunication
             return fileFullPath;
         }
 
+
+        private void configureRFDebug_Click(object sender, RoutedEventArgs e)
+        {
+            configureRF(this.TXAdrrTextBoxDebug.Text);
+        }
+
         private void setLocalLoopButton_Click(object sender, RoutedEventArgs e)
         {
             Byte[] transmittedData = new Byte[5]; // <set stop loop command><value>
@@ -2847,7 +1809,7 @@ namespace SwarmRobotControlAndCommunication
             transmittedData[3] = (Byte)(value >> 8);
             transmittedData[4] = (Byte)(value & 0xFF);
 
-           // theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
+            theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
         }
 
         private void setStepSizeButton_Click(object sender, RoutedEventArgs e)
@@ -2867,7 +1829,7 @@ namespace SwarmRobotControlAndCommunication
                 transmittedData[3] = (Byte)(value >> 8);
                 transmittedData[4] = (Byte)(value & 0xFF);
 
-               // theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
+                theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
             }
             else
             {
@@ -2892,7 +1854,7 @@ namespace SwarmRobotControlAndCommunication
                 transmittedData[3] = (Byte)(value >> 8);
                 transmittedData[4] = (Byte)(value & 0xFF);
 
-                // theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
+                theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
             }
             else
             {
@@ -2917,7 +1879,7 @@ namespace SwarmRobotControlAndCommunication
                 transmittedData[3] = (Byte)(value >> 8);
                 transmittedData[4] = (Byte)(value & 0xFF);
 
-               // theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
+                theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
             }
             else
             {
@@ -2941,7 +1903,7 @@ namespace SwarmRobotControlAndCommunication
                 transmittedData[3] = (Byte)(ui32Value >> 8);
                 transmittedData[4] = (Byte)(ui32Value & 0xFF);
 
-             //   theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
+                theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
             }
             else
             {
@@ -2963,7 +1925,7 @@ namespace SwarmRobotControlAndCommunication
                 transmittedData[1] = (Byte)(i16Value >> 8);
                 transmittedData[2] = (Byte)(i16Value & 0xFF);
 
-               // theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
+                theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
             }
             else
             {
@@ -2987,7 +1949,7 @@ namespace SwarmRobotControlAndCommunication
                 transmittedData[3] = (Byte)(ui32Value >> 8);
                 transmittedData[4] = (Byte)(ui32Value & 0xFF);
 
-            //    theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
+                theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
             }
             else
             {
@@ -3013,7 +1975,7 @@ namespace SwarmRobotControlAndCommunication
                 transmittedData[3] = (Byte)(i32Values >> 8);
                 transmittedData[4] = (Byte)(i32Values & 0xFF);
 
-                //theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
+                theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
             }
             else
             {
@@ -3022,9 +1984,6 @@ namespace SwarmRobotControlAndCommunication
         }
 
         #endregion
-
-
-
     }
 
     #region IValueConverter Members

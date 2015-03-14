@@ -67,9 +67,10 @@ namespace SwarmRobotControlAndCommunication
         private Button closeButtonPlotWindow = new Button();
         private Button minimizeButtonPlotWindow = new Button();
         private Button maximizeButtonPlotWindow = new Button();
-        private FrameworkElement titleButtonMainWindow = new FrameworkElement();
 
         private WindowState previousWindowState = new WindowState();
+
+        private FrameworkElement titleButtonMainWindow = new FrameworkElement();
 
         private void OxyplotWindow_Loaded(object sender, RoutedEventArgs e)
         {
@@ -96,6 +97,7 @@ namespace SwarmRobotControlAndCommunication
             {
                 this.titleButtonMainWindow.MouseLeftButtonDown += PlotWindowTitle_MouseLeftButtonDown;
             }
+
         }
         private void PlotWindowMaximizeApplicationWindow(object sender, RoutedEventArgs e)
         {
@@ -191,7 +193,7 @@ namespace SwarmRobotControlAndCommunication
             var plotModel1 = new PlotModel();
             plotModel1.Title = Title;
             var linearAxis1 = new LinearAxis();
-            linearAxis1.Maximum = data.Length;
+            linearAxis1.Maximum = 300;
             linearAxis1.Minimum = 0;
             linearAxis1.Position = AxisPosition.Bottom;
             plotModel1.Axes.Add(linearAxis1);
@@ -244,7 +246,14 @@ namespace SwarmRobotControlAndCommunication
 
             plotModel1.Series.Add(scatterSeries);
 
-            // Least-Square calculation
+            //var polylineAnnotation1 = new PolylineAnnotation();
+
+            //uint[] data = { 35, 65, 85, 115, 145, 175, 225 };
+            //for (uint i = 0; i < data.Length; i++)
+            //{
+            //    polylineAnnotation1.Points.Add(new DataPoint((double)(i + 1) * 10, (double)data[i]));
+            //}
+            //plotModel1.Annotations.Add(polylineAnnotation1);
 
             Int32 n = dataX.Length;
 
@@ -268,19 +277,11 @@ namespace SwarmRobotControlAndCommunication
             float detAIntercept = (sumY * sumX2) - (sumXY * sumX);
             float detASlope = (n * sumXY) - (sumX * sumY);
 
+
             var lineAnnotation1 = new LineAnnotation();
             lineAnnotation1.Intercept = detAIntercept / detA; // b
             lineAnnotation1.Slope = detASlope / detA; // a
-
-            double errorVariance = 0;
-            double sqrt_e_i = 0;
-            for (int i = 0; i < n; i++)
-            {
-                sqrt_e_i = dataY[i] - lineAnnotation1.Intercept - lineAnnotation1.Slope * dataX[i];
-                errorVariance += Math.Pow(sqrt_e_i, 2.0);
-            }
-
-            lineAnnotation1.Text = "Intercept " + lineAnnotation1.Intercept.ToString("0.00000") + ", Slope " + lineAnnotation1.Slope.ToString("0.00000") + "Var " + errorVariance.ToString("0.00000");
+            lineAnnotation1.Text = "Intercept(" + lineAnnotation1.Intercept.ToString() + "); Slope(" + lineAnnotation1.Slope.ToString() + ")";
             plotModel1.Annotations.Add(lineAnnotation1);
 
             return plotModel1;

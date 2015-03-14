@@ -95,15 +95,15 @@ namespace SwarmRobotControlAndCommunication
             /// The size of one block of bytes that will be written
             /// into the  flash memory in each programming frame
             /// </summary>
-            private const byte SIZE_ONE_PROGRAM_BLOCK = 16; 
+            private const byte SIZE_ONE_PROGRAM_BLOCK = 32; 
 
             /// <summary>
             /// The waitting time for a NACK signal to be received (unit: ms).
             /// </summary>
-           private const byte DATA_FRAME_NACK_WAIT_TIME = 12; // unit = 1ms
+           private const byte DATA_FRAME_NACK_WAIT_TIME = 10; // unit = 1ms
             private const UInt32 ROBOT_NEXT_FRAME_WAIT_TIME = 255000; // Not use
             private const UInt32 BACKWARD_STEP_FOR_RESEND_PACKET = 4;
-            private const UInt32 NUMBER_OF_RESEND_LAST_PACKET = 10;
+            private const UInt32 NUMBER_OF_RESEND_LAST_PACKET = 8;
         #endregion
 
         #region Variables for bootloader commands
@@ -163,11 +163,6 @@ namespace SwarmRobotControlAndCommunication
         }
 
         public event programmingProgressUpdate currentProgrammingPercentEvent;
-
-        public UInt32 getLastTransferSize()
-        {
-            return transferSize;
-        }
 
         /// <summary>
         /// Verifye the format and calculate the number of lines of a HEX file.
@@ -405,8 +400,24 @@ namespace SwarmRobotControlAndCommunication
         /// <param name="cts">A cancel token to stop the programming process</param>
         public void startProgramming(string fileName, CancellationTokenSource cts)
         {
+            //sendGoIntoBootLoaderModeCommand();
             resetBootLoaderVariables();
             programHexFileToRobots(fileName,cts);
+        }
+
+        /// <summary>
+        /// Send a command to signal devices to go into bootloader mode
+        /// </summary>
+        private void sendGoIntoBootLoaderModeCommand()
+        {
+            try
+            {
+                theControlBoard.transmitBytesToRobot(BOOTLOADER_START_COMMAND);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Go into BootLoader mode: " + ex.Message);
+            }
         }
 
         /// <summary>
@@ -441,6 +452,7 @@ namespace SwarmRobotControlAndCommunication
             nextHexLine.data = new byte[SIZE_ONE_PROGRAM_BLOCK];
             try
             {
+                //prepareBootLoader();
                 sendStartBootloaderPacket();
                 startProgrammingUsingBootLoader(cts); 
             }
@@ -457,7 +469,6 @@ namespace SwarmRobotControlAndCommunication
                 hexFile.Close();
             }
         }
-
         #region program hex file to robots private functions
         // Long Dang, 31 Jul 2014, add 
         private void sendStartBootloaderPacket()
@@ -492,12 +503,39 @@ namespace SwarmRobotControlAndCommunication
 
             transmitData[9] = checkSum;
 
-            theControlBoard.transmitBslPacketToRobot(transmitData, 10, 1);
+            theControlBoard.transmitBytesToRobot(transmitData, 10, 1);
 
+            //System.Threading.Thread.Sleep((int)(WAIT_FOR_MASS_FLASH_ERASE * transferSize / 1024));
             System.Threading.Thread.Sleep(WAIT_FOR_MASS_FLASH_ERASE);
 
             currentHexLinePointer++;
-        }              
+        }        
+        private void prepareBootLoader()
+        {
+            currentProgrammingPercentEvent(0);
+
+            //Discard the start symbol of the first line
+            hexFile.ReadByte();
+
+            nextHexLine = readOneLineOfHexFile(ref hexFile);
+                
+            byte[] transmitData = new byte[4];
+            transferSize = endLineAddess - APP_START_ADDRESS + endLineByteCount;
+            transmitData[0] = (byte)((transferSize >> 24) & 0xFF);
+            transmitData[1] = (byte)((transferSize >> 16) & 0xFF);
+            transmitData[2] = (byte)((transferSize >> 8) & 0xFF);
+            transmitData[3] = (byte)(transferSize & 0xFF);
+            theControlBoard.transmitBslPacketToRobot(transmitData, 4, 1);
+            //System.Threading.Thread.Sleep((int)(WAIT_FOR_MASS_FLASH_ERASE*transferSize/1024));
+            System.Threading.Thread.Sleep(WAIT_FOR_MASS_FLASH_ERASE);
+            //MessageBox.Show(transferSize.ToString());
+            currentHexLinePointer++;
+        }
+        private void movePointerToTheNextLine()
+        {
+            while (hexFile.ReadByte() != ':') ;
+        }           
+        
         private void startProgrammingUsingBootLoader(CancellationTokenSource cancelToken)
         {
             bool isSkipTheRest = false;
@@ -548,10 +586,6 @@ namespace SwarmRobotControlAndCommunication
                 }
             }
         }
-        private void movePointerToTheNextLine()
-        {
-            while (hexFile.ReadByte() != ':') ;
-        } 
         private void updateCurrentProgrammingEvent()
         {
             currentProgrammingPercentEvent((UInt32)(Math.Round((currentHexLinePointer - 1) * 100.0 / numberOfLines)));
@@ -680,7 +714,7 @@ namespace SwarmRobotControlAndCommunication
             try
             {
                 UInt16 checkSum;
-                bool isDetectedJamming = false;
+                bool isReceivedSignal = false;
                 byte[] nackSignal = new byte[3];
                 UInt32 lastCurrentDataFramePointer;
 
@@ -725,9 +759,9 @@ namespace SwarmRobotControlAndCommunication
                         {
                             theControlBoard.transmitBslPacketToRobot(transmitBuffer, programPacketLength, 0);
 
-                            isDetectedJamming = theControlBoard.tryToDetectJammingSignal(DATA_FRAME_NACK_WAIT_TIME);
+                            isReceivedSignal = theControlBoard.tryReceiveBytesFromRobot(1, ref nackSignal, DATA_FRAME_NACK_WAIT_TIME);
 
-                            if (isDetectedJamming)
+                            if (isReceivedSignal)
                             {
                                 if (currentDataFramePointer != 0)
                                 {// Re-written the previous data frame before writing this data frame
@@ -759,9 +793,9 @@ namespace SwarmRobotControlAndCommunication
                     {
                         theControlBoard.transmitBslPacketToRobot(transmitBuffer, programPacketLength, 0);
 
-                        isDetectedJamming = theControlBoard.tryToDetectJammingSignal(DATA_FRAME_NACK_WAIT_TIME);
+                        isReceivedSignal = theControlBoard.tryReceiveBytesFromRobot(1, ref nackSignal, DATA_FRAME_NACK_WAIT_TIME);
 
-                        if (isDetectedJamming)
+                        if (isReceivedSignal)
                         {
                             if (currentDataFramePointer != 0)
                             {// Re-written the previous data frame before writing this data frame
