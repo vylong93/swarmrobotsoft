@@ -31,8 +31,8 @@
 
     <!--Button Orange-->
     <SolidColorBrush x:Key="ButtonOrangeBackgroundNormal" Color="OrangeRed"/>
-    <SolidColorBrush x:Key="ButtonOrangeBackgroundHighlighted" Color="Orange"/>
-    <SolidColorBrush x:Key="ButtonOrangeBackgroundSelected" Color="Salmon"/>
+    <SolidColorBrush x:Key="ButtonOrangeBackgroundHighlighted" Color="Salmon"/>
+    <SolidColorBrush x:Key="ButtonOrangeBackgroundSelected" Color="Orange"/>
 
     <SolidColorBrush x:Key="ButtonOrangeForegroundNormal" Color="White"/>
     <SolidColorBrush x:Key="ButtonOrangeForegroundHighlighted" Color="White"/>

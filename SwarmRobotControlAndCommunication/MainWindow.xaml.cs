@@ -79,6 +79,7 @@ namespace SwarmRobotControlAndCommunication
 
         private const byte COMMAND_START_LOCALIZATION = 0x17;
         private const byte COMMAND_READ_NEIGHBORS_TABLE = 0x18;
+        private const byte COMMAND_READ_ONEHOP_NEIGHBORS_TABLE = 0x19;
 
         //==== command below is out of date ===================================
         private const byte COMMAND_SET_RUNNING_STATUS = 0xC3;
@@ -2276,8 +2277,11 @@ namespace SwarmRobotControlAndCommunication
                         readNeighborsTable();
                         break;
 
+                    case "Read One Hop Neighbors Table":
+                        readOneHopNeighborsTable();
+                        break;
+
                     //<ComboBoxItem Content="Scan Robots Vector"/>
-                    //<ComboBoxItem Content="Read One Hop Neighbors Table"/>
                     //<ComboBoxItem Content="Draw Coordination Table"/>
                     //<ComboBoxItem Content="Draw Coordination From File..."/>
                     //<ComboBoxItem Content="Calculate Average Vector From Files..."/>
@@ -2295,10 +2299,6 @@ namespace SwarmRobotControlAndCommunication
 
                     case "Scan Robots Oriented Angle":
                         scanCorrectionAngleAndOriented();
-                        break;
-
-                    case "Read One Hop Neighbors Table":
-                        ReadOneHopNeighbor();
                         break;
 
                     case "Draw Coordination Table":
@@ -2346,43 +2346,151 @@ namespace SwarmRobotControlAndCommunication
         private void readNeighborsTable()
         {
             uint length = 60;
-
-            String title = "Robot [" + this.TXAdrrTextBoxDebug.Text + "] neighbors table";
-            String table = "Neighbors Table of Robot [0x" + this.TXAdrrTextBoxDebug.Text + "]:\n";
+            byte[] receivedData = new byte[length];
 
             SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_READ_NEIGHBORS_TABLE);
             SwarmMessage requestMessage = new SwarmMessage(header);
 
-            byte[] receivedData = new byte[length];
             try
             {
                 theControlBoard.receivedDataFromRobot(receivedData, length, 1000, requestMessage);
 
-                int[] ID = new int[10];
-                int[] distance = new int[10];
-                int pointer = 0;
+                String tableContent = constructNeighborsTableFromByteBuffer(receivedData);
 
-                double distanceInCm = 0;
-
-                for (int i = 0; i < 10; i++)
-                {
-                    ID[i] = (receivedData[pointer] << 24) | (receivedData[pointer + 1] << 16) | (receivedData[pointer + 2] << 8) | receivedData[pointer + 3];
-                    distance[i] = (receivedData[pointer + 4] << 8) | receivedData[pointer + 5];
-
-                    pointer += 6;
-
-                    distanceInCm = distance[i] / 256.0;
-                    if (ID[i] != 0 || distance[i] != 0)
-                        table += String.Format("Robot [0x{0}] :: {1} cm\n", ID[i].ToString("X6"), distanceInCm.ToString("G6"));
-                }
+                MessageBox.Show(tableContent, "Robot [" + this.TXAdrrTextBoxDebug.Text + "] neighbors table", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
                 defaultExceptionHandle(ex);
             }
-
-            MessageBox.Show(table, title, MessageBoxButton.OK, MessageBoxImage.Information);
         }
+        private String constructNeighborsTableFromByteBuffer(byte[] receivedData)
+        {
+            String table = "Neighbors Table of Robot [0x" + this.TXAdrrTextBoxDebug.Text + "]:\n";
+
+            int[] ID = new int[10];
+            int[] distance = new int[10];
+            int pointer = 0;
+
+            double distanceInCm = 0;
+
+            for (int i = 0; i < 10; i++)
+            {
+                ID[i] = (receivedData[pointer] << 24) | (receivedData[pointer + 1] << 16) | (receivedData[pointer + 2] << 8) | receivedData[pointer + 3];
+                distance[i] = (receivedData[pointer + 4] << 8) | receivedData[pointer + 5];
+
+                pointer += 6;
+
+                distanceInCm = distance[i] / 256.0;
+                if (ID[i] != 0 || distance[i] != 0)
+                    table += String.Format("Robot [0x{0}] :: {1} cm\n", ID[i].ToString("X6"), distanceInCm.ToString("G6"));
+            }
+
+            return table;
+        }
+
+        private void readOneHopNeighborsTable()
+        {
+            uint length = 640;
+            byte[] receivedData = new byte[length];
+
+            SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_READ_ONEHOP_NEIGHBORS_TABLE);
+            SwarmMessage requestMessage = new SwarmMessage(header);
+
+            try
+            {
+                theControlBoard.receivedDataFromRobot(receivedData, length, 1000, requestMessage);
+
+                String fileContent = constructOneHopDataFromByteBuffer(receivedData);
+
+                String fileFullPath = exportOneHopDataToTextFile("Output OneHop", "OneHop " + this.TXAdrrTextBoxDebug.Text + ".txt", fileContent);
+
+                displayOneHopDataFiles("Robot [" + this.TXAdrrTextBoxDebug.Text + "] one hop neighbors table", fileFullPath);
+            }
+            catch (Exception ex)
+            {
+                defaultExceptionHandle(ex);
+            }
+        }
+        private String constructOneHopDataFromByteBuffer(byte[] receivedData)
+        {
+            String[] table = new String[10];
+            String msg = "One Hop Neighbors Table of Robot [0x" + this.TXAdrrTextBoxDebug.Text + "]:\n";
+
+            int[] firstID = new int[10];
+            int[] ID = new int[100];
+            int[] distance = new int[100];
+            int pointer = 0;
+            double distanceInCm = 0;
+
+            for (int i = 0; i < 10; i++)
+            {
+                table[i] = "XX";
+
+                firstID[i] = (receivedData[pointer] << 24) | (receivedData[pointer + 1] << 16) | (receivedData[pointer + 2] << 8) | receivedData[pointer + 3];
+                pointer += 4;
+
+                for (int j = 0; j < 10; j++)
+                {
+                    ID[i * 10 + j] = (receivedData[pointer] << 24) | (receivedData[pointer + 1] << 16) | (receivedData[pointer + 2] << 8) | receivedData[pointer + 3];
+
+                    distance[i * 10 + j] = (receivedData[pointer + 4] << 8) | (receivedData[pointer + 5]);
+
+                    pointer += 6;
+
+                    distanceInCm = distance[i * 10 + j] / 256.0;
+                    if (table[i].Equals("XX"))
+                    {
+                        table[i] = "first Hop ID = 0x" + firstID[i].ToString("X6") + ":\n";
+                    }
+
+                    if (ID[i * 10 + j] != 0 || distance[i * 10 + j] != 0)
+                    {
+                        table[i] += String.Format("Robot [0x{0}] :: {1} cm\n", ID[i * 10 + j].ToString("X6"), distanceInCm.ToString("G6"));
+                    }
+                }
+
+                table[i] += "\n";
+                msg += table[i];
+            }
+
+            return msg;
+        }
+        private String exportOneHopDataToTextFile(String folderHeaderText, String fileFullName, String content)
+        {
+            DirectoryInfo fileDir = new DirectoryInfo(".");
+
+            fileDir = fileDir.CreateSubdirectory(folderHeaderText + " " + String.Format("{0:yyyy'-'MM'-'dd}", System.DateTime.Now.Date));
+
+            String fileName = String.Format("{0:hh'-'mm'-'ss tt}", System.DateTime.Now) + " " + fileFullName;
+
+            String fileFullPath = fileDir.FullName + "\\" + fileName;
+
+            File.WriteAllText(@fileFullPath, content);
+
+            return fileFullPath;
+        }
+        private void displayOneHopDataFiles(String title, String fileFullPath)
+        {
+            MessageBox.Show("One Hop Neighbors Table of Robot [0x" + this.TXAdrrTextBox.Text + "] have save to\n" + fileFullPath, title, MessageBoxButton.OK, MessageBoxImage.Information);
+
+            string textEditor1 = @"D:\\Program Files\\Notepad++\\notepad++.exe";
+            string textEditor2 = @"C:\\Program Files\\Notepad++\\notepad++.exe";
+
+            if (File.Exists(textEditor1))
+            {
+                Process.Start(textEditor1, fileFullPath);
+            }
+            else if (File.Exists(textEditor2))
+            {
+                Process.Start(textEditor2, fileFullPath);
+            }
+            else
+            {
+                Process.Start(@"notepad.exe", fileFullPath);
+            }
+        }
+
 
         // === The funtions below is out of date ========================================
         private void scanRobotsVector()
@@ -2549,7 +2657,7 @@ namespace SwarmRobotControlAndCommunication
                 defaultExceptionHandle(ex);
             }
 
-            String fileFullPath = exportTextFile("Output OneHop", "OneHop " + this.TXAdrrTextBoxDebug.Text + ".txt", msg);
+            String fileFullPath = exportOneHopDataToTextFile("Output OneHop", "OneHop " + this.TXAdrrTextBoxDebug.Text + ".txt", msg);
 
             MessageBox.Show("One Hop Neighbors Table of Robot [0x" + this.TXAdrrTextBox.Text + "] have save to\n" + fileFullPath, title, MessageBoxButton.OK, MessageBoxImage.Information);
 
@@ -2619,7 +2727,7 @@ namespace SwarmRobotControlAndCommunication
                 Plot_dataY[i] = dataY[i];
             }
 
-            exportTextFile("Output Coordinates", "Coordinates " + this.TXAdrrTextBoxDebug.Text + ".txt", msg);
+            exportOneHopDataToTextFile("Output Coordinates", "Coordinates " + this.TXAdrrTextBoxDebug.Text + ".txt", msg);
 
             OxyplotWindow oxyplotWindow = new OxyplotWindow(Plot_id, Plot_dataX, Plot_dataY, title, OxyplotWindow.ScatterPointAndLinePlot);
 
@@ -2818,21 +2926,6 @@ namespace SwarmRobotControlAndCommunication
             transmittedData[1] = 0x07;
 
             //theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
-        }
-
-        private String exportTextFile(String folderHeaderText, String fileFullName, String content)
-        {
-            DirectoryInfo fileDir = new DirectoryInfo(".");
-
-            fileDir = fileDir.CreateSubdirectory(folderHeaderText + " " + String.Format("{0:yyyy'-'MM'-'dd}", System.DateTime.Now.Date));
-
-            String fileName = String.Format("{0:hh'-'mm'-'ss tt}", System.DateTime.Now) + " " + fileFullName;
-
-            String fileFullPath = fileDir.FullName + "\\" + fileName;
-
-            File.WriteAllText(@fileFullPath, content);
-
-            return fileFullPath;
         }
 
         private void setLocalLoopButton_Click(object sender, RoutedEventArgs e)
