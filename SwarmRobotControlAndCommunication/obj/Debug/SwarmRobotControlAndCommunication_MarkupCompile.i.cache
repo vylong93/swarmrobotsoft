@@ -4,16 +4,16 @@
 winexe
 C#
 .cs
-D:\Software Projects\TortoiseSVN\CHECK_POINT\swarmrobotsoft\SwarmRobotControlAndCommunication\obj\Debug\
+E:\00 SwarmRobot\Workspace\SwarmRobotControlAndCommunicationRFV2\branch\BootloaderV3\SwarmRobotControlAndCommunication\obj\Debug\
 SwarmRobotControlAndCommunication
 none
 false
 DEBUG;TRACE
-D:\Software Projects\TortoiseSVN\CHECK_POINT\swarmrobotsoft\SwarmRobotControlAndCommunication\App.xaml
+E:\00 SwarmRobot\Workspace\SwarmRobotControlAndCommunicationRFV2\branch\BootloaderV3\SwarmRobotControlAndCommunication\App.xaml
 16-143571931
 
-17-1746139850
-19-589401765
+17-1921162555
+19-754025380
 MergeResourcesDictionary.xaml;dot.xaml;MainWindow.xaml;AboutWindow.xaml;ResourceDictionaries\ButtonStyles.xaml;ResourceDictionaries\ColorMetroStyles.xaml;ResourceDictionaries\Colors.xaml;ResourceDictionaries\ComboBoxStyles.xaml;ResourceDictionaries\DataGridStyles.xaml;ResourceDictionaries\MenuStyles.xaml;ResourceDictionaries\ProgressBarStyles.xaml;ResourceDictionaries\ScrollBarStyles.xaml;ResourceDictionaries\TabControlStyles.xaml;ResourceDictionaries\TextBoxStyles.xaml;ResourceDictionaries\WindowStyles.xaml;OxyplotWindow.xaml;
 
 True

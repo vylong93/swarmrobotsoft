@@ -41,7 +41,5 @@ namespace SwarmRobotControlAndCommunication.CustomInterfaces
         /// <param name="fileName">The patch to the HEX file</param>
         /// <param name="cts">A cancel token to stop the programming process</param>
         void startProgramming(string fileName, CancellationTokenSource cts);
-
-        UInt32 getLastTransferSize();
     }
 }

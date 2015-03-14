@@ -5,7 +5,7 @@
         xmlns:local="clr-namespace:SwarmRobotControlAndCommunication"
         xmlns:System="clr-namespace:System;assembly=mscorlib" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" x:Name="window" x:Class="SwarmRobotControlAndCommunication.MainWindow"
         Icon="favicon.ico"
-        Title="Swarm Robot Control &amp; Communication" Height="423" Width="312" WindowStartupLocation="CenterScreen" Style="{StaticResource MainWindow}"  Loaded="this_Loaded" SizeToContent="WidthAndHeight" ResizeMode="NoResize">
+        Title="Swarm Robot Control &amp; Communication" Height="360" Width="312" WindowStartupLocation="CenterScreen" Style="{StaticResource MainWindow}"  Loaded="this_Loaded" SizeToContent="WidthAndHeight" ResizeMode="NoResize">
     <Window.Resources>
         <AlternationConverter x:Key="AlternationConverter"/>
         <System:Double x:Key="ellipseRunningWidth">322</System:Double>
@@ -81,16 +81,7 @@
                           Header="RF Mode" 
                           IsCheckable="True" Template="{StaticResource SubMenuItem}"
                           VerticalAlignment="Center"  HorizontalAlignment="Center" 
-                          VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch" Click="viewRfMode_Click"
-                           />
-            </MenuItem>
-            <MenuItem Header="_Plot" 
-                      MinWidth="10" MinHeight="10" Background="Black">
-                <MenuItem x:Name="plotTDOA"
-                          Header="Least-square TDOA" 
-                          HorizontalAlignment="Left" 
-                          Template="{StaticResource SubMenuItem}"
-                          Click="plotTDOA_Click"
+                          VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch"
                            />
             </MenuItem>
             <MenuItem Header="_Help">
@@ -132,7 +123,7 @@
                         <Button x:Name="wakeUpProgramButton" 
                                     Content="Wake Up &amp; Program" Width="150" Height="{Binding Parent.ActualHeight, ElementName=resetProgramButton, Mode=OneWay}" Click="wakeUpAndProgramButton_Click" Style="{StaticResource ProgramButton}"/>
                     </StackPanel>
-                    <ProgressBar x:Name="progressProgramBar" HorizontalAlignment="Left" Height="10" Margin="1,0.6,-0.2,0" VerticalAlignment="Top" Width="298" Grid.Row="3"/>
+                    <ProgressBar x:Name="progressProgramBar" HorizontalAlignment="Left" Height="10" Margin="0,0.6,-0.2,0" VerticalAlignment="Top" Width="301" Grid.Row="3"/>
 
                     <Ellipse x:Name="ellipseProgress1" HorizontalAlignment="Left" Height="9" Width="9" Margin="-10,15.6,0,0" Stroke="Black" VerticalAlignment="Top"  RenderTransformOrigin="1,0.5"  Grid.Row="3">
                         <Ellipse.Fill>
@@ -165,11 +156,64 @@
                         </Ellipse.RenderTransform>
                     </Ellipse>
                     <StackPanel Grid.Row="1" HorizontalAlignment="Left" Height="24" Margin="0,9.4,-11.2,0" VerticalAlignment="Top" Width="{Binding ActualWidth, ElementName=window, Mode=OneWay}" Orientation="Horizontal" Grid.RowSpan="2">
-                        <Label x:Name="label" Content="HEX File" HorizontalAlignment="Left" Margin="0" VerticalAlignment="Top" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Left" Height="{Binding Parent.ActualHeight, ElementName=label, Mode=OneWay}" Width="49"/>
+                        <Label x:Name="label" Content="HEX File" HorizontalAlignment="Left" Margin="0" VerticalAlignment="Top" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Height="{Binding Parent.ActualHeight, ElementName=label, Mode=OneWay}" Width="50"/>
                         <TextBox x:Name="pathOfHexFile" Text="" HorizontalAlignment="Center" Height="18" VerticalAlignment="Center" Width="230" VerticalContentAlignment="Center" Margin="0,3" BorderBrush="Black" Style="{DynamicResource PathTextbox}" ScrollViewer.CanContentScroll="True" SnapsToDevicePixels="True" VerticalScrollBarVisibility="Disabled"/>
                         <Button x:Name="loadHexButton" 
                                 Content="..." Width="20" Style="{StaticResource PathButton}" Margin="0,3" Click="loadHexButton_Click" />
                     </StackPanel>
+                </Grid>
+            </TabItem>
+            <TabItem x:Name="spiTab"
+                     Header="SPI Config"
+                     Margin="{Binding Margin, ElementName=controlTab}" RenderTransformOrigin="0.5,0.5">
+                <Grid Name="gridSPIConfig">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="6*"/>
+                        <ColumnDefinition Width="55*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="28"/>
+                        <RowDefinition Height="28"/>
+                        <RowDefinition Height="28"/>
+                        <RowDefinition Height="28"/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <StackPanel x:Name="configureSPIStack" Margin="5.4,0,-0.2,0" Grid.Row="0" Orientation="Horizontal" FlowDirection="LeftToRight" Grid.Column="1" >
+                        <Label Content="Clock Speed" 
+                               HorizontalAlignment="Left" VerticalAlignment="Bottom" FlowDirection="LeftToRight" Padding="0,5,5,5" Width="{Binding Width, ElementName=SpiProtocollabel}"/>
+                        <TextBox x:Name="spiClockSpeedTextBox" IsEnabled="True" Text="2000000"
+                                 local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="20000000" local:TextBoxHelpers.MinValue="500000"
+                                 HorizontalAlignment="Center" VerticalContentAlignment="Center" FlowDirection="LeftToRight" 
+                                 HorizontalContentAlignment="Right" VerticalAlignment="Center"  Width="{Binding Width, ElementName=SpiProtocolComboBox}" 
+                                 Height="20"  Padding="0" Style="{StaticResource PathTextbox}"/>
+                        <Label Content="Hz"  HorizontalAlignment="Left" VerticalAlignment="Center" FlowDirection="LeftToRight"/>
+                    </StackPanel>
+                    <StackPanel x:Name="configureSpiProtocol"
+                                Margin="5.4,0,-0.2,0" Grid.Row="1" Orientation="Horizontal" FlowDirection="LeftToRight" Grid.Column="1">
+                        <Label x:Name="SpiProtocollabel" IsEnabled="True" Content="Transmit Protocol" 
+                               HorizontalAlignment="Left" VerticalAlignment="Bottom" FlowDirection="LeftToRight" Padding="0,5,5,5" Width="100"/>
+                        <ComboBox x:Name="SpiProtocolComboBox" SelectedIndex="0"
+                                  VerticalContentAlignment="Center" HorizontalContentAlignment="Center" 
+                                  Height="20" Width="90" BorderThickness="1"  MinHeight="11" Margin="0,0,0,0" 
+                                  HorizontalAlignment="Center" VerticalAlignment="Center" FlowDirection="LeftToRight" >
+                            <ComboBoxItem Content="SPO 0, SPH 0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            <ComboBoxItem Content="SPO 1, SPH 0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            <ComboBoxItem Content="SPO 0, SPH 1" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            <ComboBoxItem Content="SPO 1, SPH 1"/>
+                        </ComboBox>
+                        <Label IsEnabled="True" Content="Motorola" HorizontalAlignment="Left" VerticalAlignment="Center" FlowDirection="LeftToRight"/>
+                    </StackPanel>
+                    <StackPanel x:Name="SpiDataWidthStack" Margin="5.4,0,-0.2,0" Grid.Row="2" Orientation="Horizontal" FlowDirection="LeftToRight" Grid.Column="1">
+                        <Label x:Name="SpiDataWidth" IsEnabled="False" Content="Data Width"  Width="{Binding Width, ElementName=SpiProtocollabel}"
+                               HorizontalAlignment="Left" VerticalAlignment="Bottom" FlowDirection="LeftToRight" Padding="0,5,5,5"/>
+                        <TextBox x:Name="SpiDataWidthTextBox" IsEnabled="False" Text="8" Width="{Binding Width, ElementName=SpiProtocolComboBox}" 
+                                 HorizontalAlignment="Center" VerticalContentAlignment="Center" FlowDirection="LeftToRight" 
+                                 VerticalAlignment="Center" TextWrapping="Wrap"
+                                 Height="20"  Padding="0" Margin="0,4"  Style="{StaticResource PathTextbox}" HorizontalContentAlignment="Right"/>
+                        <Label IsEnabled="False" Content="bits"  HorizontalAlignment="Left" VerticalAlignment="Center" FlowDirection="LeftToRight"/>
+                    </StackPanel>
+                    <Button Content="Configure SPI"  Grid.Row="3" Grid.Column="1"
+                                Margin="5.4,1,0,1" Height="26" HorizontalAlignment="Left" VerticalAlignment="Center" FlowDirection="LeftToRight" Width="100" Click="configureSPI_Click"/>
                 </Grid>
             </TabItem>
             <TabItem x:Name="rfTab" 
@@ -180,333 +224,188 @@
                         <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
+                        <RowDefinition Height="28"/>
+                        <RowDefinition Height="28"/>
                         <RowDefinition/>
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="24"/>
-                        <ColumnDefinition Width="107"/>
-                        <ColumnDefinition Width="18"/>
+                        <ColumnDefinition Width="148.8"/>
                         <ColumnDefinition/>
                     </Grid.ColumnDefinitions>
-
-                    <StackPanel x:Name="TxAddressPanel" Grid.Row="0" Grid.Column="0" 
-                        Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,2,0" Grid.ColumnSpan="3">
+                    <StackPanel x:Name="RfMode" Grid.Column="0"
+                                Margin="0,2,1.8,2" Grid.Row="0" Orientation="Horizontal" FlowDirection="LeftToRight">
+                        <Label x:Name ="lblRFMode" Content="RF Mode"
+                               HorizontalAlignment="Left" VerticalAlignment="Center" Width="{Binding Width, ElementName=label1}"/>
+                        <ComboBox x:Name="RFModeComboBox"  SelectedIndex="0"
+                                  Margin="0,2,5,2" Height="20" Width="70" BorderThickness="1" MinHeight="11" 
+                                  VerticalContentAlignment="Center" HorizontalContentAlignment="Center" 
+                                  HorizontalAlignment="Center" VerticalAlignment="Center" >
+                            <ComboBoxItem Content="Transmiter" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            <ComboBoxItem Content="Reciever" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                        </ComboBox>
+                    </StackPanel>
+                    <StackPanel x:Name="ChannelPanel" Grid.Row="2" Grid.Column="0" Margin="0"
+                                HorizontalAlignment="Left"  VerticalAlignment="Bottom" 
+                                Orientation="Horizontal" FlowDirection="LeftToRight" Width="140" Height="28">
+                        <Label Content="Channel" 
+                               HorizontalAlignment="Left" VerticalAlignment="Center" Width="{Binding Width, ElementName=label1}" Margin="0,1"/>
+                        <TextBox x:Name="rfChannelTextBox" Text="0"
+                                 local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="125" local:TextBoxHelpers.MinValue="0" VerticalContentAlignment="Center" FlowDirection="LeftToRight" 
+                                 VerticalAlignment="Center" TextWrapping="Wrap" Width="{Binding Width, ElementName=RFModeComboBox}" 
+                                 Height="20"  Padding="0" Margin="0,4"  Style="{StaticResource PathTextbox}" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                    <StackPanel x:Name="TxAddressPanel" Grid.Row="1" Grid.Column="0" 
+                        Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1.8,0">
                         <Label x:Name="label1" Content="TX Address" 
                                HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,1" Width="69"/>
                         <TextBox x:Name="TXAdrrTextBox"
                         	HorizontalAlignment="Center" VerticalContentAlignment="Center" FlowDirection="LeftToRight" 
-                        	VerticalAlignment="Center" TextWrapping="Wrap" Width="70" 
+                        	VerticalAlignment="Center" TextWrapping="Wrap" Width="{Binding Width, ElementName=RFModeComboBox}" 
                         	Height="20"  Padding="0" Margin="0,4"  Style="{StaticResource PathTextbox}" KeyDown="TXAdrrTextBox_KeyDown"/>
                     </StackPanel>
-
-                    <StackPanel x:Name="Pipe0Panel"  Grid.Row="0" Grid.Column="3"
-                                    HorizontalAlignment="Left"  VerticalAlignment="Bottom" Margin="0,0,-4,0"
-                                    Orientation="Horizontal" FlowDirection="LeftToRight" Height="28" Width="155">
-                        <Label Content="RX Address"
-                               HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,1" Width="69"/>
-                        <TextBox x:Name="Pipe0AddressTextBox" IsReadOnly="False" IsEnabled="False"
-                        	HorizontalAlignment="Center" VerticalContentAlignment="Center" FlowDirection="LeftToRight" 
-                        	VerticalAlignment="Center" TextWrapping="Wrap" Width="{Binding Width, ElementName=TXAdrrTextBox}" 
-                        	Height="20"  Padding="0" Margin="0,4"  Style="{StaticResource PathTextbox}" KeyDown="TXAdrrTextBox_KeyDown"/>
+                    <StackPanel x:Name="DataRatePanel" Grid.Row="3" Grid.Column="0"
+                        HorizontalAlignment="Left"  VerticalAlignment="Bottom" 
+                        Orientation="Horizontal" FlowDirection="LeftToRight" Height="28" Width="140">
+                        <Label Content="Data Rate" 
+                               HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="{Binding Width, ElementName=label1}"/>
+                        <ComboBox x:Name="rfAirRateComboBox"  SelectedIndex="0"
+                                  Margin="0,4,5,4" Height="20" Width="{Binding Width, ElementName=RFModeComboBox}" BorderThickness="1" MinHeight="11" 
+                                  VerticalContentAlignment="Center" HorizontalContentAlignment="Center" 
+                                  HorizontalAlignment="Center" VerticalAlignment="Center" >
+                            <ComboBoxItem Content="1 Mbps" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            <ComboBoxItem Content="2 Mbps" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                        </ComboBox>
                     </StackPanel>
-
-                    <StackPanel x:Name="ChannelPanel" Grid.Row="1" Grid.Column="0" Margin="0"
-                                HorizontalAlignment="Left"  VerticalAlignment="Bottom" 
-                                Orientation="Horizontal" FlowDirection="LeftToRight" Width="140" Height="28" Grid.ColumnSpan="3">
-                        <Label Content="Channel" 
-                               HorizontalAlignment="Left" VerticalAlignment="Center" Width="{Binding Width, ElementName=label1}" Margin="0,1"/>
-                        <TextBox x:Name="rfChannelTextBox" Text="51"
-                                 local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="125" local:TextBoxHelpers.MinValue="0" VerticalContentAlignment="Center" FlowDirection="LeftToRight" 
-                                 VerticalAlignment="Center" TextWrapping="Wrap" Width="70" 
-                                 Height="20"  Padding="0" Margin="0,4"  Style="{StaticResource PathTextbox}" HorizontalAlignment="Center"/>
-                    </StackPanel>
-
-                    <StackPanel x:Name="TXPowerPanel" Grid.Row="1" Grid.Column="3"
+                    <StackPanel x:Name="TXPowerPanel" Grid.Row="4" Grid.Column="0"
                         HorizontalAlignment="Left"  VerticalAlignment="Bottom" 
                         Orientation="Horizontal" FlowDirection="LeftToRight" Height="28" Width="140">
                         <Label Content="TX Power" 
                                HorizontalAlignment="Left" Margin="0,2,0,0" Width="{Binding Width, ElementName=label1}"/>
-                        <ComboBox x:Name="TXPowerComboBox"  SelectedIndex="0"
-                                  Margin="0,4,5,4" Height="20" Width="70" BorderThickness="1" MinHeight="11" 
+                        <ComboBox x:Name="TXPowerComboBox"  SelectedIndex="3"
+                                  Margin="0,4,5,4" Height="20" Width="{Binding Width, ElementName=RFModeComboBox}" BorderThickness="1" MinHeight="11" 
                                   VerticalContentAlignment="Center" HorizontalContentAlignment="Center" 
                                   HorizontalAlignment="Center" VerticalAlignment="Center" >
-                            <ComboBoxItem Content="0 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                            <ComboBoxItem Content="-6 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                            <ComboBoxItem Content="-12 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                             <ComboBoxItem Content="-18 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            <ComboBoxItem Content="-12 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            <ComboBoxItem Content="-6 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            <ComboBoxItem Content="0 dBm" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                         </ComboBox>
                     </StackPanel>
+                    <StackPanel x:Name="Pipe0PayloadPanel" IsEnabled="False" 
+                        Grid.Row="0" Grid.Column="1"
+                        HorizontalAlignment="Left"  VerticalAlignment="Bottom" 
+                        Orientation="Horizontal" FlowDirection="LeftToRight" Height="28" Width="165" Margin="0.2,0,-10,0">
+                        <StackPanel HorizontalAlignment="Left"  VerticalAlignment="Bottom" 
+                                    Orientation="Horizontal" FlowDirection="LeftToRight" Width="151">
+                            <Label Content="Payload"
+                               HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,1" Width="{Binding Width, ElementName=label1}"/>
+                            <ComboBox x:Name="P0PayloadComboBox"  SelectedIndex="1"
+                                  Margin="0,4,5,4" Height="20" Width="{Binding Width, ElementName=RFModeComboBox}" BorderThickness="1" MinHeight="11" 
+                                  VerticalContentAlignment="Center" HorizontalContentAlignment="Center" 
+                                  HorizontalAlignment="Center" VerticalAlignment="Center" >
+                                <ComboBoxItem Content="Static" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                                <ComboBoxItem Content="Dynamic" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            </ComboBox>
+                        </StackPanel>
+                        <StackPanel x:Name="PayloadBytesPanel"
+                                    HorizontalAlignment="Left"  VerticalAlignment="Bottom" 
+                                    Orientation="Horizontal" FlowDirection="LeftToRight" Width="151" />
+                    </StackPanel>
 
-                    <Button x:Name="rfDefaultButton" Content="Default"
-                                Margin="43,1,9,1" Height="26" Width="73" Grid.Column="1" Grid.Row="2" 
-                                HorizontalAlignment="Center" VerticalAlignment="Center" FlowDirection="RightToLeft" 
-                                Style="{DynamicResource SlateBlueButton}" Click="rfDefaultButton_Click" Grid.ColumnSpan="2"/>
-
-                    <Button x:Name="rfConfigureButton" Content="Configure RF Module"  Style="{DynamicResource OrangeButton}"
-                            Click="configureRF_Click" Grid.Column="3" Grid.Row="2" 
-                            Margin="4,1,0,1" Height="26" Width="135"
-                            HorizontalAlignment="Left" VerticalAlignment="Center" FlowDirection="RightToLeft"  />
-                </Grid>
-            </TabItem>
-            <TabItem x:Name="eepromTab"
-                     Header="EEPROM"
-                     Margin="{Binding Margin, ElementName=controlTab}" Height="20" VerticalAlignment="Top">
-                <Grid HorizontalAlignment="Left" Width="305" Margin="0,0,-5,0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="28"/>
-                        <RowDefinition Height="28"/>
-                        <RowDefinition Height="28"/>
-                        <RowDefinition Height="28"/>
-                        <RowDefinition Height="28"/>
-                        <RowDefinition Height="28"/>
-                        <RowDefinition Height="28"/>
-                        <RowDefinition Height="28"/>
-                        <RowDefinition Height="20"/>
-                        <RowDefinition Height="28"/>
-                        <RowDefinition/>
-                    </Grid.RowDefinitions>
-                    <StackPanel x:Name="dataHeaderPanel" Grid.Column="0" Grid.Row="0" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
-                        <Label Content="------------------- DATA PARAMETERS -------------------" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" HorizontalContentAlignment="Center" Width="299"/>
+                    <StackPanel x:Name="Pipe0Panel"  Grid.Row="1" Grid.Column="1"
+                                    HorizontalAlignment="Left"  VerticalAlignment="Bottom" Margin="0.2,0,0,0"
+                                    Orientation="Horizontal" FlowDirection="LeftToRight" Height="28" Width="155">
+                        <Label Content="RX Address"
+                               HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,1" Width="69"/>
+                        <TextBox x:Name="Pipe0AddressTextBox" IsReadOnly="False"
+                        	HorizontalAlignment="Center" VerticalContentAlignment="Center" FlowDirection="LeftToRight" 
+                        	VerticalAlignment="Center" TextWrapping="Wrap" Width="{Binding Width, ElementName=TXAdrrTextBox}" 
+                        	Height="20"  Padding="0" Margin="0,4"  Style="{StaticResource PathTextbox}" KeyDown="TXAdrrTextBox_KeyDown"/>
                     </StackPanel>
-                    <StackPanel x:Name="randomSequenceEepromPanel" Grid.Column="0" Grid.Row="1" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
-                        <Label Content="Random W" Width="70" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center"/>
-                        <TextBox x:Name="EepromRandom7TextBox" Text="15"  Style="{DynamicResource PathTextbox}" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="15" local:TextBoxHelpers.MinValue="0" VerticalContentAlignment="Center" Padding="0,0,0,0" Width="20" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                        <TextBox x:Name="EepromRandom6TextBox" Text="15"  Style="{DynamicResource PathTextbox}" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="15" local:TextBoxHelpers.MinValue="0" VerticalContentAlignment="Center" Padding="0,0,0,0" Width="20" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                        <TextBox x:Name="EepromRandom5TextBox" Text="15"  Style="{DynamicResource PathTextbox}" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="15" local:TextBoxHelpers.MinValue="0" VerticalContentAlignment="Center" Padding="0,0,0,0" Width="20" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                        <TextBox x:Name="EepromRandom4TextBox" Text="15"  Style="{DynamicResource PathTextbox}" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="15" local:TextBoxHelpers.MinValue="0" VerticalContentAlignment="Center" Padding="0,0,0,0" Width="20" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                        <Label Content=" " Width="5" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center"/>
-                        <TextBox x:Name="EepromRandom3TextBox" Text="15"  Style="{DynamicResource PathTextbox}" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="15" local:TextBoxHelpers.MinValue="0" VerticalContentAlignment="Center" Padding="0,0,0,0" Width="20" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                        <TextBox x:Name="EepromRandom2TextBox" Text="15"  Style="{DynamicResource PathTextbox}" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="15" local:TextBoxHelpers.MinValue="0" VerticalContentAlignment="Center" Padding="0,0,0,0" Width="20" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                        <TextBox x:Name="EepromRandom1TextBox" Text="15"  Style="{DynamicResource PathTextbox}" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="15" local:TextBoxHelpers.MinValue="0" VerticalContentAlignment="Center" Padding="0,0,0,0" Width="20" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                        <TextBox x:Name="EepromRandom0TextBox" Text="15"  Style="{DynamicResource PathTextbox}" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="15" local:TextBoxHelpers.MinValue="0" VerticalContentAlignment="Center" Padding="0,0,0,0" Width="20" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                        <TextBox x:Name="EepromRandomSequencesWordIndexTextBox" Text="19" IsEnabled="false" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="511" 
-                                 local:TextBoxHelpers.MinValue="0" Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" Width="30" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                        <Button x:Name="EepromRandomGenButton" Content="Gen" Margin="3,1,0,1" Height="26" Width="33" Style="{DynamicResource SlateBlueButton}"
-                            HorizontalAlignment="Left" VerticalAlignment="Center" FlowDirection="RightToLeft" Click="EepromRandomGenButton_Click"/>
+                    <StackPanel x:Name="CRCPanel" Grid.Row="2" Grid.Column="1" Margin="0.2,0,0,0"
+                                HorizontalAlignment="Left"  VerticalAlignment="Bottom" 
+                                Orientation="Horizontal" FlowDirection="LeftToRight" Width="140" Height="28">
+                        <Label Content="RX CRC" Width="{Binding Width, ElementName=label1}"
+                               HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                        <ComboBox x:Name="rfCRCComboBox"  SelectedIndex="2"
+                                  Margin="0,4,5,4" Height="20" Width="{Binding Width, ElementName=RFModeComboBox}" BorderThickness="1" MinHeight="11" 
+                                  VerticalContentAlignment="Center" HorizontalContentAlignment="Center" 
+                                  HorizontalAlignment="Center" VerticalAlignment="Center" >
+                            <ComboBoxItem Content="OFF" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            <ComboBoxItem Content="1 Byte" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            <ComboBoxItem Content="2 Bytes" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                        </ComboBox>
                     </StackPanel>
-                    <StackPanel x:Name="robotIdEepromPanel" Grid.Column="0" Grid.Row="2" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
-                        <Label Content="Robot's ID" Width="70" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center"/>
-                        <TextBox x:Name="EepromRobotIdTextBox" Text="00BEADFF"  Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" Width="80" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                        <Label Content="at index Word" Width="85" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center"/>
-                        <TextBox x:Name="EepromRobotIdWordIndexTextBox" Text="16" IsEnabled="false" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="511" 
-                                 local:TextBoxHelpers.MinValue="0" Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" Width="65" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
+                    <StackPanel x:Name="defaultPanel" Grid.Column="1"
+                                Margin="0.2,2,0,2" Grid.Row="3" Orientation="Horizontal" FlowDirection="LeftToRight">
+                        <Label x:Name ="LNAlabel" Content="LNA"
+                               HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,0,3,0"/>
+                        <CheckBox x:Name="LNACheckBox" 
+                                  IsChecked="True" Margin="0,3,12,3"
+                                  VerticalContentAlignment="Center" HorizontalContentAlignment="Center" 
+                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Button x:Name="rfDefaultButton" Content="Default"
+                                Margin="3,0,4,0" Height="26" Width="73"
+                                HorizontalAlignment="Center" VerticalAlignment="Center" FlowDirection="RightToLeft" Style="{DynamicResource ProgramButton}" Click="rfDefaultButton_Click"/>
                     </StackPanel>
-                    <StackPanel x:Name="interceptEepromPanel" Grid.Column="0" Grid.Row="3" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
-                        <Label Content="Intercept" Width="70" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center"/>
-                        <TextBox x:Name="EepromInterceptTextBox" Text="8.5619"  Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" Width="80" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                        <Label Content="at index Word" Width="85" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center"/>
-                        <TextBox x:Name="EepromInterceptWordIndexTextBox" Text="17" IsEnabled="false" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="511" 
-                                 local:TextBoxHelpers.MinValue="0" Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" Width="65" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                    </StackPanel>
-                    <StackPanel x:Name="slopeEepromPanel" Grid.Column="0" Grid.Row="4" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
-                        <Label Content="Slope" Width="70" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center"/>
-                        <TextBox x:Name="EepromSlopeTextBox" Text="3.046"  Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" Width="80" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                        <Label Content="at index Word" Width="85" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center"/>
-                        <TextBox x:Name="EepromSlopeWordIndexTextBox" Text="18" IsEnabled="false" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="511" 
-                                 local:TextBoxHelpers.MinValue="0" Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" Width="65" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                    </StackPanel>
-                    
-                    <StackPanel x:Name="dataButtonPanel" Grid.Column="0" Grid.Row="5" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
-                        <Button x:Name="EepromDataSynchronousButton" Content="Synchronous Data" Margin="4,1,0,1" Height="26" Width="147"
-                                HorizontalAlignment="Center" VerticalAlignment="Center" FlowDirection="RightToLeft" Style="{DynamicResource ProgramButton}" Click="EepromDataSynchronousButton_Click"/>
-                        <Button x:Name="EepromDataReadButton" Content="Read Data" Margin="3,1,0,1" Height="26" Width="147"
-                            HorizontalAlignment="Left" VerticalAlignment="Center" FlowDirection="RightToLeft" Click="EepromDataReadButton_Click" />
-                    </StackPanel>               
-                    <StackPanel x:Name="tableHeaderPanel" Grid.Column="0" Grid.Row="6" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
-                        <Label Content="---------------------- TABLE STATUS ----------------------" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" HorizontalContentAlignment="Center" Width="299"/>
-                    </StackPanel>
-                    <StackPanel x:Name="tablePanel" Grid.Column="0" Grid.Row="7" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
-                        <Label Content="Sine table" Width="70" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center"/>
-                        <TextBox x:Name="SineTableStatusTextBox" Text="invalid" IsEnabled="false" Style="{DynamicResource PathTextbox}" 
-                                 VerticalContentAlignment="Center" Padding="2,0,0,0" Width="80" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                        <Label Content="ArcSine table" Width="85" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center"/>
-                        <TextBox x:Name="ArcSineTableStatusTextBox" Text="invalid" IsEnabled="false" Style="{DynamicResource PathTextbox}" 
-                                 VerticalContentAlignment="Center" Padding="2,0,0,0" Width="65" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                    </StackPanel>
-                    <ProgressBar x:Name="tableVerifyProgramBar" Grid.Column="0" Grid.Row="8" HorizontalAlignment="Left" Height="10" Margin="5,0.6,-0.2,0" VerticalAlignment="Center" Width="295"/>
-                    <StackPanel x:Name="tableButtonPanel" Grid.Column="0" Grid.Row="9" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
-                        <Button x:Name="EepromTableUpdatingButton" Content="Update Table" Margin="4,-1,0,-1" Height="26" Width="147"
-                                HorizontalAlignment="Center" VerticalAlignment="Bottom" FlowDirection="RightToLeft" Style="{DynamicResource ProgramButton}" Click="EepromProgramTableButton_Click"/>
-                        <Button x:Name="EepromTableVerifyButton" Content="Verify Table" Margin="3,-1,0,-1" Height="26" Width="147"
-                            HorizontalAlignment="Left" VerticalAlignment="Top" FlowDirection="RightToLeft" Click="EepromTableVerifyButton_Click" />
-                    </StackPanel>
+                    <Button Content="Configure RF Module" Click="configureRF_Click" Grid.Column="1" Grid.Row="4" 
+                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="135" HorizontalAlignment="Left"/>
                 </Grid>
             </TabItem>
             <TabItem Header="Calibration" Margin="{Binding Margin, ElementName=controlTab}">
-                <Grid HorizontalAlignment="Left" VerticalAlignment="Top" Width="304.8">
+                <Grid HorizontalAlignment="Left" Height="238.4" VerticalAlignment="Top" Width="304.8">
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="36"/>
                         <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
-                        <RowDefinition Height="28"/>
-                        <RowDefinition Height="28"/>
-                        <RowDefinition Height="28"/>
-                        <RowDefinition Height="28"/>
-                        <RowDefinition Height="28"/>
+                        <RowDefinition Height="36.8"/>
                         <RowDefinition/>
                     </Grid.RowDefinitions>
-                    <StackPanel x:Name="TxAddressPanel0" Grid.Column="0" Grid.Row="0" 
-                        Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1.8,0" Grid.ColumnSpan="2">
-                        <Label Content="Transmission ID" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,1" Width="100"/>
-                        <ComboBox x:Name="TXAddressCalibrationSelectBox" HorizontalAlignment="Center" VerticalContentAlignment="Center" FlowDirection="LeftToRight" 
-                        	VerticalAlignment="Center" Width="75" Height="{Binding ActualHeight, ElementName=stackPanel3, Mode=OneWay}" Margin="2,0" SelectedIndex="0">
-                            <ComboBoxItem Content="00BEADFF"/>
-                            <ComboBoxItem Content="00BEAD01"/>
-                            <ComboBoxItem Content="00BEAD02"/>
-                            <ComboBoxItem Content="00BEAD03"/>
-                            <ComboBoxItem Content="00BEAD04"/>
-                            <ComboBoxItem Content="00BEAD05"/>
-                            <ComboBoxItem Content="00BEAD06"/>
-                            <ComboBoxItem Content="00BEAD07"/>
-                            <ComboBoxItem Content="00BEAD08"/>
-                            <ComboBoxItem Content="00BEAD00"/>
-                        </ComboBox>
-                        <Button x:Name="ConfigureRFCalibration" Content="Set TX Address" Grid.Column="1" Grid.Row="4" Style="{DynamicResource OrangeButton}"
-                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="118" HorizontalAlignment="Left" Click="ConfigureRFCalibration_Click"/>
-                    </StackPanel>
-                    <StackPanel x:Name="stackPanel3" Grid.Column="0" Grid.Row="1" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="24" Orientation="Horizontal">
+                    <StackPanel x:Name="stackPanel3" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="24" Orientation="Horizontal">
                         <Button x:Name="sendCommandButton" Content="Send Command" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Top" Height="{Binding ActualHeight, ElementName=stackPanel3, Mode=OneWay}" Width="100" Click="sendCommandButton_Click"/>
-                        <ComboBox x:Name="commandSelectBox" Width="198" Height="{Binding ActualHeight, ElementName=stackPanel3, Mode=OneWay}" Margin="0,0,0,0" SelectedIndex="0">
-                            <ComboBoxItem Content="Test Robot's RF Receiver"/>
-                            <ComboBoxItem Content="Test Robot's RF Transmistter"/>
+                        <ComboBox x:Name="commandSelectBox" Width="150" Height="{Binding ActualHeight, ElementName=stackPanel3, Mode=OneWay}" Margin="0,0,0,0" SelectedIndex="0">
+                            <ComboBoxItem Content="Test RF Transmister"/>
+                            <ComboBoxItem Content="Test RF Receiver"/>
+                            <ComboBoxItem Content="Test RF Carrier Detection"/>
                             <ComboBoxItem Content="Toggle All Status Leds"/>
+                            <ComboBoxItem Content="Test All Motor Modes"/>
                             <ComboBoxItem Content="Start Sampling Mics Signals"/>
                             <ComboBoxItem Content="Test Speaker"/>
                             <ComboBoxItem Content="Change Motors Speed"/>
-                            <ComboBoxItem Content="Read Battery Voltage"/>
-                            <ComboBoxItem Content="Indicate Battery Voltage"/>
+                            <ComboBoxItem Content="Get Battery Voltage"/>
                         </ComboBox>
                     </StackPanel>
-                    <StackPanel x:Name="readAdc1StackPanel" Grid.Column="0" Grid.Row="2" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="24" Orientation="Horizontal">
+                    <StackPanel x:Name="motor1SpeedStackPanel" Grid.Column="0" Grid.Row="1" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="24" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                        <Label Content="Motor 1:    Speed" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Width="102" Height="24"/>
+                        <TextBox x:Name="motor1SpeedTextBox"  local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="99" local:TextBoxHelpers.MinValue="1" Text="500" Style="{DynamicResource PathTextbox}" Width="40" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                        <Label Content="Reverse" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Width="50" Height="24"/>
+                        <CheckBox x:Name="motor1ReverseCheckBox" IsChecked="False" Margin="0,3,5,3" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Button x:Name="stopMotor1Button" Content="Stop Motor 1" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc1StackPanel}" Width="85" Click="stopMotor1Button_Click"/>
+                    </StackPanel>
+                    <StackPanel x:Name="motor2SpeedStackPanel" Grid.Column="0" Grid.Row="2" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="24" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                        <Label Content="Motor 2:    Speed" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Width="102" Height="24"/>
+                        <TextBox x:Name="motor2SpeedTextBox"  local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="99" local:TextBoxHelpers.MinValue="1" Text="500" Style="{DynamicResource PathTextbox}" Width="40" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                        <Label Content="Reverse" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Width="50" Height="24"/>
+                        <CheckBox x:Name="motor2ReverseCheckBox" IsChecked="False" Margin="0,3,5,3" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Button x:Name="stopMotor2Button" Content="Stop Motor 2" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc1StackPanel}" Width="85" Click="stopMotor2Button_Click"/>
+                    </StackPanel>
+                    <StackPanel x:Name="readAdc1StackPanel" Grid.Column="0" Grid.Row="3" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="24" Orientation="Horizontal">
                         <Button x:Name="readAdc1Button" Content="Read ADC 1" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc1StackPanel}" Width="100" Click="readAdc1Button_Click"/>
                         <TextBox x:Name="readAdc1TextBox" Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" IsReadOnly="True" Width="200" Height="{Binding Height, ElementName=readAdc1StackPanel}" VerticalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="True" UseLayoutRounding="True" Cursor=""/>
                     </StackPanel>
-                    <StackPanel x:Name="readAdc2StackPanel" Grid.Column="0" Grid.Row="3" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                    <StackPanel x:Name="readAdc2StackPanel" Grid.Column="0" Grid.Row="4" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
                         <Button x:Name="readAdc2Button" Content="Read ADC 2" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc2StackPanel}" Width="100" Click="readAdc2Button_Click"/>
                         <TextBox x:Name="readAdc2TextBox" Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" IsReadOnly="True" Width="200" Height="{Binding Height, ElementName=readAdc2StackPanel}"/>
                     </StackPanel>
-                    <StackPanel x:Name="motor1SpeedStackPanel" Grid.Column="0" Grid.Row="4" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="24" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
-                        <Button x:Name="stopMotor1Button" Content="Stop Motor 1" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc1StackPanel}" Width="100" Click="stopMotor1Button_Click"/>
-                        <Label Content="Backward:" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Height="24"/>
-                        <CheckBox x:Name="motor1ReverseCheckBox" IsChecked="False" Margin="0,3,5,3" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        <Label Content="Speed (8-bit):" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Height="24"/>
-                        <TextBox x:Name="motor1SpeedTextBox"  local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="255" local:TextBoxHelpers.MinValue="0" Text="50" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                    <StackPanel x:Name="readBatteryVoltage" Grid.Column="0" Grid.Row="5" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                        <Button x:Name="readBatteryVoltageButton" Content="Get Batt Voltage" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc2StackPanel}" Width="100" Click="readBatteryVoltageButton_Click"/>
+                        <TextBox x:Name="readBatteryVoltageTextBox" Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" IsReadOnly="True" Width="200" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
                     </StackPanel>
-                    <StackPanel x:Name="motor2SpeedStackPanel" Grid.Column="0" Grid.Row="5" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="24" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
-                        <Button x:Name="stopMotor2Button" Content="Stop Motor 2" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc1StackPanel}" Width="100" Click="stopMotor2Button_Click"/>
-                        <Label Content="Backward:" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Height="24"/>
-                        <CheckBox x:Name="motor2ReverseCheckBox" IsChecked="False" Margin="0,3,5,3" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        <Label Content="Speed (8-bit):" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Height="24"/>
-                        <TextBox x:Name="motor2SpeedTextBox"  local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="255" local:TextBoxHelpers.MinValue="0" Text="50" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
-                    </StackPanel>
-                    <StackPanel x:Name="distanceSensingStackPanel" Grid.Column="0" Grid.Row="6" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
-                        <Button x:Name="testDistacneSensingButton" Content="Calibrate TDOA" HorizontalAlignment="Center" Margin="2,0,0,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc1StackPanel}" Width="100" Click="testDistacneSensingButton_Click"/>
-                        <Label Content="Distance (cm):" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Center"/>
-                        <TextBox x:Name="distanceTextBox" Text="15" Style="{DynamicResource PathTextbox}" Width="34" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
-                        <Label Content="Times:" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Center"/>
-                        <TextBox x:Name="testTimesTextBox"  local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="100" local:TextBoxHelpers.MinValue="1" Text="10" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
-                    </StackPanel>
-                    <StackPanel x:Name="distanceSensingStackPanel2" Grid.Column="0" Grid.Row="7" Margin="0,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
-                        <Label Content="Tx:" HorizontalAlignment="Left" VerticalAlignment="Center"/>
-                        <TextBox x:Name="speakerRobotTextBox" Text="00BEAD01" Style="{DynamicResource PathTextbox}" Width="65" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
-                        <Label Content="Rx:" HorizontalAlignment="Left" VerticalAlignment="Center"/>
-                        <TextBox x:Name="micsRobotTextBox" Text="00BEAD02" Style="{DynamicResource PathTextbox}" Width="65" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
-                        <Label Content="Delay ms:" HorizontalAlignment="Left" Margin="1,0,0,0" VerticalAlignment="Center"/>
-                        <TextBox x:Name="delayTestingTextBox" local:TextBoxHelpers.IsNumeric="True" Text="400" Style="{DynamicResource PathTextbox}" Width="58" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
-                    </StackPanel>        
-                    <Label Content="--------------------- TESTING ONLY ---------------------" HorizontalAlignment="Center" Margin="0,0,0,0" Grid.Row="8" VerticalAlignment="Center"/>
-                    <StackPanel x:Name="PIDPanel" Grid.Column="0" Grid.Row="9" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" 
-                                Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
-                        <Label Content="P" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
-                        <TextBox x:Name="PIDkPTextBox" Text="0.8" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
-                        <Label Content="I" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
-                        <TextBox x:Name="PIDkITextBox" Text="0.01" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
-                        <Label Content="D" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
-                        <TextBox x:Name="PIDkDTextBox" Text="0.0" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
-                        <Label Content="ref" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
-                        <TextBox x:Name="PIDrefTextBox" Text="0" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
-                        <Label Content="run" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center"/>
-                        <CheckBox x:Name="runPIDCheckBox" IsChecked="true" Margin="0,3,5,3" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        <Button x:Name="SetPIDParameterButton" Content="Set" Grid.Column="1" Grid.Row="4" 
-                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="40" HorizontalAlignment="Left" Click="SetPIDParameterButton_Click"/>
-                    </StackPanel>
-                </Grid>
-            </TabItem>
-            <TabItem Header="Debug" Margin="{Binding Margin, ElementName=controlTab}">
-                <Grid HorizontalAlignment="Left" VerticalAlignment="Top" Width="304.8">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="28"/>
-                        <RowDefinition Height="28"/>
-                        <RowDefinition Height="28"/>
-                        <RowDefinition Height="28"/>
-                        <RowDefinition Height="28"/>
-                        <RowDefinition Height="28"/>
-                        <RowDefinition/>
-                    </Grid.RowDefinitions>
 
-                    <StackPanel Grid.Row="0" x:Name="TxAddressPanel1" 
-                        Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1.8,0" Grid.ColumnSpan="2">
-                        <Label Content="Robot's Id " Width="64" 
-                               HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,1"/>
-                        <ComboBox x:Name="TXAdrrTextBoxDebug" HorizontalAlignment="Center" VerticalContentAlignment="Center" 
-                                  FlowDirection="LeftToRight" VerticalAlignment="Center" Width="95" Margin="0,1" SelectedIndex="0">
-                            <ComboBoxItem Content="00BEADFF"/>
-                            <ComboBoxItem Content="00BEAD01"/>
-                            <ComboBoxItem Content="00BEAD02"/>
-                            <ComboBoxItem Content="00BEAD03"/>
-                            <ComboBoxItem Content="00BEAD04"/>
-                            <ComboBoxItem Content="00BEAD05"/>
-                            <ComboBoxItem Content="00BEAD06"/>
-                            <ComboBoxItem Content="00BEAD07"/>
-                            <ComboBoxItem Content="00BEAD08"/>
-                            <ComboBoxItem Content="00BEAD00"/>
-                        </ComboBox>
-                        <Button x:Name="configureRFDebug" Content="Set TX Address" Grid.Column="1" Grid.Row="4" Style="{DynamicResource OrangeButton}"
-                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="135" HorizontalAlignment="Left" Click="configureRFDebug_Click_1"/>
-                    </StackPanel>
-                    <StackPanel Grid.Row="1" x:Name="DebugComandPanel" Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,0,0" Grid.ColumnSpan="2">
-                        <ComboBox x:Name="debugCommandSelectBox" HorizontalAlignment="Center" VerticalContentAlignment="Center"
-                                  FlowDirection="LeftToRight" VerticalAlignment="Center" Width="154" Margin="5,0,0,0" SelectedIndex="0">
-                            <ComboBoxItem Content="Start Localization"/>
-                            <ComboBoxItem Content="Read Neighbors Table"/>
-                        </ComboBox>
-                        <Button x:Name="sendDebugCommandButton" Content="Send Command" Margin="4.2,1,0,1" Height="26" 
-                                VerticalAlignment="Center" FlowDirection="RightToLeft" Width="135" HorizontalAlignment="Left" Click="sendDebugCommandButton_Click"/>
-                    </StackPanel>
-                    <StackPanel Grid.Row="2" Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1.8,0" Grid.ColumnSpan="2">
-                        <Button x:Name="setStepSizeButton" Content="Set Step Size" Grid.Column="1" Grid.Row="4" 
-                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="120" HorizontalAlignment="Left" Click="setStepSizeButton_Click"/>
-                        <TextBox x:Name="StepSizeTextBox" Text="0.2" Width="35" Style="{DynamicResource PathTextbox}" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                        <Button x:Name="setLocalLoopButton" Content="Set Stop Loop" Grid.Column="1" Grid.Row="4" 
-                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="100" HorizontalAlignment="Left" Click="setLocalLoopButton_Click"/>
-                        <TextBox x:Name="LocalLoopTextBox" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="2000000000" local:TextBoxHelpers.MinValue="0" Text="2" Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" Width="34" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                    </StackPanel>
-                    <StackPanel Grid.Row="3" Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1.8,0" Grid.ColumnSpan="2">
-                        <Button x:Name="setStop2Button" Content="Set Stop 2" Grid.Column="1" Grid.Row="4" 
-                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="120" HorizontalAlignment="Left" Click="setStop2Button_Click"/>
-                        <TextBox x:Name="stop2TextBox" Text="0.9" Width="35" Style="{DynamicResource PathTextbox}" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                        <Button x:Name="setStop1Button" Content="Set Stop 1" Grid.Column="1" Grid.Row="4" 
-                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="100" HorizontalAlignment="Left" Click="setStop1Button_Click"/>
-                        <TextBox x:Name="stop1TextBox" Text="0.3" Width="35" Style="{DynamicResource PathTextbox}" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                    </StackPanel>
-                    <StackPanel Grid.Row="4" Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1.8,0" Grid.ColumnSpan="2">
-                        <Button x:Name="rotateAngleButton" Content="Rotate Angle Degree" Grid.Column="1" Grid.Row="4" 
-                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="120" HorizontalAlignment="Left" Click="rotateAngleButton_Click"/>
-                        <TextBox x:Name="rotateAngleTextBox" Text="90" Style="{DynamicResource PathTextbox}" Width="35" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                        <Button x:Name="rotateClockwiseButton" Content="Rotate Clockwise" Grid.Column="1" Grid.Row="4" 
-                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="100" HorizontalAlignment="Left" Click="rotateClockwiseButton_Click"/>
-                        <TextBox x:Name="rotatePeriodTextBox" Text="700" Style="{DynamicResource PathTextbox}" local:TextBoxHelpers.IsNumeric="True" Width="35" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                    </StackPanel>
-                    <StackPanel Grid.Row="5" Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1.8,0" Grid.ColumnSpan="2">
-                        <Button x:Name="forwardDistanceButton" Content="Forward Distance" Grid.Column="1" Grid.Row="4" 
-                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="120" HorizontalAlignment="Left" Click="forwardDistanceButton_Click"/>
-                        <TextBox x:Name="forwardDistanceTextBox" Text="8.0" Style="{DynamicResource PathTextbox}" Width="35" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                        <Button x:Name="forwardPeriodButton" Content="Forward Period" Grid.Column="1" Grid.Row="4" 
-                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="100" HorizontalAlignment="Left" Click="forwardPeriodButton_Click"/>
-                        <TextBox x:Name="forwardPeriodTextBox" Text="700" Style="{DynamicResource PathTextbox}" local:TextBoxHelpers.IsNumeric="True" Width="35" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                    </StackPanel>
+                    <Button x:Name="testDistacneSensingButton" Grid.Row="6" Content="Test Distacne Sensing" HorizontalAlignment="Center" Margin="78,7,76.8,5.8" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc1StackPanel}" Width="150" Click="testDistacneSensingButton_Click"/>
                 </Grid>
             </TabItem>
         </TabControl>

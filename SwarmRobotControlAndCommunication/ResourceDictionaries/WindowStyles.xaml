@@ -196,7 +196,7 @@
                                     <ColumnDefinition Width="20" />
                                     <ColumnDefinition Width="20" />
                                 </Grid.ColumnDefinitions>
-                                <Label x:Name="PlotTitle" Style="{StaticResource MainWindowTitle}" Content="{TemplateBinding Title}" />
+                                <Label Style="{StaticResource MainWindowTitle}" Content="{TemplateBinding Title}" />
                                 <Button x:Name="PlotMinimizeButton" 
     									Content="{StaticResource MinimizeButtonPath}"
     									Grid.Column="1"

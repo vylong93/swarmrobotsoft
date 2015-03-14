@@ -5,42 +5,13 @@
     <SolidColorBrush x:Key="ButtonBackgroundNormal" Color="#FF028702"/>
     <SolidColorBrush x:Key="ButtonBackgroundHighlighted" Color="#FF2CB22C"/>
     <SolidColorBrush x:Key="ButtonBackgroundSelected" Color="LightGreen"/>
-
     <SolidColorBrush x:Key="ButtonForegroundNormal" Color="White"/>
     <SolidColorBrush x:Key="ButtonForegroundHighlighted" Color="White"/>
     <SolidColorBrush x:Key="ButtonForegroundSelected" Color="White"/>
-    
     <SolidColorBrush x:Key="ButtonBorderBrushNormal" Color="White"/>
     <SolidColorBrush x:Key="ButtonBorderBrushHighlighted" Color="White"/>
     <SolidColorBrush x:Key="ButtonBorderBrushSelected" Color="White"/>
-    
     <SolidColorBrush x:Key="tes" Color="SlateGray"/>
-
-    <!--Button SlateBlue-->
-    <SolidColorBrush x:Key="ButtonSlateBlueBackgroundNormal" Color="DarkSlateBlue"/>
-    <SolidColorBrush x:Key="ButtonSlateBlueBackgroundHighlighted" Color="SlateBlue"/>
-    <SolidColorBrush x:Key="ButtonSlateBlueBackgroundSelected" Color="LightSteelBlue"/>
-
-    <SolidColorBrush x:Key="ButtonSlateBlueForegroundNormal" Color="White"/>
-    <SolidColorBrush x:Key="ButtonSlateBlueForegroundHighlighted" Color="White"/>
-    <SolidColorBrush x:Key="ButtonSlateBlueForegroundSelected" Color="White"/>
-
-    <SolidColorBrush x:Key="ButtonSlateBlueBorderBrushNormal" Color="White"/>
-    <SolidColorBrush x:Key="ButtonSlateBlueBorderBrushHighlighted" Color="White"/>
-    <SolidColorBrush x:Key="ButtonSlateBlueBorderBrushSelected" Color="White"/>
-
-    <!--Button Orange-->
-    <SolidColorBrush x:Key="ButtonOrangeBackgroundNormal" Color="OrangeRed"/>
-    <SolidColorBrush x:Key="ButtonOrangeBackgroundHighlighted" Color="Orange"/>
-    <SolidColorBrush x:Key="ButtonOrangeBackgroundSelected" Color="Salmon"/>
-
-    <SolidColorBrush x:Key="ButtonOrangeForegroundNormal" Color="White"/>
-    <SolidColorBrush x:Key="ButtonOrangeForegroundHighlighted" Color="White"/>
-    <SolidColorBrush x:Key="ButtonOrangeForegroundSelected" Color="White"/>
-
-    <SolidColorBrush x:Key="ButtonOrangeBorderBrushNormal" Color="White"/>
-    <SolidColorBrush x:Key="ButtonOrangeBorderBrushHighlighted" Color="White"/>
-    <SolidColorBrush x:Key="ButtonOrangeBorderBrushSelected" Color="White"/>
 
     <!--Link Button-->
     <SolidColorBrush x:Key="LinkButtonForeground" Color="#1297FB"/>
@@ -109,80 +80,6 @@
                             <Setter Property="Background" Value="#FFA8B5C1"/>
                             <Setter Property="BorderBrush" Value="White"/>
                             <Setter Property="Foreground" Value="White" />
-                        </Trigger>
-                        <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Opacity" Value=".5"/>
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-    <!-- SlateBlue Button-->
-    <Style x:Key="SlateBlueButton" TargetType="{x:Type Button}">
-        <Setter Property="Visibility" Value="Visible"/>
-        <Setter Property="Background" Value="{StaticResource ButtonSlateBlueBackgroundNormal}"/>
-        <Setter Property="Foreground" Value="{StaticResource ButtonSlateBlueForegroundNormal}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource ButtonSlateBlueBorderBrushNormal}"/>
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="{x:Type Button}">
-                    <Border SnapsToDevicePixels="True"
-    						BorderThickness="1"
-    						BorderBrush="{TemplateBinding BorderBrush}" 
-    						Background="{TemplateBinding Background}">
-                        <Grid SnapsToDevicePixels="True">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Grid>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="{StaticResource ButtonSlateBlueBackgroundHighlighted}" />
-                            <Setter Property="Foreground" Value="{StaticResource ButtonSlateBlueForegroundHighlighted}" />
-                            <Setter Property="BorderBrush" Value="{StaticResource ButtonSlateBlueBorderBrushHighlighted}" />
-                        </Trigger>
-                        <Trigger Property="IsPressed" Value="True">
-                            <Setter Property="Background" Value="{StaticResource ButtonSlateBlueBackgroundSelected}"/>
-                            <Setter Property="Foreground" Value="{StaticResource ButtonSlateBlueForegroundSelected}" />
-                            <Setter Property="BorderBrush" Value="{StaticResource ButtonSlateBlueBorderBrushSelected}"/>
-                        </Trigger>
-                        <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Opacity" Value=".5"/>
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-    <!-- Orange Button-->
-    <Style x:Key="OrangeButton" TargetType="{x:Type Button}">
-        <Setter Property="Visibility" Value="Visible"/>
-        <Setter Property="Background" Value="{StaticResource ButtonOrangeBackgroundNormal}"/>
-        <Setter Property="Foreground" Value="{StaticResource ButtonOrangeForegroundNormal}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource ButtonOrangeBorderBrushNormal}"/>
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="{x:Type Button}">
-                    <Border SnapsToDevicePixels="True"
-    						BorderThickness="1"
-    						BorderBrush="{TemplateBinding BorderBrush}" 
-    						Background="{TemplateBinding Background}">
-                        <Grid SnapsToDevicePixels="True">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Grid>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="{StaticResource ButtonOrangeBackgroundHighlighted}" />
-                            <Setter Property="Foreground" Value="{StaticResource ButtonOrangeForegroundHighlighted}" />
-                            <Setter Property="BorderBrush" Value="{StaticResource ButtonOrangeBorderBrushHighlighted}" />
-                        </Trigger>
-                        <Trigger Property="IsPressed" Value="True">
-                            <Setter Property="Background" Value="{StaticResource ButtonOrangeBackgroundSelected}"/>
-                            <Setter Property="Foreground" Value="{StaticResource ButtonOrangeForegroundSelected}" />
-                            <Setter Property="BorderBrush" Value="{StaticResource ButtonOrangeBorderBrushSelected}"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value=".5"/>

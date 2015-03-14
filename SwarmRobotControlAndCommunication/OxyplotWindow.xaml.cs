@@ -30,46 +30,23 @@ namespace SwarmRobotControlAndCommunication
         public PlotModel MyModel { get; private set; }
         private PlotWindowModel viewModel;
 
-        public delegate PlotModel delegatePolyPlot(UInt32[] data, string Title);
-        public delegate PlotModel delegateScatterPointPlot(float[] dataX, float[] dataY, string Title);
-        public delegate PlotModel delegateScatterPointAndLinePlot(UInt32[] id, float[] dataX, float[] dataY, string Title);
-
-        public OxyplotWindow(UInt32[] id, float[] dataX, float[] dataY, String Title, delegateScatterPointAndLinePlot plot)
+        public OxyplotWindow(UInt32[] data, String Title)
         {
             InitializeComponent();
 
             //Binding Data Manually
             viewModel = new PlotWindowModel();
             DataContext = viewModel;
-            viewModel.PlotModel = plot(id, dataX, dataY, Title);
-        }
-
-        public OxyplotWindow(float[] dataX, float[] dataY, String Title, delegateScatterPointPlot plot)
-        {
-            InitializeComponent();
-
-            //Binding Data Manually
-            viewModel = new PlotWindowModel();
-            DataContext = viewModel;
-             viewModel.PlotModel = plot(dataX, dataY, Title);
-        }
-
-        public OxyplotWindow(UInt32[] data, String Title, delegatePolyPlot plot)
-        {
-            InitializeComponent();
-
-            //Binding Data Manually
-            viewModel = new PlotWindowModel();
-            DataContext = viewModel;
-            viewModel.PlotModel = plot(data, Title);
+            viewModel.PlotModel = PolylineAnnotation(data, Title);
         }
 
         private Button closeButtonPlotWindow = new Button();
         private Button minimizeButtonPlotWindow = new Button();
         private Button maximizeButtonPlotWindow = new Button();
-        private FrameworkElement titleButtonMainWindow = new FrameworkElement();
 
         private WindowState previousWindowState = new WindowState();
+
+        private FrameworkElement titleButtonMainWindow = new FrameworkElement();
 
         private void OxyplotWindow_Loaded(object sender, RoutedEventArgs e)
         {
@@ -96,6 +73,7 @@ namespace SwarmRobotControlAndCommunication
             {
                 this.titleButtonMainWindow.MouseLeftButtonDown += PlotWindowTitle_MouseLeftButtonDown;
             }
+
         }
         private void PlotWindowMaximizeApplicationWindow(object sender, RoutedEventArgs e)
         {
@@ -186,12 +164,12 @@ namespace SwarmRobotControlAndCommunication
         }
 
         //[Example("PolylineAnnotation")]
-        public static PlotModel PolylineMonoY(UInt32[] data, string Title)
+        public static PlotModel PolylineAnnotation(UInt32[] data, string Title)
         {
             var plotModel1 = new PlotModel();
             plotModel1.Title = Title;
             var linearAxis1 = new LinearAxis();
-            linearAxis1.Maximum = data.Length;
+            linearAxis1.Maximum = 300;
             linearAxis1.Minimum = 0;
             linearAxis1.Position = AxisPosition.Bottom;
             plotModel1.Axes.Add(linearAxis1);
@@ -209,171 +187,5 @@ namespace SwarmRobotControlAndCommunication
             return plotModel1;
         }
 
-        public static PlotModel ScatterPointPlot(float[] dataX, float[] dataY, string Title) 
-        {
-            var plotModel1 = new PlotModel();
-            plotModel1.Title = Title;
-            var linearAxis1 = new LinearAxis();
-            linearAxis1.Maximum = dataX.Max() + 10;
-            linearAxis1.Minimum = 0;
-            linearAxis1.Position = AxisPosition.Bottom;
-            linearAxis1.MajorGridlineStyle = LineStyle.Solid;
-            linearAxis1.MinorGridlineStyle = LineStyle.Dot;
-            plotModel1.Axes.Add(linearAxis1);
-
-            var linearAxis2 = new LinearAxis();
-            linearAxis2.Maximum = dataY.Max() + dataX.Min();
-            linearAxis2.Minimum = 0;
-            linearAxis2.MajorGridlineStyle = LineStyle.Solid;
-            linearAxis2.MinorGridlineStyle = LineStyle.Dot;
-            plotModel1.Axes.Add(linearAxis2);
-
-            var scatterSeries = new ScatterSeries();
-            scatterSeries.MarkerStrokeThickness = 1;
-            scatterSeries.MarkerStroke = OxyColor.FromRgb(255, 60, 60);
-            scatterSeries.MarkerSize = 4;
-            scatterSeries.MarkerType = MarkerType.Star;
-
-            if (dataX.Length != dataY.Length)
-                throw new Exception("Invalid length of X and Y!");
-
-            for (int i = 0; i < dataY.Length; i++)
-            {
-                scatterSeries.Points.Add(new ScatterPoint(dataX[i], dataY[i]));
-            }
-
-            plotModel1.Series.Add(scatterSeries);
-
-            // Least-Square calculation
-
-            Int32 n = dataX.Length;
-
-            float sumX = 0;
-            foreach (float item in dataX)
-                sumX += (float)item;
-
-            float sumX2 = 0;
-            foreach (float item in dataX)
-                sumX2 += (float)(item * item);
-
-            float sumY = 0;
-            foreach (float item in dataY)
-                sumY += (float)item;
-
-            float sumXY = 0;
-            for (int i = 0; i < dataX.Length; i++)
-                sumXY += ((float)dataX[i] * (float)dataY[i]);
-
-            float detA = (n * sumX2) - (sumX * sumX);
-            float detAIntercept = (sumY * sumX2) - (sumXY * sumX);
-            float detASlope = (n * sumXY) - (sumX * sumY);
-
-            var lineAnnotation1 = new LineAnnotation();
-            lineAnnotation1.Intercept = detAIntercept / detA; // b
-            lineAnnotation1.Slope = detASlope / detA; // a
-
-            double errorVariance = 0;
-            double sqrt_e_i = 0;
-            for (int i = 0; i < n; i++)
-            {
-                sqrt_e_i = dataY[i] - lineAnnotation1.Intercept - lineAnnotation1.Slope * dataX[i];
-                errorVariance += Math.Pow(sqrt_e_i, 2.0);
-            }
-
-            lineAnnotation1.Text = "Intercept " + lineAnnotation1.Intercept.ToString("0.00000") + ", Slope " + lineAnnotation1.Slope.ToString("0.00000") + "Var " + errorVariance.ToString("0.00000");
-            plotModel1.Annotations.Add(lineAnnotation1);
-
-            return plotModel1;
-        }
-
-        public static PlotModel ScatterPointAndLinePlot(UInt32[] id, float[] dataX, float[] dataY, string Title)
-        {
-            List<OxyPlot.OxyColor> randomColor = new List<OxyPlot.OxyColor>();
-            randomColor.Add(OxyColors.Red);
-            randomColor.Add(OxyColors.Blue);
-            randomColor.Add(OxyColors.Brown);
-            randomColor.Add(OxyColors.DarkSeaGreen);
-            randomColor.Add(OxyColors.Violet);
-            randomColor.Add(OxyColors.DarkViolet);
-            randomColor.Add(OxyColors.DarkCyan);
-            randomColor.Add(OxyColors.Navy);
-            randomColor.Add(OxyColors.Olive);
-            randomColor.Add(OxyColors.DimGray);
-
-            var plotModel1 = new PlotModel();
-            plotModel1.PlotAreaBorderThickness = new OxyThickness(0, 0, 0, 0);
-            plotModel1.PlotMargins = new OxyThickness(10, 10, 10, 10);
-            plotModel1.Title = Title;
-
-            var linearAxis1 = new LinearAxis();
-            linearAxis1.Maximum = 70;
-            linearAxis1.Minimum = -70;
-            linearAxis1.PositionAtZeroCrossing = true;
-            linearAxis1.TickStyle = TickStyle.Crossing;
-            //linearAxis1.Position = AxisPosition.Bottom;
-            //linearAxis1.MajorGridlineStyle = LineStyle.Solid;
-            //linearAxis1.MinorGridlineStyle = LineStyle.Dot;
-            plotModel1.Axes.Add(linearAxis1);
-
-            var linearAxis2 = new LinearAxis();
-            linearAxis2.Maximum = 70;
-            linearAxis2.Minimum = -70;
-            linearAxis2.PositionAtZeroCrossing = true;
-            linearAxis2.TickStyle = TickStyle.Crossing;
-            linearAxis2.Position = AxisPosition.Bottom;
-            //linearAxis2.MajorGridlineStyle = LineStyle.Solid;
-            //linearAxis2.MinorGridlineStyle = LineStyle.Dot;
-            plotModel1.Axes.Add(linearAxis2);
-
-            if (dataX.Length != dataY.Length)
-                throw new Exception("Invalid length of X and Y!");
-
-            for (int i = 0; i < dataX.Length; i++)
-            {
-                var pointAnnotation1 = new PointAnnotation();
-                pointAnnotation1.X = dataX[i];
-                pointAnnotation1.Y = dataY[i];
-
-                //pointAnnotation1.Fill = OxyColors.Orange;
-                //pointAnnotation1.Stroke = OxyColors.IndianRed;
-
-                pointAnnotation1.Fill = OxyColors.Cyan;
-                pointAnnotation1.Stroke = OxyColors.DarkBlue;
-
-                //pointAnnotation1.Fill = OxyColors.DarkBlue;
-                //pointAnnotation1.Stroke = OxyColors.Cyan;
-                pointAnnotation1.StrokeThickness = 3;
-                pointAnnotation1.Size = 10;
-                pointAnnotation1.Text = "0x" + id[i].ToString("X6");
-                plotModel1.Annotations.Add(pointAnnotation1);
-            }
-
-            for (int i = 0; i < dataX.Length; i++)
-            {
-                if (dataX[i] == 0 && dataY[i] == 0)
-                    continue;
-
-                var arrowAnnotation2 = new ArrowAnnotation();
-                arrowAnnotation2.EndPoint = new DataPoint(dataX[i], dataY[i]);
-                //arrowAnnotation2.Text = "0x" + id[i].ToString("X6");
-                //arrowAnnotation2.TextPosition = new DataPoint(dataX[i], dataY[i]);
-                //arrowAnnotation2.TextHorizontalAlignment = OxyPlot.HorizontalAlignment.Left;
-                //arrowAnnotation2.TextVerticalAlignment = OxyPlot.VerticalAlignment.Bottom;
-                arrowAnnotation2.Color = randomColor[i % randomColor.Count];
-                plotModel1.Annotations.Add(arrowAnnotation2);
-            }
-
-            //var arrowAnnotation3 = new ArrowAnnotation();
-            //arrowAnnotation3.Color = OxyColors.Red;
-            //arrowAnnotation3.EndPoint = new DataPoint(10, -3);
-            //arrowAnnotation3.HeadLength = 14;
-            //arrowAnnotation3.HeadWidth = 6;
-            //arrowAnnotation3.Veeness = 4;
-            //arrowAnnotation3.Text = "HeadLength = 20, HeadWidth = 10, Veeness = 4";
-            //plotModel1.Annotations.Add(arrowAnnotation3);
-
-
-            return plotModel1;
-        }
     }
 }

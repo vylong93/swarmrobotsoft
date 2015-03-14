@@ -71,16 +71,9 @@
     <Compile Include="AboutWindow.xaml.cs">
       <DependentUpon>AboutWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="OxyplotWindowTwoChart.xaml.cs">
-      <DependentUpon>OxyplotWindowTwoChart.xaml</DependentUpon>
-    </Compile>
     <Compile Include="PlotWindowModel.cs" />
     <Compile Include="OxyplotWindow.xaml.cs">
       <DependentUpon>OxyplotWindow.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="SwarmMessage.cs" />
-    <Compile Include="UserInputTextWindow.xaml.cs">
-      <DependentUpon>UserInputTextWindow.xaml</DependentUpon>
     </Compile>
     <Page Include="MergeResourcesDictionary.xaml">
       <SubType>Designer</SubType>
@@ -110,10 +103,6 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="AboutWindow.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="OxyplotWindowTwoChart.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -162,10 +151,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="OxyplotWindow.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="UserInputTextWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
