@@ -80,6 +80,7 @@ namespace SwarmRobotControlAndCommunication
         private const byte COMMAND_START_LOCALIZATION = 0x17;
         private const byte COMMAND_READ_NEIGHBORS_TABLE = 0x18;
         private const byte COMMAND_READ_ONEHOP_NEIGHBORS_TABLE = 0x19;
+        private const byte COMMAND_READ_LOCATIONS_TABLE = 0x1A;
 
         //==== command below is out of date ===================================
         private const byte COMMAND_SET_RUNNING_STATUS = 0xC3;
@@ -393,6 +394,11 @@ namespace SwarmRobotControlAndCommunication
         private void plotTDOA_Click(object sender, RoutedEventArgs e)
         {
             plotPeakResultFromFile();
+        }
+
+        private void plotLocs_Click(object sender, RoutedEventArgs e)
+        {
+            plotLocationsTableFromFile();
         }
 
         private void aboutMenuItem_Click(object sender, RoutedEventArgs e)
@@ -2281,6 +2287,10 @@ namespace SwarmRobotControlAndCommunication
                         readOneHopNeighborsTable();
                         break;
 
+                    case "Read Locations Table":
+                        readLocationsTable();
+                        break;
+    
                     //<ComboBoxItem Content="Scan Robots Vector"/>
                     //<ComboBoxItem Content="Draw Coordination Table"/>
                     //<ComboBoxItem Content="Draw Coordination From File..."/>
@@ -2403,9 +2413,12 @@ namespace SwarmRobotControlAndCommunication
 
                 String fileContent = constructOneHopDataFromByteBuffer(receivedData);
 
-                String fileFullPath = exportOneHopDataToTextFile("Output OneHop", "OneHop " + this.TXAdrrTextBoxDebug.Text + ".txt", fileContent);
+                String fileFullPath = exportDataToTextFile("Output OneHop", "OneHop " + this.TXAdrrTextBoxDebug.Text + ".txt", fileContent);
 
-                displayOneHopDataFiles("Robot [" + this.TXAdrrTextBoxDebug.Text + "] one hop neighbors table", fileFullPath);
+                MessageBoxResult result = MessageBox.Show("The table content have been saved to\n" + fileFullPath, "Robot [" + this.TXAdrrTextBoxDebug.Text + "] one hop neighbors table", MessageBoxButton.YesNo, MessageBoxImage.Information);
+
+                if (result == MessageBoxResult.Yes)
+                    displayOneHopDataFile(fileFullPath);
             }
             catch (Exception ex)
             {
@@ -2456,7 +2469,7 @@ namespace SwarmRobotControlAndCommunication
 
             return msg;
         }
-        private String exportOneHopDataToTextFile(String folderHeaderText, String fileFullName, String content)
+        private String exportDataToTextFile(String folderHeaderText, String fileFullName, String content)
         {
             DirectoryInfo fileDir = new DirectoryInfo(".");
 
@@ -2470,10 +2483,8 @@ namespace SwarmRobotControlAndCommunication
 
             return fileFullPath;
         }
-        private void displayOneHopDataFiles(String title, String fileFullPath)
+        private void displayOneHopDataFile(String fileFullPath)
         {
-            MessageBox.Show("One Hop Neighbors Table of Robot [0x" + this.TXAdrrTextBox.Text + "] have save to\n" + fileFullPath, title, MessageBoxButton.OK, MessageBoxImage.Information);
-
             string textEditor1 = @"D:\\Program Files\\Notepad++\\notepad++.exe";
             string textEditor2 = @"C:\\Program Files\\Notepad++\\notepad++.exe";
 
@@ -2491,6 +2502,124 @@ namespace SwarmRobotControlAndCommunication
             }
         }
 
+        private void readLocationsTable()
+        {
+            uint length = 120;
+            byte[] receivedData = new byte[length];
+
+            SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_READ_LOCATIONS_TABLE);
+            SwarmMessage requestMessage = new SwarmMessage(header);
+
+            try
+            {
+                theControlBoard.receivedDataFromRobot(receivedData, length, 1000, requestMessage);
+
+                String tableContent = constructLocationsTableFromByteBuffer(receivedData);
+
+                String fileFullPath = exportDataToTextFile("Output Coordinates", "Coordinates " + this.TXAdrrTextBoxDebug.Text + ".txt", tableContent);
+
+                MessageBoxResult result =  MessageBox.Show(tableContent + "\nDo you want to plot this?", "Robot [" + this.TXAdrrTextBoxDebug.Text + "] Locations table", MessageBoxButton.YesNo, MessageBoxImage.Information);
+
+                if (result == MessageBoxResult.Yes)
+                    plotLocationsTable(fileFullPath);
+            }
+            catch (Exception ex)
+            {
+                defaultExceptionHandle(ex);
+            }
+        }
+        private String constructLocationsTableFromByteBuffer(byte[] receivedData)
+        { 
+            String table = "Locations Table of Robot [0x" + this.TXAdrrTextBoxDebug.Text + "]:\n";
+
+            UInt32[] ID = new UInt32[10];
+            float[] x = new float[10];
+            float[] y = new float[10];
+            int pointer = 0;
+
+            for (int i = 0; i < 10; i++)
+            {
+                ID[i] = (UInt32)((receivedData[pointer] << 24) | (receivedData[pointer + 1] << 16) | (receivedData[pointer + 2] << 8) | receivedData[pointer + 3]);
+                pointer += 4;
+
+                x[i] = (float)(((receivedData[pointer] << 24) | (receivedData[pointer + 1] << 16) | (receivedData[pointer + 2] << 8) | receivedData[pointer + 3]) / 65536.0f);
+                pointer += 4;
+
+                y[i] = (float)(((receivedData[pointer] << 24) | (receivedData[pointer + 1] << 16) | (receivedData[pointer + 2] << 8) | receivedData[pointer + 3]) / 65536.0f);
+                pointer += 4;
+
+                if (ID[i] != 0 || x[i] != 0 || y[i] != 0)
+                {
+                    table += String.Format("Robot:0x{0} ({1}; {2})\n", ID[i].ToString("X6"), x[i].ToString("G6"), y[i].ToString("G6"));
+                }
+            }
+
+            return table;
+        }
+        private void plotLocationsTable(String fileFullPath)
+        {
+            bool isValidFile = false;
+
+            System.IO.StreamReader file = new System.IO.StreamReader(fileFullPath);
+
+            string title;
+            if ((title = file.ReadLine()) == null)
+                return;
+
+            List<float> xAxis = new List<float>();
+            List<float> yAxis = new List<float>();
+            List<UInt32> ui32ID = new List<UInt32>();
+
+            string line;
+            while ((line = file.ReadLine()) != null)
+            {
+                Match match = Regex.Match(line, @"^Robot:(0x[A-Fa-f0-9]+)\s\W([+-]?[0-9]*(?:\.[0-9]+)?);\s([+-]?[0-9]*(?:\.[0-9]+)?)\W$", RegexOptions.IgnoreCase);
+
+                if (match.Success)
+                {
+                    if (!match.Groups[1].Value.Equals("0x000000"))
+                    {
+                        ui32ID.Add(UInt32.Parse(match.Groups[1].Value.Substring(2), System.Globalization.NumberStyles.HexNumber));
+                        xAxis.Add(float.Parse(match.Groups[2].Value));
+                        yAxis.Add(float.Parse(match.Groups[3].Value));
+
+                        isValidFile = true;
+                    }
+                }
+            }
+
+            file.Close();
+
+            if (isValidFile)
+            {
+                float[] Plot_dataX = new float[xAxis.Count];
+                float[] Plot_dataY = new float[yAxis.Count];
+                UInt32[] listID = new UInt32[ui32ID.Count];
+
+                xAxis.CopyTo(Plot_dataX);
+                yAxis.CopyTo(Plot_dataY);
+                ui32ID.CopyTo(listID);
+
+                OxyplotWindow oxyplotWindow = new OxyplotWindow(listID, Plot_dataX, Plot_dataY, title, OxyplotWindow.ScatterPointAndLinePlot);
+
+                oxyplotWindow.Show();
+            }
+        }
+
+        private void plotLocationsTableFromFile()
+        {
+            OpenFileDialog dlg = new OpenFileDialog();
+            dlg.Title = "Select your file";
+            dlg.Filter = "Text files (*.TXT)|*.TXT" + "|All files (*.*)|*.*";
+
+            // Process open file dialog box results 
+            if (dlg.ShowDialog() == true)
+            {
+                string pathToFile = dlg.FileName;
+
+                plotLocationsTable(pathToFile);
+            }
+        }
 
         // === The funtions below is out of date ========================================
         private void scanRobotsVector()
@@ -2602,82 +2731,6 @@ namespace SwarmRobotControlAndCommunication
             MessageBox.Show(message, "Scan results", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        private void ReadOneHopNeighbor()
-        {
-            uint length = 640;
-            Byte[] receivedData = new Byte[length];
-
-            String[] table = new String[10];
-            String title = "Robot [" + this.TXAdrrTextBoxDebug.Text + "] one hop neighbors table";
-            String msg = "One Hop Neighbors Table of Robot [0x" + this.TXAdrrTextBoxDebug.Text + "]:\n";
-
-            int[] firstID = new int[10];
-            int[] ID = new int[100];
-            int[] distance = new int[100];
-            int pointer = 0;
-            double distanceInCm = 0;
-
-            try
-            {
-               // theControlBoard.receiveBytesFromRobot(COMMAND_READ_ONEHOP_TABLE, null, length, ref receivedData, 1000);
-
-                for (int i = 0; i < 10; i++)
-                {
-                    table[i] = "XX";
-
-                    firstID[i] = (receivedData[pointer] << 24) | (receivedData[pointer + 1] << 16) | (receivedData[pointer + 2] << 8) | receivedData[pointer + 3];
-                    pointer += 4;
-
-                    for (int j = 0; j < 10; j++)
-                    {
-                        ID[i * 10 + j] = (receivedData[pointer] << 24) | (receivedData[pointer + 1] << 16) | (receivedData[pointer + 2] << 8) | receivedData[pointer + 3];
-
-                        distance[i * 10 + j] = (receivedData[pointer + 4] << 8) | (receivedData[pointer + 5]);
-
-                        pointer += 6;
-
-                        distanceInCm = distance[i * 10 + j] / 256.0;
-                        if (table[i].Equals("XX"))
-                        {
-                            table[i] = "first Hop ID = 0x" + firstID[i].ToString("X6") + ":\n";
-                        }
-
-                        if (ID[i * 10 + j] != 0 || distance[i * 10 + j] != 0)
-                        {
-                            table[i] += String.Format("Robot [0x{0}] :: {1} cm\n", ID[i * 10 + j].ToString("X6"), distanceInCm.ToString("G6"));
-                        }
-                    }
-
-                    table[i] += "\n";
-                    msg += table[i];
-                }
-            }
-            catch (Exception ex)
-            {
-                defaultExceptionHandle(ex);
-            }
-
-            String fileFullPath = exportOneHopDataToTextFile("Output OneHop", "OneHop " + this.TXAdrrTextBoxDebug.Text + ".txt", msg);
-
-            MessageBox.Show("One Hop Neighbors Table of Robot [0x" + this.TXAdrrTextBox.Text + "] have save to\n" + fileFullPath, title, MessageBoxButton.OK, MessageBoxImage.Information);
-
-            string textEditor1 = @"D:\\Program Files\\Notepad++\\notepad++.exe";
-            string textEditor2 = @"C:\\Program Files\\Notepad++\\notepad++.exe";
-
-            if (File.Exists(textEditor1))
-            {
-                Process.Start(textEditor1, fileFullPath);
-            }
-            else if (File.Exists(textEditor2))
-            {
-                Process.Start(textEditor2, fileFullPath);
-            }
-            else
-            {
-                Process.Start(@"notepad.exe", fileFullPath);
-            }
-        }
-
         private void DrawMap()
         {
             uint length = 120;
@@ -2727,7 +2780,7 @@ namespace SwarmRobotControlAndCommunication
                 Plot_dataY[i] = dataY[i];
             }
 
-            exportOneHopDataToTextFile("Output Coordinates", "Coordinates " + this.TXAdrrTextBoxDebug.Text + ".txt", msg);
+            exportDataToTextFile("Output Coordinates", "Coordinates " + this.TXAdrrTextBoxDebug.Text + ".txt", msg);
 
             OxyplotWindow oxyplotWindow = new OxyplotWindow(Plot_id, Plot_dataX, Plot_dataY, title, OxyplotWindow.ScatterPointAndLinePlot);
 
@@ -3115,9 +3168,6 @@ namespace SwarmRobotControlAndCommunication
         }
 
         #endregion
-
-
-
     }
 
     #region IValueConverter Members
