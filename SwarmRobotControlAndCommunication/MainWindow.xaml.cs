@@ -81,6 +81,7 @@ namespace SwarmRobotControlAndCommunication
         private const byte COMMAND_READ_NEIGHBORS_TABLE = 0x18;
         private const byte COMMAND_READ_ONEHOP_NEIGHBORS_TABLE = 0x19;
         private const byte COMMAND_READ_LOCATIONS_TABLE = 0x1A;
+        private const byte COMMAND_SELF_CORRECT_LOCATIONS_TABLE = 0x1B;
 
         //==== command below is out of date ===================================
         private const byte COMMAND_SET_RUNNING_STATUS = 0xC3;
@@ -2289,6 +2290,10 @@ namespace SwarmRobotControlAndCommunication
 
                     case "Read Locations Table":
                         readLocationsTable();
+                        break;
+
+                    case "Self Correct Locations Table":
+                        theControlBoard.broadcastCommandToRobot(COMMAND_SELF_CORRECT_LOCATIONS_TABLE);
                         break;
     
                     //<ComboBoxItem Content="Scan Robots Vector"/>
