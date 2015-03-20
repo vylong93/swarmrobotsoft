@@ -43,5 +43,6 @@ namespace SwarmRobotControlAndCommunication.CustomInterfaces
         void startProgramming(string fileName, CancellationTokenSource cts);
 
         UInt32 getLastTransferSize();
+        double getProgramSpeed();
     }
 }

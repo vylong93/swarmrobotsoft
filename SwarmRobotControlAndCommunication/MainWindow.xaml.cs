@@ -82,6 +82,7 @@ namespace SwarmRobotControlAndCommunication
         private const byte COMMAND_READ_ONEHOP_NEIGHBORS_TABLE = 0x19;
         private const byte COMMAND_READ_LOCATIONS_TABLE = 0x1A;
         private const byte COMMAND_SELF_CORRECT_LOCATIONS_TABLE = 0x1B;
+        private const byte COMMAND_SELF_CORRECT_LOCATIONS_TABLE_EXCEPT_ROTATION_HOP = 0x1C;
 
         //==== command below is out of date ===================================
         private const byte COMMAND_SET_RUNNING_STATUS = 0xC3;
@@ -298,6 +299,7 @@ namespace SwarmRobotControlAndCommunication
             this.Dispatcher.Invoke((Action)delegate
             {
                 this.progressProgramBar.Value = value;
+                this.statusDeviceAttached.Content = String.Format("Program Size = {0:0} KB, Transfer rate = {1:0.000} KB/sec", bootLoader.getLastTransferSize() / 1000, bootLoader.getProgramSpeed() * 60 / 1000);
             }
             );
         }
@@ -2294,6 +2296,10 @@ namespace SwarmRobotControlAndCommunication
 
                     case "Self Correct Locations Table":
                         theControlBoard.broadcastCommandToRobot(COMMAND_SELF_CORRECT_LOCATIONS_TABLE);
+                        break;
+
+                    case "Self Correct Locations Table Except Rotation Hop":
+                        theControlBoard.broadcastCommandToRobot(COMMAND_SELF_CORRECT_LOCATIONS_TABLE_EXCEPT_ROTATION_HOP);
                         break;
     
                     //<ComboBoxItem Content="Scan Robots Vector"/>

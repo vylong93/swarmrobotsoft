@@ -143,6 +143,8 @@ namespace SwarmRobotControlAndCommunication
             private ControlBoardInterface theControlBoard;
         #endregion
 
+        private double programSpeed;
+
         public TivaBootLoader(ControlBoardInterface controlBoard, UInt32 flashSizeInKB)
         {
             extendedSegmentAddress = 0;
@@ -160,6 +162,7 @@ namespace SwarmRobotControlAndCommunication
             arrayDataFrame = new DataFrameFormat[maxNumberOfDataFrame];
             numberOfLines = 0;
             theControlBoard = controlBoard;
+            programSpeed = 0;
         }
 
         public event programmingProgressUpdate currentProgrammingPercentEvent;
@@ -167,6 +170,11 @@ namespace SwarmRobotControlAndCommunication
         public UInt32 getLastTransferSize()
         {
             return transferSize;
+        }
+
+        public double getProgramSpeed()
+        {
+            return programSpeed;
         }
 
         /// <summary>
@@ -501,6 +509,9 @@ namespace SwarmRobotControlAndCommunication
         private void startProgrammingUsingBootLoader(CancellationTokenSource cancelToken)
         {
             bool isSkipTheRest = false;
+
+            DateTime startProgramMoment = System.DateTime.Now;
+
             while (isCanceledByUser(cancelToken) == false)
             {
                 updateCurrentProgrammingEvent();
@@ -510,13 +521,13 @@ namespace SwarmRobotControlAndCommunication
                 if (isSkipTheRest == true)
                 {
                     programOneByteFrameToFlash(SIZE_ONE_PROGRAM_BLOCK, startAddressCurrentProgramBlock, toSendData, cancelToken);
-                    updateAddressesAndDataPointer();
+                    updateAddressesAndDataPointer(startProgramMoment);
                     continue;
                 }
                 if (isOneByteFrameReady() == true)
                 {
                     programOneByteFrameToFlash(SIZE_ONE_PROGRAM_BLOCK, startAddressCurrentProgramBlock, toSendData, cancelToken);
-                    updateAddressesAndDataPointer();
+                    updateAddressesAndDataPointer(startProgramMoment);
                 }
                 //Update all next* variables if only part of nextHexLineData is sent
                 if (notAllOfNextLineDataIsSentFlag == true)
@@ -551,7 +562,7 @@ namespace SwarmRobotControlAndCommunication
         private void movePointerToTheNextLine()
         {
             while (hexFile.ReadByte() != ':') ;
-        } 
+        }
         private void updateCurrentProgrammingEvent()
         {
             currentProgrammingPercentEvent((UInt32)(Math.Round((currentHexLinePointer - 1) * 100.0 / numberOfLines)));
@@ -595,11 +606,23 @@ namespace SwarmRobotControlAndCommunication
             else
                 return true;
         }
-        private void updateAddressesAndDataPointer()
+        private void updateAddressesAndDataPointer(DateTime startProgramMoment)
         {
+            DateTime currentProgramMoment = System.DateTime.Now;
+
+            double secondPast = calculateTheSecondPass(startProgramMoment, currentProgramMoment);
+
+            programSpeed = (startAddressNextProgramBlock - APP_START_ADDRESS) / secondPast;
+
             startAddressCurrentProgramBlock += SIZE_ONE_PROGRAM_BLOCK;
             startAddressNextProgramBlock += SIZE_ONE_PROGRAM_BLOCK;
             dataPointer = 0;
+        }
+        private double calculateTheSecondPass(DateTime start, DateTime end)
+        {
+            TimeSpan period = end.Subtract(start);
+
+            return (period.Hours * 24 + period.Minutes * 60 + period.Seconds * 60 + 0.01);
         }
         private bool isNextAddressAndAllOfItsDataInsideCurrentBlock()
         {
