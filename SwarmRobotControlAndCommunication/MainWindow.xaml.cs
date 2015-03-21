@@ -2279,6 +2279,8 @@ namespace SwarmRobotControlAndCommunication
 
                 string command = this.debugCommandSelectBox.Text;
 
+                setStatusBarContent("Transmit Command: " + command);
+
                 switch (command)
                 {
                     case "Start Localization":
@@ -2313,9 +2315,7 @@ namespace SwarmRobotControlAndCommunication
                         broadcastCommandGotoState(4);
                         break;
 
-                    //<ComboBoxItem Content="Scan Robots Vector"/>
-                    //<ComboBoxItem Content="Draw Coordination Table"/>
-                    //<ComboBoxItem Content="Draw Coordination From File..."/>
+ 
                     //<ComboBoxItem Content="Calculate Average Vector From Files..."/>
                     //<ComboBoxItem Content="Goto Locomotion State"/>
                     //<ComboBoxItem Content="Scan Robots Oriented Angle"/>
@@ -2325,20 +2325,9 @@ namespace SwarmRobotControlAndCommunication
                     //<ComboBoxItem Content="Rotate Correction Angle Same"/>
 
                     // ===== cases below is out of date ======================================
-                    case "Scan Robots Vector":
-                        scanRobotsVector();
-                        break;
 
                     case "Scan Robots Oriented Angle":
                         scanCorrectionAngleAndOriented();
-                        break;
-
-                    case "Draw Coordination Table":
-                        DrawMap();
-                        break;
-
-                    case "Draw Coordination From File...":
-                        DrawFromFile();
                         break;
 
                     case "Calculate Average Vector From Files...":
@@ -2373,66 +2362,6 @@ namespace SwarmRobotControlAndCommunication
             {
                 defaultExceptionHandle(ex);
             }
-        }
-
-        private void scanRobotIdentity()
-        {
-            String outputContent = "Robot Identities Information\n";
-
-            String foundRobot = " robot(s): ";
-            int numberOfFoundRobot = 0;
-
-            uint length = 31;
-            byte[] receivedData = new byte[length];
-
-            // TODO: change this
-            UInt32[] robotId = { 0xBEAD01, 0xBEAD02, 0xBEAD03, 0xBEAD04, 0xBEAD05, 0xBEAD06, 0xBEAD07, 0xBEAD08 };
-
-            for (int i = 0; i < robotId.Length; i++)
-            {
-                Thread.Sleep(100);
-                setTxAddress(robotId[i].ToString("X8"));
-                Thread.Sleep(100);
-                try
-                {
-                    SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_READ_ROBOT_IDENTITY);
-                    SwarmMessage message = new SwarmMessage(header);
-
-                    theControlBoard.receivedDataFromRobot(receivedData, length, 1000, message);
-
-                    SwarmMessage rxMessage = SwarmMessage.ConstructFromByteArray(receivedData);
-
-                    UInt32 Self_ID = (UInt32)((receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3]);
-                    UInt32 Origin_ID = (UInt32)((receivedData[4] << 24) | (receivedData[5] << 16) | (receivedData[6] << 8) | receivedData[7]);
-                    UInt32 RotationHop_ID = (UInt32)((receivedData[8] << 24) | (receivedData[9] << 16) | (receivedData[10] << 8) | receivedData[11]);
-                    byte Self_NeighborsCount = receivedData[12];
-                    byte Origin_NeighborsCount = receivedData[13];
-                    byte Origin_Hopth = receivedData[14];
-                    float x = (float)((Int32)((receivedData[15] << 24) | (receivedData[16] << 16) | (receivedData[17] << 8) | receivedData[18]) / 65536.0);
-                    float y = (float)((Int32)((receivedData[19] << 24) | (receivedData[20] << 16) | (receivedData[21] << 8) | receivedData[22]) / 65536.0);
-                    float RotationHop_x = (float)((Int32)((receivedData[23] << 24) | (receivedData[24] << 16) | (receivedData[25] << 8) | receivedData[26]) / 65536.0);
-                    float RotationHop_y = (float)((Int32)((receivedData[27] << 24) | (receivedData[28] << 16) | (receivedData[29] << 8) | receivedData[30]) / 65536.0);
-
-                    outputContent += String.Format("Robot:0x{0} ({1}; {2})\n", Self_ID.ToString("X6"), x.ToString("G6"), y.ToString("G6"));
-                    outputContent += String.Format("Self neighbors = {0}\n", Self_NeighborsCount.ToString());
-                    outputContent += String.Format("Origin:0x{0}, neighbors = {1}, Hopth = {2}\n", Origin_ID.ToString("X6"), Origin_NeighborsCount.ToString(), Origin_Hopth.ToString());
-                    outputContent += String.Format("Rotation Hop:0x{0} ({1}; {2})\n", RotationHop_ID.ToString("X6"), RotationHop_x.ToString("G6"), RotationHop_y.ToString("G6"));
-                    outputContent += "\n";
-
-                    numberOfFoundRobot += 1;
-                    foundRobot = foundRobot + "0x" + robotId[i].ToString("X6") + ", ";
-                }
-                catch (Exception ex)
-                {
-                }
-            }
-            setTxAddress(DEFAULT_TX_ADDRESS);
-
-            String fileFullPath = exportDataToTextFile("Output RobotIdentity", "RobotIdentity.txt", outputContent);
-
-            MessageBoxResult result = MessageBox.Show("Found " + numberOfFoundRobot + foundRobot, "Display Robot Identity Table", MessageBoxButton.YesNo, MessageBoxImage.Information);
-            if (result == MessageBoxResult.Yes)
-                displayTextDataFile(fileFullPath);
         }
 
         private void broadcastCommandGotoState(byte stateNumber)
@@ -2716,63 +2645,77 @@ namespace SwarmRobotControlAndCommunication
             }
         }
 
-        // === The funtions below is out of date ========================================
-        private void scanRobotsVector()
+        private void scanRobotIdentity()
         {
-            uint length = 8;
-            Byte[] receivedData = new Byte[length];
+            String outputContent = "Robot Identities Information\n";
 
-            UInt32[] Plot_id = { 0xBEAD01, 0xBEAD02, 0xBEAD03, 0xBEAD04, 0xBEAD05, 0xBEAD06 };
+            String foundRobot = " robot(s): ";
+            int numberOfFoundRobot = 0;
 
-            List<float> xAxis = new List<float>();
-            List<float> yAxis = new List<float>();
-            List<UInt32> ui32ID = new List<UInt32>();
+            uint length = 31;
+            byte[] receivedData = new byte[length];
 
-            float temp;
-            UInt32[] listID;
-            float[] Plot_dataX;
-            float[] Plot_dataY;
-            for (int i = 0; i < 6; i++)
+            // TODO: change this
+            UInt32[] robotId = { 0xBEAD01, 0xBEAD02, 0xBEAD03, 0xBEAD04, 0xBEAD05, 0xBEAD06, 0xBEAD07, 0xBEAD08 };
+
+            for (int i = 0; i < robotId.Length; i++)
             {
-                configureRF(Plot_id[i].ToString("X6"));
-
-                Thread.Sleep(50);
-                //theControlBoard.transmitBytesToRobot(COMMAND_TOGGLE_LEDS);
-                Thread.Sleep(50);
-
+                Thread.Sleep(100);
+                setTxAddress(robotId[i].ToString("X8"));
+                Thread.Sleep(100);
                 try
                 {
-                    //theControlBoard.receiveBytesFromRobot(COMMAND_READ_VECTOR, null, length, ref receivedData, 1000);
+                    SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_READ_ROBOT_IDENTITY);
+                    SwarmMessage message = new SwarmMessage(header);
 
-                    temp = (float)((Int32)((receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3]) / 65536.0);
-                    xAxis.Add(temp);
+                    theControlBoard.receivedDataFromRobot(receivedData, length, 1000, message);
 
-                    temp = (float)((Int32)((receivedData[4] << 24) | (receivedData[5] << 16) | (receivedData[6] << 8) | receivedData[7]) / 65536.0);
-                    yAxis.Add(temp);
+                    SwarmMessage rxMessage = SwarmMessage.ConstructFromByteArray(receivedData);
 
-                    ui32ID.Add(Plot_id[i]);
+                    UInt32 Self_ID = (UInt32)((receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3]);
+                    UInt32 Origin_ID = (UInt32)((receivedData[4] << 24) | (receivedData[5] << 16) | (receivedData[6] << 8) | receivedData[7]);
+                    UInt32 RotationHop_ID = (UInt32)((receivedData[8] << 24) | (receivedData[9] << 16) | (receivedData[10] << 8) | receivedData[11]);
+                    byte Self_NeighborsCount = receivedData[12];
+                    byte Origin_NeighborsCount = receivedData[13];
+                    byte Origin_Hopth = receivedData[14];
+                    float x = (float)((Int32)((receivedData[15] << 24) | (receivedData[16] << 16) | (receivedData[17] << 8) | receivedData[18]) / 65536.0);
+                    float y = (float)((Int32)((receivedData[19] << 24) | (receivedData[20] << 16) | (receivedData[21] << 8) | receivedData[22]) / 65536.0);
+                    float RotationHop_x = (float)((Int32)((receivedData[23] << 24) | (receivedData[24] << 16) | (receivedData[25] << 8) | receivedData[26]) / 65536.0);
+                    float RotationHop_y = (float)((Int32)((receivedData[27] << 24) | (receivedData[28] << 16) | (receivedData[29] << 8) | receivedData[30]) / 65536.0);
+
+                    outputContent += String.Format("Robot:0x{0} ({1}; {2})\n", Self_ID.ToString("X6"), x.ToString("G6"), y.ToString("G6"));
+                    outputContent += String.Format("Self neighbors = {0}\n", Self_NeighborsCount.ToString());
+                    outputContent += String.Format("Origin:0x{0}, neighbors = {1}, Hopth = {2}\n", Origin_ID.ToString("X6"), Origin_NeighborsCount.ToString(), Origin_Hopth.ToString());
+                    outputContent += String.Format("Rotation Hop:0x{0} ({1}; {2})\n", RotationHop_ID.ToString("X6"), RotationHop_x.ToString("G6"), RotationHop_y.ToString("G6"));
+                    outputContent += "\n";
+
+                    numberOfFoundRobot += 1;
+                    foundRobot = foundRobot + "0x" + robotId[i].ToString("X6") + ", ";
                 }
                 catch (Exception ex)
                 {
                 }
             }
+            setTxAddress(DEFAULT_TX_ADDRESS);
 
-            configureRF(DEFAULT_TX_ADDRESS);
+            if (numberOfFoundRobot > 0)
+            {
+                String fileFullPath = exportDataToTextFile("Output RobotIdentity", "RobotIdentity.txt", outputContent);
 
-            Plot_dataX = new float[xAxis.Count];
-            Plot_dataY = new float[yAxis.Count];
-            listID = new UInt32[ui32ID.Count];
-
-
-            xAxis.CopyTo(Plot_dataX);
-            yAxis.CopyTo(Plot_dataY);
-            ui32ID.CopyTo(listID);
-
-            OxyplotWindow oxyplotWindow = new OxyplotWindow(listID, Plot_dataX, Plot_dataY, "Robots Real Coordinates", OxyplotWindow.ScatterPointAndLinePlot);
-
-            oxyplotWindow.Show();
+                MessageBoxResult result = MessageBox.Show("Found " + numberOfFoundRobot + foundRobot, "Display Robot Identity Table", MessageBoxButton.YesNo, MessageBoxImage.Information);
+                if (result == MessageBoxResult.Yes)
+                {
+                    displayTextDataFile(fileFullPath);
+                    plotLocationsTable(fileFullPath);
+                }
+            }
+            else
+            {
+                MessageBox.Show("Control Board didn't find any robot that matches the Robot's Id array!", "Robot Identity Table Request", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
         }
 
+        // === The funtions below is out of date ========================================
         private void scanCorrectionAngleAndOriented()
         {
             uint length = 8;
