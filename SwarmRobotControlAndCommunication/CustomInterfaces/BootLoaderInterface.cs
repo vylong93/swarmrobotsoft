@@ -44,5 +44,6 @@ namespace SwarmRobotControlAndCommunication.CustomInterfaces
 
         UInt32 getLastTransferSize();
         double getProgramSpeed();
+        uint getTransferedSize();
     }
 }

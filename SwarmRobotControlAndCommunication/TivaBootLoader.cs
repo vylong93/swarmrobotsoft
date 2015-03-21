@@ -120,6 +120,7 @@ namespace SwarmRobotControlAndCommunication
             private UInt32 startLocationLeftOverData;
             private byte lengthOfLeftOverData;
             private UInt32 transferSize;
+            private double programSpeed;
             private UInt32 numberOfLines;
             FileStream hexFile;
             private struct IntelHexFormat
@@ -142,8 +143,6 @@ namespace SwarmRobotControlAndCommunication
             private UInt32 currentDataFramePointer;
             private ControlBoardInterface theControlBoard;
         #endregion
-
-        private double programSpeed;
 
         public TivaBootLoader(ControlBoardInterface controlBoard, UInt32 flashSizeInKB)
         {
@@ -175,6 +174,11 @@ namespace SwarmRobotControlAndCommunication
         public double getProgramSpeed()
         {
             return programSpeed;
+        }
+
+        public uint getTransferedSize()
+        {
+            return startAddressNextProgramBlock - APP_START_ADDRESS;
         }
 
         /// <summary>
@@ -612,7 +616,7 @@ namespace SwarmRobotControlAndCommunication
 
             double secondPast = calculateTheSecondPass(startProgramMoment, currentProgramMoment);
 
-            programSpeed = (startAddressNextProgramBlock - APP_START_ADDRESS) / secondPast;
+            programSpeed = ((startAddressNextProgramBlock - APP_START_ADDRESS) / secondPast) * 60;
 
             startAddressCurrentProgramBlock += SIZE_ONE_PROGRAM_BLOCK;
             startAddressNextProgramBlock += SIZE_ONE_PROGRAM_BLOCK;
