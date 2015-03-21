@@ -479,6 +479,8 @@
                             <ComboBoxItem Content="Read Locations Table"/>
                             <ComboBoxItem Content="Self Correct Locations Table"/>
                             <ComboBoxItem Content="Self Correct Locations Table Except Rotation Hop"/>
+                            <ComboBoxItem Content="Scan Robot Identity"/>
+                            <ComboBoxItem Content="Goto State Four"/>
                         </ComboBox>
                         <Button x:Name="sendDebugCommandButton" Content="Send Command" Margin="4.2,1,0,1" Height="26" 
                                 VerticalAlignment="Center" FlowDirection="RightToLeft" Width="135" HorizontalAlignment="Left" Click="sendDebugCommandButton_Click"/>

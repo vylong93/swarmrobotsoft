@@ -83,6 +83,8 @@ namespace SwarmRobotControlAndCommunication
         private const byte COMMAND_READ_LOCATIONS_TABLE = 0x1A;
         private const byte COMMAND_SELF_CORRECT_LOCATIONS_TABLE = 0x1B;
         private const byte COMMAND_SELF_CORRECT_LOCATIONS_TABLE_EXCEPT_ROTATION_HOP = 0x1C;
+        private const byte COMMAND_GOTO_STATE = 0x1D;
+        private const byte COMMAND_READ_ROBOT_IDENTITY = 0x1E;
 
         //==== command below is out of date ===================================
         private const byte COMMAND_SET_RUNNING_STATUS = 0xC3;
@@ -2302,7 +2304,15 @@ namespace SwarmRobotControlAndCommunication
                     case "Self Correct Locations Table Except Rotation Hop":
                         theControlBoard.broadcastCommandToRobot(COMMAND_SELF_CORRECT_LOCATIONS_TABLE_EXCEPT_ROTATION_HOP);
                         break;
-    
+
+                    case "Scan Robot Identity":
+                        scanRobotIdentity();
+                        break;
+
+                    case "Goto State Four":
+                        broadcastCommandGotoState(4);
+                        break;
+
                     //<ComboBoxItem Content="Scan Robots Vector"/>
                     //<ComboBoxItem Content="Draw Coordination Table"/>
                     //<ComboBoxItem Content="Draw Coordination From File..."/>
@@ -2363,6 +2373,79 @@ namespace SwarmRobotControlAndCommunication
             {
                 defaultExceptionHandle(ex);
             }
+        }
+
+        private void scanRobotIdentity()
+        {
+            String outputContent = "Robot Identities Information\n";
+
+            String foundRobot = " robot(s): ";
+            int numberOfFoundRobot = 0;
+
+            uint length = 31;
+            byte[] receivedData = new byte[length];
+
+            // TODO: change this
+            UInt32[] robotId = { 0xBEAD01, 0xBEAD02, 0xBEAD03, 0xBEAD04, 0xBEAD05, 0xBEAD06, 0xBEAD07, 0xBEAD08 };
+
+            for (int i = 0; i < robotId.Length; i++)
+            {
+                Thread.Sleep(100);
+                setTxAddress(robotId[i].ToString("X8"));
+                Thread.Sleep(100);
+                try
+                {
+                    SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_READ_ROBOT_IDENTITY);
+                    SwarmMessage message = new SwarmMessage(header);
+
+                    theControlBoard.receivedDataFromRobot(receivedData, length, 1000, message);
+
+                    SwarmMessage rxMessage = SwarmMessage.ConstructFromByteArray(receivedData);
+
+                    UInt32 Self_ID = (UInt32)((receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3]);
+                    UInt32 Origin_ID = (UInt32)((receivedData[4] << 24) | (receivedData[5] << 16) | (receivedData[6] << 8) | receivedData[7]);
+                    UInt32 RotationHop_ID = (UInt32)((receivedData[8] << 24) | (receivedData[9] << 16) | (receivedData[10] << 8) | receivedData[11]);
+                    byte Self_NeighborsCount = receivedData[12];
+                    byte Origin_NeighborsCount = receivedData[13];
+                    byte Origin_Hopth = receivedData[14];
+                    float x = (float)((Int32)((receivedData[15] << 24) | (receivedData[16] << 16) | (receivedData[17] << 8) | receivedData[18]) / 65536.0);
+                    float y = (float)((Int32)((receivedData[19] << 24) | (receivedData[20] << 16) | (receivedData[21] << 8) | receivedData[22]) / 65536.0);
+                    float RotationHop_x = (float)((Int32)((receivedData[23] << 24) | (receivedData[24] << 16) | (receivedData[25] << 8) | receivedData[26]) / 65536.0);
+                    float RotationHop_y = (float)((Int32)((receivedData[27] << 24) | (receivedData[28] << 16) | (receivedData[29] << 8) | receivedData[30]) / 65536.0);
+
+                    outputContent += String.Format("Robot:0x{0} ({1}; {2})\n", Self_ID.ToString("X6"), x.ToString("G6"), y.ToString("G6"));
+                    outputContent += String.Format("Self neighbors = {0}\n", Self_NeighborsCount.ToString());
+                    outputContent += String.Format("Origin:0x{0}, neighbors = {1}, Hopth = {2}\n", Origin_ID.ToString("X6"), Origin_NeighborsCount.ToString(), Origin_Hopth.ToString());
+                    outputContent += String.Format("Rotation Hop:0x{0} ({1}; {2})\n", RotationHop_ID.ToString("X6"), RotationHop_x.ToString("G6"), RotationHop_y.ToString("G6"));
+                    outputContent += "\n";
+
+                    numberOfFoundRobot += 1;
+                    foundRobot = foundRobot + "0x" + robotId[i].ToString("X6") + ", ";
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+            setTxAddress(DEFAULT_TX_ADDRESS);
+
+            String fileFullPath = exportDataToTextFile("Output RobotIdentity", "RobotIdentity.txt", outputContent);
+
+            MessageBoxResult result = MessageBox.Show("Found " + numberOfFoundRobot + foundRobot, "Display Robot Identity Table", MessageBoxButton.YesNo, MessageBoxImage.Information);
+            if (result == MessageBoxResult.Yes)
+                displayTextDataFile(fileFullPath);
+        }
+
+        private void broadcastCommandGotoState(byte stateNumber)
+        {
+            Byte[] data = new Byte[1];
+
+            data[0] = stateNumber;
+
+            SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_GOTO_STATE);
+
+            SwarmMessage message = new SwarmMessage(header, data);
+
+            theControlBoard.broadcastMessageToRobot(message);
         }
 
         private void readNeighborsTable()
@@ -2430,7 +2513,7 @@ namespace SwarmRobotControlAndCommunication
                 MessageBoxResult result = MessageBox.Show("The table content have been saved to\n" + fileFullPath, "Robot [" + this.TXAdrrTextBoxDebug.Text + "] one hop neighbors table", MessageBoxButton.YesNo, MessageBoxImage.Information);
 
                 if (result == MessageBoxResult.Yes)
-                    displayOneHopDataFile(fileFullPath);
+                    displayTextDataFile(fileFullPath);
             }
             catch (Exception ex)
             {
@@ -2495,7 +2578,7 @@ namespace SwarmRobotControlAndCommunication
 
             return fileFullPath;
         }
-        private void displayOneHopDataFile(String fileFullPath)
+        private void displayTextDataFile(String fileFullPath)
         {
             string textEditor1 = @"D:\\Program Files\\Notepad++\\notepad++.exe";
             string textEditor2 = @"C:\\Program Files\\Notepad++\\notepad++.exe";
@@ -2674,7 +2757,7 @@ namespace SwarmRobotControlAndCommunication
                 }
             }
 
-            configureRF("BEADFF");
+            configureRF(DEFAULT_TX_ADDRESS);
 
             Plot_dataX = new float[xAxis.Count];
             Plot_dataY = new float[yAxis.Count];
