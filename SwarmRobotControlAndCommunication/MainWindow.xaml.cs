@@ -43,6 +43,9 @@ namespace SwarmRobotControlAndCommunication
         //--------------------Control board-----------------------------
         private const string DEFAULT_TX_ADDRESS = "00BEADFF";
         private const string DEFAULT_RX_ADDRESS = "00C1AC02";
+        private UInt32[] ROBOT_ID_LIST = { 0xBEAD01, 0xBEAD02, 0xBEAD03, 0xBEAD04, 0xBEAD05,
+                                           0xBEAD06, 0xBEAD07, 0xBEAD08, 0xBEAD09, 0xBEAD00};
+        
         //-------------------------------------------------Control board
 
         //------------Commands from Robots---------------------
@@ -240,7 +243,8 @@ namespace SwarmRobotControlAndCommunication
 
             this.TXAdrrTextBox.Text = DEFAULT_TX_ADDRESS;
             this.Pipe0AddressTextBox.Text = DEFAULT_RX_ADDRESS;
-            this.TXAdrrTextBoxDebug.Text = DEFAULT_TX_ADDRESS;
+            addRobotIdListToCombobox(ref this.TXAddressCalibrationSelectBox, ROBOT_ID_LIST);
+            addRobotIdListToCombobox(ref this.TXAdrrComboBoxDebug, ROBOT_ID_LIST);
 
             listTupeEepromTable = new List<Tuple<UInt32, UInt16[]>>();
 
@@ -257,6 +261,14 @@ namespace SwarmRobotControlAndCommunication
             listTupeEepromTable.Add(new Tuple<uint, ushort[]>(0x02C0, ArcSineTableBlock3));
             listTupeEepromTable.Add(new Tuple<uint, ushort[]>(0x0300, ArcSineTableBlock4));
             listTupeEepromTable.Add(new Tuple<uint, ushort[]>(0x0340, ArcSineTableBlock5));
+        }
+        private void addRobotIdListToCombobox(ref ComboBox target, UInt32[] content)
+        {
+            target.Items.Clear();
+            target.Items.Add(DEFAULT_TX_ADDRESS);
+            for (int i = 0; i < content.Length; i++)
+                target.Items.Add(content[i].ToString("X8"));
+            target.SelectedIndex = 0;
         }
 
         private void usbEvent_receiver(object o, EventArgs e)
@@ -2267,8 +2279,8 @@ namespace SwarmRobotControlAndCommunication
 
         private void configureRFDebug_Click_1(object sender, RoutedEventArgs e)
         {
-            setTxAddress(this.TXAdrrTextBoxDebug.Text);
-            setStatusBarContent("Set RF Tx Address: " + this.TXAdrrTextBoxDebug.Text);
+            setTxAddress(this.TXAdrrComboBoxDebug.Text);
+            setStatusBarContent("Set RF Tx Address: " + this.TXAdrrComboBoxDebug.Text);
         }
 
         private void sendDebugCommandButton_Click(object sender, RoutedEventArgs e)
@@ -2391,7 +2403,7 @@ namespace SwarmRobotControlAndCommunication
 
                 String tableContent = constructNeighborsTableFromByteBuffer(receivedData);
 
-                MessageBox.Show(tableContent, "Robot [" + this.TXAdrrTextBoxDebug.Text + "] neighbors table", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show(tableContent, "Robot [" + this.TXAdrrComboBoxDebug.Text + "] neighbors table", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
@@ -2400,7 +2412,7 @@ namespace SwarmRobotControlAndCommunication
         }
         private String constructNeighborsTableFromByteBuffer(byte[] receivedData)
         {
-            String table = "Neighbors Table of Robot [0x" + this.TXAdrrTextBoxDebug.Text + "]:\n";
+            String table = "Neighbors Table of Robot [0x" + this.TXAdrrComboBoxDebug.Text + "]:\n";
 
             int[] ID = new int[10];
             int[] distance = new int[10];
@@ -2437,9 +2449,9 @@ namespace SwarmRobotControlAndCommunication
 
                 String fileContent = constructOneHopDataFromByteBuffer(receivedData);
 
-                String fileFullPath = exportDataToTextFile("Output OneHop", "OneHop " + this.TXAdrrTextBoxDebug.Text + ".txt", fileContent);
+                String fileFullPath = exportDataToTextFile("Output OneHop", "OneHop " + this.TXAdrrComboBoxDebug.Text + ".txt", fileContent);
 
-                MessageBoxResult result = MessageBox.Show("The table content have been saved to\n" + fileFullPath, "Robot [" + this.TXAdrrTextBoxDebug.Text + "] one hop neighbors table", MessageBoxButton.YesNo, MessageBoxImage.Information);
+                MessageBoxResult result = MessageBox.Show("The table content have been saved to\n" + fileFullPath, "Robot [" + this.TXAdrrComboBoxDebug.Text + "] one hop neighbors table", MessageBoxButton.YesNo, MessageBoxImage.Information);
 
                 if (result == MessageBoxResult.Yes)
                     displayTextDataFile(fileFullPath);
@@ -2452,7 +2464,7 @@ namespace SwarmRobotControlAndCommunication
         private String constructOneHopDataFromByteBuffer(byte[] receivedData)
         {
             String[] table = new String[10];
-            String msg = "One Hop Neighbors Table of Robot [0x" + this.TXAdrrTextBoxDebug.Text + "]:\n";
+            String msg = "One Hop Neighbors Table of Robot [0x" + this.TXAdrrComboBoxDebug.Text + "]:\n";
 
             int[] firstID = new int[10];
             int[] ID = new int[100];
@@ -2540,9 +2552,9 @@ namespace SwarmRobotControlAndCommunication
 
                 String tableContent = constructLocationsTableFromByteBuffer(receivedData);
 
-                String fileFullPath = exportDataToTextFile("Output Coordinates", "Coordinates " + this.TXAdrrTextBoxDebug.Text + ".txt", tableContent);
+                String fileFullPath = exportDataToTextFile("Output Coordinates", "Coordinates " + this.TXAdrrComboBoxDebug.Text + ".txt", tableContent);
 
-                MessageBoxResult result =  MessageBox.Show(tableContent + "\nDo you want to plot this?", "Robot [" + this.TXAdrrTextBoxDebug.Text + "] Locations table", MessageBoxButton.YesNo, MessageBoxImage.Information);
+                MessageBoxResult result = MessageBox.Show(tableContent + "\nDo you want to plot this?", "Robot [" + this.TXAdrrComboBoxDebug.Text + "] Locations table", MessageBoxButton.YesNo, MessageBoxImage.Information);
 
                 if (result == MessageBoxResult.Yes)
                     plotLocationsTable(fileFullPath);
@@ -2553,8 +2565,8 @@ namespace SwarmRobotControlAndCommunication
             }
         }
         private String constructLocationsTableFromByteBuffer(byte[] receivedData)
-        { 
-            String table = "Locations Table of Robot [0x" + this.TXAdrrTextBoxDebug.Text + "]:\n";
+        {
+            String table = "Locations Table of Robot [0x" + this.TXAdrrComboBoxDebug.Text + "]:\n";
 
             UInt32[] ID = new UInt32[10];
             float[] x = new float[10];
@@ -2655,13 +2667,10 @@ namespace SwarmRobotControlAndCommunication
             uint length = 31;
             byte[] receivedData = new byte[length];
 
-            // TODO: change this
-            UInt32[] robotId = { 0xBEAD01, 0xBEAD02, 0xBEAD03, 0xBEAD04, 0xBEAD05, 0xBEAD06, 0xBEAD07, 0xBEAD08 };
-
-            for (int i = 0; i < robotId.Length; i++)
+            for (int i = 0; i < ROBOT_ID_LIST.Length; i++)
             {
                 Thread.Sleep(100);
-                setTxAddress(robotId[i].ToString("X8"));
+                setTxAddress(ROBOT_ID_LIST[i].ToString("X8"));
                 Thread.Sleep(100);
                 try
                 {
@@ -2690,7 +2699,7 @@ namespace SwarmRobotControlAndCommunication
                     outputContent += "\n";
 
                     numberOfFoundRobot += 1;
-                    foundRobot = foundRobot + "0x" + robotId[i].ToString("X6") + ", ";
+                    foundRobot = foundRobot + "0x" + ROBOT_ID_LIST[i].ToString("X6") + ", ";
                 }
                 catch (Exception ex)
                 {
@@ -2715,6 +2724,7 @@ namespace SwarmRobotControlAndCommunication
             }
         }
 
+        #region OUT_OF_DATE
         // === The funtions below is out of date ========================================
         private void scanCorrectionAngleAndOriented()
         {
@@ -2773,8 +2783,8 @@ namespace SwarmRobotControlAndCommunication
         {
             uint length = 120;
             Byte[] receivedData = new Byte[length];
-            String msg = "Coordination Table of Robot [0x" + this.TXAdrrTextBoxDebug.Text + "]:\n";
-            String title = "Robot [" + this.TXAdrrTextBoxDebug.Text + "] Coordination Table";
+            String msg = "Coordination Table of Robot [0x" + this.TXAdrrComboBoxDebug.Text + "]:\n";
+            String title = "Robot [" + this.TXAdrrComboBoxDebug.Text + "] Coordination Table";
 
             int pointer = 0;
             uint dataCounter = 0;
@@ -2818,7 +2828,7 @@ namespace SwarmRobotControlAndCommunication
                 Plot_dataY[i] = dataY[i];
             }
 
-            exportDataToTextFile("Output Coordinates", "Coordinates " + this.TXAdrrTextBoxDebug.Text + ".txt", msg);
+            exportDataToTextFile("Output Coordinates", "Coordinates " + this.TXAdrrComboBoxDebug.Text + ".txt", msg);
 
             OxyplotWindow oxyplotWindow = new OxyplotWindow(Plot_id, Plot_dataX, Plot_dataY, title, OxyplotWindow.ScatterPointAndLinePlot);
 
@@ -3204,6 +3214,7 @@ namespace SwarmRobotControlAndCommunication
                 MessageBox.Show("Unvalid forward distance!");
             }
         }
+        #endregion
 
         #endregion
     }

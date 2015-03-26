@@ -357,14 +357,6 @@
                         <ComboBox x:Name="TXAddressCalibrationSelectBox" HorizontalAlignment="Center" VerticalContentAlignment="Center" FlowDirection="LeftToRight" 
                         	VerticalAlignment="Center" Width="75" Height="{Binding ActualHeight, ElementName=stackPanel3, Mode=OneWay}" Margin="2,0" SelectedIndex="0">
                             <ComboBoxItem Content="00BEADFF"/>
-                            <ComboBoxItem Content="00BEAD01"/>
-                            <ComboBoxItem Content="00BEAD02"/>
-                            <ComboBoxItem Content="00BEAD03"/>
-                            <ComboBoxItem Content="00BEAD04"/>
-                            <ComboBoxItem Content="00BEAD05"/>
-                            <ComboBoxItem Content="00BEAD06"/>
-                            <ComboBoxItem Content="00BEAD07"/>
-                            <ComboBoxItem Content="00BEAD08"/>
                             <ComboBoxItem Content="00BEAD00"/>
                         </ComboBox>
                         <Button x:Name="ConfigureRFCalibration" Content="Set TX Address" Grid.Column="1" Grid.Row="4" Style="{DynamicResource OrangeButton}"
@@ -454,17 +446,9 @@
                         Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1.8,0" Grid.ColumnSpan="2">
                         <Label Content="Robot's Id " Width="64" 
                                HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,1"/>
-                        <ComboBox x:Name="TXAdrrTextBoxDebug" HorizontalAlignment="Center" VerticalContentAlignment="Center" 
+                        <ComboBox x:Name="TXAdrrComboBoxDebug" HorizontalAlignment="Center" VerticalContentAlignment="Center" 
                                   FlowDirection="LeftToRight" VerticalAlignment="Center" Width="95" Margin="0,1" SelectedIndex="0">
                             <ComboBoxItem Content="00BEADFF"/>
-                            <ComboBoxItem Content="00BEAD01"/>
-                            <ComboBoxItem Content="00BEAD02"/>
-                            <ComboBoxItem Content="00BEAD03"/>
-                            <ComboBoxItem Content="00BEAD04"/>
-                            <ComboBoxItem Content="00BEAD05"/>
-                            <ComboBoxItem Content="00BEAD06"/>
-                            <ComboBoxItem Content="00BEAD07"/>
-                            <ComboBoxItem Content="00BEAD08"/>
                             <ComboBoxItem Content="00BEAD00"/>
                         </ComboBox>
                         <Button x:Name="configureRFDebug" Content="Set TX Address" Grid.Column="1" Grid.Row="4" Style="{DynamicResource OrangeButton}"
