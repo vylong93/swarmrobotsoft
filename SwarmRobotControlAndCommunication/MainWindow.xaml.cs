@@ -41,10 +41,11 @@ namespace SwarmRobotControlAndCommunication
 
         #region Constants
         //--------------------Control board-----------------------------
+        private const string DEFAULT_ROBOT_ID = "00BEAD00";
         private const string DEFAULT_TX_ADDRESS = "00BEADFF";
         private const string DEFAULT_RX_ADDRESS = "00C1AC02";
         private UInt32[] ROBOT_ID_LIST = { 0xBEAD01, 0xBEAD02, 0xBEAD03, 0xBEAD04, 0xBEAD05,
-                                           0xBEAD06, 0xBEAD07, 0xBEAD08, 0xBEAD09, 0xBEAD00};
+                                           0xBEAD06, 0xBEAD07, 0xBEAD08, 0xBEAD09};
         
         //-------------------------------------------------Control board
 
@@ -268,6 +269,7 @@ namespace SwarmRobotControlAndCommunication
             target.Items.Add(DEFAULT_TX_ADDRESS);
             for (int i = 0; i < content.Length; i++)
                 target.Items.Add(content[i].ToString("X8"));
+            target.Items.Add(DEFAULT_ROBOT_ID);
             target.SelectedIndex = 0;
         }
 
