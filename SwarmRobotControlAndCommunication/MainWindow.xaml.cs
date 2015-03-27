@@ -81,14 +81,13 @@ namespace SwarmRobotControlAndCommunication
 
         private const byte COMMAND_INDICATE_BATT_VOLT = 0x16;
 
-        private const byte COMMAND_START_LOCALIZATION = 0x17;
+        private const byte COMMAND_READ_ROBOT_IDENTITY = 0x17;
         private const byte COMMAND_READ_NEIGHBORS_TABLE = 0x18;
         private const byte COMMAND_READ_ONEHOP_NEIGHBORS_TABLE = 0x19;
         private const byte COMMAND_READ_LOCATIONS_TABLE = 0x1A;
         private const byte COMMAND_SELF_CORRECT_LOCATIONS_TABLE = 0x1B;
         private const byte COMMAND_SELF_CORRECT_LOCATIONS_TABLE_EXCEPT_ROTATION_HOP = 0x1C;
         private const byte COMMAND_GOTO_STATE = 0x1D;
-        private const byte COMMAND_READ_ROBOT_IDENTITY = 0x1E;
 
         //==== command below is out of date ===================================
         private const byte COMMAND_SET_RUNNING_STATUS = 0xC3;
@@ -2285,6 +2284,36 @@ namespace SwarmRobotControlAndCommunication
             setStatusBarContent("Set RF Tx Address: " + this.TXAdrrComboBoxDebug.Text);
         }
 
+        private void sendGotoStateCommandButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                Byte[] transmittedData = new Byte[32];
+
+                string command = this.robotStateSelectBox.Text;
+
+                setStatusBarContent("Transmit Command: " + command);
+
+                broadcastCommandGotoState((byte)(this.robotStateSelectBox.SelectedIndex));
+            }
+            catch (Exception ex)
+            {
+                defaultExceptionHandle(ex);
+            }
+        }
+        private void broadcastCommandGotoState(byte stateNumber)
+        {
+            Byte[] data = new Byte[1];
+
+            data[0] = stateNumber;
+
+            SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_GOTO_STATE);
+
+            SwarmMessage message = new SwarmMessage(header, data);
+
+            theControlBoard.broadcastMessageToRobot(message);
+        }
+
         private void sendDebugCommandButton_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -2297,10 +2326,6 @@ namespace SwarmRobotControlAndCommunication
 
                 switch (command)
                 {
-                    case "Start Localization":
-                        theControlBoard.broadcastCommandToRobot(COMMAND_START_LOCALIZATION);
-                        break;
-
                     case "Read Neighbors Table":
                         readNeighborsTable();
                         break;
@@ -2325,11 +2350,6 @@ namespace SwarmRobotControlAndCommunication
                         scanRobotIdentity();
                         break;
 
-                    case "Goto State Four":
-                        broadcastCommandGotoState(4);
-                        break;
-
- 
                     //<ComboBoxItem Content="Calculate Average Vector From Files..."/>
                     //<ComboBoxItem Content="Goto Locomotion State"/>
                     //<ComboBoxItem Content="Scan Robots Oriented Angle"/>
@@ -2376,19 +2396,6 @@ namespace SwarmRobotControlAndCommunication
             {
                 defaultExceptionHandle(ex);
             }
-        }
-
-        private void broadcastCommandGotoState(byte stateNumber)
-        {
-            Byte[] data = new Byte[1];
-
-            data[0] = stateNumber;
-
-            SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_GOTO_STATE);
-
-            SwarmMessage message = new SwarmMessage(header, data);
-
-            theControlBoard.broadcastMessageToRobot(message);
         }
 
         private void readNeighborsTable()
@@ -3033,15 +3040,15 @@ namespace SwarmRobotControlAndCommunication
 
         private void setLocalLoopButton_Click(object sender, RoutedEventArgs e)
         {
-            Byte[] transmittedData = new Byte[5]; // <set stop loop command><value>
+            //Byte[] transmittedData = new Byte[5]; // <set stop loop command><value>
 
-            transmittedData[0] = COMMAND_SET_LOCAL_LOOP_STOP;
+            //transmittedData[0] = COMMAND_SET_LOCAL_LOOP_STOP;
 
-            Int32 value = Convert.ToInt32(this.LocalLoopTextBox.Text);
-            transmittedData[1] = (Byte)(value >> 24);
-            transmittedData[2] = (Byte)(value >> 16);
-            transmittedData[3] = (Byte)(value >> 8);
-            transmittedData[4] = (Byte)(value & 0xFF);
+            //Int32 value = Convert.ToInt32(this.LocalLoopTextBox.Text);
+            //transmittedData[1] = (Byte)(value >> 24);
+            //transmittedData[2] = (Byte)(value >> 16);
+            //transmittedData[3] = (Byte)(value >> 8);
+            //transmittedData[4] = (Byte)(value & 0xFF);
 
            // theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
         }
@@ -3054,21 +3061,21 @@ namespace SwarmRobotControlAndCommunication
 
             float valueF;
 
-            if (float.TryParse(this.StepSizeTextBox.Text, out valueF))
-            {
-                Int32 value = (Int32)(valueF * 65536 + 0.5);
+            //if (float.TryParse(this.StepSizeTextBox.Text, out valueF))
+            //{
+            //    Int32 value = (Int32)(valueF * 65536 + 0.5);
 
-                transmittedData[1] = (Byte)(value >> 24);
-                transmittedData[2] = (Byte)(value >> 16);
-                transmittedData[3] = (Byte)(value >> 8);
-                transmittedData[4] = (Byte)(value & 0xFF);
+            //    transmittedData[1] = (Byte)(value >> 24);
+            //    transmittedData[2] = (Byte)(value >> 16);
+            //    transmittedData[3] = (Byte)(value >> 8);
+            //    transmittedData[4] = (Byte)(value & 0xFF);
 
-               // theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
-            }
-            else
-            {
-                MessageBox.Show("Unvalid stepsize!");
-            }
+            //   // theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
+            //}
+            //else
+            //{
+            //    MessageBox.Show("Unvalid stepsize!");
+            //}
         }
 
         private void setStop1Button_Click(object sender, RoutedEventArgs e)
@@ -3217,6 +3224,7 @@ namespace SwarmRobotControlAndCommunication
             }
         }
         #endregion
+
 
         #endregion
     }
