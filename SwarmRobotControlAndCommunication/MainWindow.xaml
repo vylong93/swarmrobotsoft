@@ -5,7 +5,7 @@
         xmlns:local="clr-namespace:SwarmRobotControlAndCommunication"
         xmlns:System="clr-namespace:System;assembly=mscorlib" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" x:Name="window" x:Class="SwarmRobotControlAndCommunication.MainWindow"
         Icon="favicon.ico"
-        Title="Swarm Robot Control &amp; Communication" Height="423" Width="312" WindowStartupLocation="CenterScreen" Style="{StaticResource MainWindow}"  Loaded="this_Loaded" SizeToContent="WidthAndHeight" ResizeMode="NoResize">
+        Title="Swarm Robot Control &amp; Communication" Height="450" Width="312" WindowStartupLocation="CenterScreen" Style="{StaticResource MainWindow}"  Loaded="this_Loaded" SizeToContent="WidthAndHeight" ResizeMode="NoResize">
     <Window.Resources>
         <AlternationConverter x:Key="AlternationConverter"/>
         <System:Double x:Key="ellipseRunningWidth">322</System:Double>
@@ -265,6 +265,7 @@
                         <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
+                        <RowDefinition Height="28"/>
                         <RowDefinition Height="20"/>
                         <RowDefinition Height="28"/>
                         <RowDefinition/>
@@ -309,17 +310,25 @@
                         <TextBox x:Name="EepromSlopeWordIndexTextBox" Text="18" IsEnabled="false" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="511" 
                                  local:TextBoxHelpers.MinValue="0" Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" Width="65" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
                     </StackPanel>
-
-                    <StackPanel x:Name="dataButtonPanel" Grid.Column="0" Grid.Row="5" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                    <StackPanel x:Name="motorEepromPanel" Grid.Row="5" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                        <Label Content="Motor pars" Width="70" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center"/>
+                        <TextBox x:Name="EepromMotor1TextBox" Text="100"  Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="0,0,0,0" Width="26"/>
+                        <TextBox x:Name="EepromMotor2TextBox" Text="100"  Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="0,0,0,0" Width="26"/>
+                        <TextBox x:Name="EepromMotorDelayTextBox" Text="1000"  Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="0,0,0,0" Width="28"/>
+                        <Label Content="at index Word" Width="85" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center"/>
+                        <TextBox x:Name="EepromMotorWordIndexTextBox" Text="20" IsEnabled="false" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="511" 
+                                 local:TextBoxHelpers.MinValue="0" Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" Width="65"/>
+                    </StackPanel>
+                    <StackPanel x:Name="dataButtonPanel" Grid.Row="6" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
                         <Button x:Name="EepromDataSynchronousButton" Content="Synchronous Data" Margin="4,1,0,1" Height="26" Width="147"
                                 HorizontalAlignment="Center" VerticalAlignment="Center" FlowDirection="RightToLeft" Style="{DynamicResource ProgramButton}" Click="EepromDataSynchronousButton_Click"/>
                         <Button x:Name="EepromDataReadButton" Content="Read Data" Margin="3,1,0,1" Height="26" Width="147"
                             HorizontalAlignment="Left" VerticalAlignment="Center" FlowDirection="RightToLeft" Click="EepromDataReadButton_Click" />
                     </StackPanel>
-                    <StackPanel x:Name="tableHeaderPanel" Grid.Column="0" Grid.Row="6" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                    <StackPanel x:Name="tableHeaderPanel" Grid.Row="7" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
                         <Label Content="---------------------- TABLE STATUS ----------------------" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" HorizontalContentAlignment="Center" Width="299"/>
                     </StackPanel>
-                    <StackPanel x:Name="tablePanel" Grid.Column="0" Grid.Row="7" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                    <StackPanel x:Name="tablePanel" Grid.Row="8" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
                         <Label Content="Sine table" Width="70" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center"/>
                         <TextBox x:Name="SineTableStatusTextBox" Text="invalid" IsEnabled="false" Style="{DynamicResource PathTextbox}" 
                                  VerticalContentAlignment="Center" Padding="2,0,0,0" Width="80" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
@@ -327,8 +336,8 @@
                         <TextBox x:Name="ArcSineTableStatusTextBox" Text="invalid" IsEnabled="false" Style="{DynamicResource PathTextbox}" 
                                  VerticalContentAlignment="Center" Padding="2,0,0,0" Width="65" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
                     </StackPanel>
-                    <ProgressBar x:Name="tableVerifyProgramBar" Grid.Column="0" Grid.Row="8" HorizontalAlignment="Left" Height="10" Margin="5,0.6,-0.2,0" VerticalAlignment="Center" Width="295"/>
-                    <StackPanel x:Name="tableButtonPanel" Grid.Column="0" Grid.Row="9" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                    <ProgressBar x:Name="tableVerifyProgramBar" Grid.Row="9" HorizontalAlignment="Left" Height="10" Margin="5,0.6,-0.2,0" VerticalAlignment="Center" Width="295"/>
+                    <StackPanel x:Name="tableButtonPanel" Grid.Row="10" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
                         <Button x:Name="EepromTableUpdatingButton" Content="Update Table" Margin="4,-1,0,-1" Height="26" Width="147"
                                 HorizontalAlignment="Center" VerticalAlignment="Bottom" FlowDirection="RightToLeft" Style="{DynamicResource ProgramButton}" Click="EepromProgramTableButton_Click"/>
                         <Button x:Name="EepromTableVerifyButton" Content="Verify Table" Margin="3,-1,0,-1" Height="26" Width="147"
@@ -339,6 +348,8 @@
             <TabItem Header="Calibration" Margin="{Binding Margin, ElementName=controlTab}">
                 <Grid HorizontalAlignment="Left" VerticalAlignment="Top" Width="304.8">
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="28"/>
+                        <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
@@ -376,44 +387,72 @@
                         </ComboBox>
                     </StackPanel>
                     <StackPanel x:Name="readAdc1StackPanel" Grid.Column="0" Grid.Row="2" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="24" Orientation="Horizontal">
-                        <Button x:Name="readAdc1Button" Content="Read ADC 1" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc1StackPanel}" Width="100" Click="readAdc1Button_Click"/>
+                        <Button x:Name="readAdc1Button" Content="Read ADC 1" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Center" Height="24" Width="100" Click="readAdc1Button_Click"/>
                         <TextBox x:Name="readAdc1TextBox" Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" IsReadOnly="True" Width="200" Height="{Binding Height, ElementName=readAdc1StackPanel}" VerticalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="True" UseLayoutRounding="True" Cursor=""/>
                     </StackPanel>
                     <StackPanel x:Name="readAdc2StackPanel" Grid.Column="0" Grid.Row="3" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
-                        <Button x:Name="readAdc2Button" Content="Read ADC 2" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc2StackPanel}" Width="100" Click="readAdc2Button_Click"/>
+                        <Button x:Name="readAdc2Button" Content="Read ADC 2" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Center" Height="24" Width="100" Click="readAdc2Button_Click"/>
                         <TextBox x:Name="readAdc2TextBox" Style="{DynamicResource PathTextbox}" VerticalContentAlignment="Center" Padding="2,0,0,0" IsReadOnly="True" Width="200" Height="{Binding Height, ElementName=readAdc2StackPanel}"/>
                     </StackPanel>
-                    <StackPanel x:Name="motor1SpeedStackPanel" Grid.Column="0" Grid.Row="4" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="24" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
-                        <Button x:Name="stopMotor1Button" Content="Stop Motor 1" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc1StackPanel}" Width="100" Click="stopMotor1Button_Click"/>
-                        <Label Content="Backward:" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Height="24"/>
-                        <CheckBox x:Name="motor1ReverseCheckBox" IsChecked="False" Margin="0,3,5,3" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        <Label Content="Speed (8-bit):" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Height="24"/>
-                        <TextBox x:Name="motor1SpeedTextBox"  local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="255" local:TextBoxHelpers.MinValue="0" Text="50" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
-                    </StackPanel>
-                    <StackPanel x:Name="motor2SpeedStackPanel" Grid.Column="0" Grid.Row="5" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="24" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
-                        <Button x:Name="stopMotor2Button" Content="Stop Motor 2" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc1StackPanel}" Width="100" Click="stopMotor2Button_Click"/>
-                        <Label Content="Backward:" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Height="24"/>
-                        <CheckBox x:Name="motor2ReverseCheckBox" IsChecked="False" Margin="0,3,5,3" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        <Label Content="Speed (8-bit):" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Height="24"/>
-                        <TextBox x:Name="motor2SpeedTextBox"  local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="255" local:TextBoxHelpers.MinValue="0" Text="50" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
-                    </StackPanel>
-                    <StackPanel x:Name="distanceSensingStackPanel" Grid.Column="0" Grid.Row="6" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
-                        <Button x:Name="testDistacneSensingButton" Content="Calibrate TDOA" HorizontalAlignment="Center" Margin="2,0,0,0" VerticalAlignment="Center" Height="{Binding Height, ElementName=readAdc1StackPanel}" Width="100" Click="testDistacneSensingButton_Click"/>
-                        <Label Content="Distance (cm):" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Center"/>
-                        <TextBox x:Name="distanceTextBox" Text="15" Style="{DynamicResource PathTextbox}" Width="34" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
-                        <Label Content="Times:" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Center"/>
-                        <TextBox x:Name="testTimesTextBox"  local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="100" local:TextBoxHelpers.MinValue="1" Text="10" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
-                    </StackPanel>
-                    <StackPanel x:Name="distanceSensingStackPanel2" Grid.Column="0" Grid.Row="7" Margin="0,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
-                        <Label Content="Tx:" HorizontalAlignment="Left" VerticalAlignment="Center"/>
-                        <TextBox x:Name="speakerRobotTextBox" Text="00BEAD01" Style="{DynamicResource PathTextbox}" Width="65" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
-                        <Label Content="Rx:" HorizontalAlignment="Left" VerticalAlignment="Center"/>
-                        <TextBox x:Name="micsRobotTextBox" Text="00BEAD02" Style="{DynamicResource PathTextbox}" Width="65" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
-                        <Label Content="Delay ms:" HorizontalAlignment="Left" Margin="1,0,0,0" VerticalAlignment="Center"/>
-                        <TextBox x:Name="delayTestingTextBox" local:TextBoxHelpers.IsNumeric="True" Text="400" Style="{DynamicResource PathTextbox}" Width="58" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
-                    </StackPanel>
-                    <Label Content="--------------------- TESTING ONLY ---------------------" HorizontalAlignment="Center" Margin="0,0,0,0" Grid.Row="8" VerticalAlignment="Center"/>
-                    <StackPanel x:Name="PIDPanel" Grid.Column="0" Grid.Row="9" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" 
+                    <Grid x:Name="robotMovementGrid" Grid.Row="4" Grid.RowSpan="4" HorizontalAlignment="Left" VerticalAlignment="Top" Width="304.8">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="28"/>
+                            <RowDefinition Height="28"/>
+                            <RowDefinition Height="28"/>
+                            <RowDefinition Height="28"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel x:Name="motor1SpeedStackPanel" Grid.Row="0" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="24" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                            <Button x:Name="stopMotor1Button" Content="Stop Motor 1" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Center" Height="24" Width="100" Click="stopMotor1Button_Click"/>
+                            <Label Content="Backward" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Width="63" Height="24"/>
+                            <CheckBox x:Name="motor1ReverseCheckBox" IsChecked="False" Margin="0,3,5,3" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <Label Content="Speed (8-bit)" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Width="81" Height="24"/>
+                            <TextBox x:Name="motor1SpeedTextBox"  local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="255" local:TextBoxHelpers.MinValue="0" Text="50" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                        </StackPanel>
+                        <StackPanel x:Name="motor2SpeedStackPanel" Grid.Row="1" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="24" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                            <Button x:Name="stopMotor2Button" Content="Stop Motor 2" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Center" Height="24" Width="100" Click="stopMotor2Button_Click"/>
+                            <Label Content="Backward" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Width="63" Height="24"/>
+                            <CheckBox x:Name="motor2ReverseCheckBox" IsChecked="False" Margin="0,3,5,3" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <Label Content="Speed (8-bit)" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Width="81" Height="24"/>
+                            <TextBox x:Name="motor2SpeedTextBox"  local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="255" local:TextBoxHelpers.MinValue="0" Text="50" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                        </StackPanel>
+                        <StackPanel x:Name="motorMovementStackPanel" Grid.Row="2" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="24" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                            <Button x:Name="moveButton" Content="Move Robot" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Top" Width="100" Height="24" Click="moveButton_Click"/>
+                            <Label Content="Forward" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Width="63" Height="24"/>
+                            <CheckBox x:Name="motorMoveForwardCheckBox" IsChecked="true" Margin="0,3,5,3" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <Label Content="Delay ms|16b" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Width="81" Height="26"/>
+                            <TextBox x:Name="motorMoveDelayTextBox" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="65535" local:TextBoxHelpers.MinValue="0" Text="1000" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                        </StackPanel>
+                        <StackPanel x:Name="motorRotateStackPanel" Grid.Row="3" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Height="24" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                            <Button x:Name="rotateButton" Content="Rotate Robot" HorizontalAlignment="Left" Margin="2,0,0,0" VerticalAlignment="Center" Width="100" Height="24" Click="rotateButton_Click"/>
+                            <Label Content="Clockwise" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Width="63" Height="24"/>
+                            <CheckBox x:Name="motorRotateClockwiseCheckBox" IsChecked="true" Margin="0,3,5,3" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <Label Content="Delay ms|16b" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center" Width="81" Height="26"/>
+                            <TextBox x:Name="motorRotateDelayTextBox" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="65535" local:TextBoxHelpers.MinValue="0" Text="1000" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                        </StackPanel>
+                    </Grid>
+                    <Grid x:Name="robotCalibrationGrid" Grid.Row="8" Grid.RowSpan="2" HorizontalAlignment="Left" VerticalAlignment="Top" Width="304.8">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="28"/>
+                            <RowDefinition Height="28"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel x:Name="distanceSensingStackPanel" Grid.Row="0" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                            <Button x:Name="testDistacneSensingButton" Content="Calibrate TDOA" HorizontalAlignment="Center" Margin="2,0,0,0" VerticalAlignment="Center" Height="24" Width="100" Click="testDistacneSensingButton_Click"/>
+                            <Label Content="Distance (cm):" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Center"/>
+                            <TextBox x:Name="distanceTextBox" Text="15" Style="{DynamicResource PathTextbox}" Width="34" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                            <Label Content="Times:" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Center"/>
+                            <TextBox x:Name="testTimesTextBox"  local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="100" local:TextBoxHelpers.MinValue="1" Text="10" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                        </StackPanel>
+                        <StackPanel x:Name="distanceSensingStackPanel2" Grid.Row="1" Margin="0,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Bottom" Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                            <Label Content="Tx:" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                            <TextBox x:Name="speakerRobotTextBox" Text="00BEAD01" Style="{DynamicResource PathTextbox}" Width="77" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                            <Label Content="Rx:" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                            <TextBox x:Name="micsRobotTextBox" Text="00BEAD02" Style="{DynamicResource PathTextbox}" Width="76" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                            <Label Content="Delay ms:" HorizontalAlignment="Left" Margin="1,0,0,0" VerticalAlignment="Center"/>
+                            <TextBox x:Name="delayTestingTextBox" local:TextBoxHelpers.IsNumeric="True" Text="400" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                        </StackPanel>
+                    </Grid>                                   
+                    <Label Content="--------------------- TESTING ONLY ---------------------" HorizontalAlignment="Center" Margin="0,0,0,0" Grid.Row="10" VerticalAlignment="Center"/>              
+                    <StackPanel x:Name="PIDPanel" Grid.Row="11" Margin="0,0,-0.2,0" VerticalAlignment="Bottom"
                                 Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
                         <Label Content="P" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
                         <TextBox x:Name="PIDkPTextBox" Text="0.8" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
@@ -423,11 +462,11 @@
                         <TextBox x:Name="PIDkDTextBox" Text="0.0" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
                         <Label Content="ref" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
                         <TextBox x:Name="PIDrefTextBox" Text="0" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
-                        <Label Content="run" HorizontalAlignment="Left" Margin="0,0,0,0" Grid.Row="1" VerticalAlignment="Center"/>
+                        <Label Content="run" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Center"/>
                         <CheckBox x:Name="runPIDCheckBox" IsChecked="true" Margin="0,3,5,3" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        <Button x:Name="SetPIDParameterButton" Content="Set" Grid.Column="1" Grid.Row="4" 
-                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="40" HorizontalAlignment="Left" Click="SetPIDParameterButton_Click"/>
-                    </StackPanel>
+                        <Button x:Name="SetPIDParameterButton" Content="Set" Grid.Row="4"
+                            Margin="4.2,1,0,1" Height="24" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="40" HorizontalAlignment="Left" Click="SetPIDParameterButton_Click"/>
+                    </StackPanel>       
                 </Grid>
             </TabItem>
             <TabItem Header="Debug" Margin="{Binding Margin, ElementName=controlTab}">

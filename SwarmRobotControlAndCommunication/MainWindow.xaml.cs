@@ -47,11 +47,8 @@ namespace SwarmRobotControlAndCommunication
         private UInt32[] ROBOT_ID_LIST = { 0xBEAD01, 0xBEAD02, 0xBEAD03, 0xBEAD04, 0xBEAD05,
                                            0xBEAD06, 0xBEAD07, 0xBEAD08, 0xBEAD09};
         
-        //-------------------------------------------------Control board
-
         //------------Commands from Robots---------------------
         private const byte ROBOT_RESPONSE_TO_HOST_OK = 0x0A;
-        //---------------------------------Commands from Robots
 
         //------------Commands to control all Robots---------------------
         private const byte COMMAND_RESET = 0x01;
@@ -89,35 +86,33 @@ namespace SwarmRobotControlAndCommunication
         private const byte COMMAND_SELF_CORRECT_LOCATIONS_TABLE_EXCEPT_ROTATION_HOP = 0x1C;
         private const byte COMMAND_GOTO_STATE = 0x1D;
 
+        private const byte COMMAND_MOVE_WITH_PERIOD = 0x1E;
+        private const byte COMMAND_ROTATE_WITH_PERIOD = 0x1F;
+
+        enum e_MotorDirection
+        {
+            MOTOR_FORWARD_DIRECTION = 0,
+            MOTOR_REVERSE_DIRECTION = 1
+        };
+
+        enum e_RobotRotateDirection
+        {
+            ROBOT_ROTATE_CCW = 0,
+            ROBOT_ROTATE_CW = 1
+        };
+
+        enum e_RobotMoveDirection
+        {
+            ROBOT_MOVE_BACKWARD = 0,
+            ROBOT_MOVE_FORWARD = 1
+        };
+
         //==== command below is out of date ===================================
-        private const byte COMMAND_SET_RUNNING_STATUS = 0xC3;
-        private const byte COMMAND_DISTANCE_SENSING = 0xA2;
-        private const byte COMMAND_READ_ONEHOP_TABLE = 0xA7;
-        private const byte COMMAND_READ_LOCS_TABLE = 0xA8;
+        //private const byte COMMAND_ROTATE_CLOCKWISE = 0xB6;
+        //private const byte COMMAND_ROTATE_CLOCKWISE_ANGLE = 0xB7;
+        //private const byte COMMAND_FORWARD_PERIOD = 0xB8;
+        //private const byte COMMAND_FORWARD_DISTANCE = 0xB9;
 
-        private const byte COMMAND_READ_EEPROM = 0xE0;
-        private const byte COMMAND_WRITE_EEPROM = 0xE1;
-        private const byte COMMAND_SET_ADDRESS_EEROM = 0xE2;
-
-        private const byte COMMAND_READ_VECTOR = 0xB1;
-        private const byte COMMAND_SET_LOCAL_LOOP_STOP = 0xB2;
-        private const byte COMMAND_SET_STEPSIZE = 0xB3;
-        private const byte COMMAND_SET_STOP1 = 0xB4;
-        private const byte COMMAND_SET_STOP2 = 0xB5;
-        private const byte COMMAND_ROTATE_CLOCKWISE = 0xB6;
-        private const byte COMMAND_ROTATE_CLOCKWISE_ANGLE = 0xB7;
-        private const byte COMMAND_FORWARD_PERIOD = 0xB8;
-        private const byte COMMAND_FORWARD_DISTANCE = 0xB9;
-        private const byte COMMAND_SET_ROBOT_STATE = 0xBA;
-        private const byte COMMAND_ROTATE_CORRECTION_ANGLE = 0xBB;
-        private const byte COMMAND_READ_CORRECTION_ANGLE = 0xBC;
-
-        private const byte COMMAND_ROTATE_CORRECTION_ANGLE_DIFF = 0xBD;
-        private const byte COMMAND_ROTATE_CORRECTION_ANGLE_SAME = 0xBE;
-
-        private const byte MOTOR_FORWARD_DIRECTION = 0x00;
-        private const byte MOTOR_REVERSE_DIRECTION = 0x01;
-        //---------------------------------Commands to control all Robots
         #endregion
 
         #region EEPROM Table
@@ -774,7 +769,7 @@ namespace SwarmRobotControlAndCommunication
        
         private void EepromDataReadButton_Click(object sender, RoutedEventArgs e)
         {
-            byte unit = 4;
+            byte unit = 5;
             byte[] data = new byte[unit * 2 + 1];
             UInt16 ui16WordIndex;
 
@@ -807,6 +802,11 @@ namespace SwarmRobotControlAndCommunication
             ui16WordIndex = Convert.ToUInt16(this.EepromRandomSequencesWordIndexTextBox.Text);
             data[7] = (byte)((ui16WordIndex >> 8) & 0x0FF);
             data[8] = (byte)(ui16WordIndex & 0x0FF);
+
+            /* 5 */
+            ui16WordIndex = Convert.ToUInt16(this.EepromMotorWordIndexTextBox.Text);
+            data[9] = (byte)((ui16WordIndex >> 8) & 0x0FF);
+            data[10] = (byte)(ui16WordIndex & 0x0FF);
 
             try
             {
@@ -861,6 +861,13 @@ namespace SwarmRobotControlAndCommunication
                         this.EepromRandom1TextBox.Text = Convert.ToString((ui32RxData >> 4) & 0x0F);
                         this.EepromRandom0TextBox.Text = Convert.ToString((ui32RxData) & 0x0F);
 
+                        /* Motor parameters */
+                        constructWordIndexAndDataContent(ref ui16WordIndex, ref ui32RxData, messageContent, dataPointer);
+                        dataPointer += UNIT_STEP;
+                        this.EepromMotor1TextBox.Text = Convert.ToString((ui32RxData) & 0xFF);
+                        this.EepromMotor2TextBox.Text = Convert.ToString((ui32RxData >> 8) & 0xFF);
+                        this.EepromMotorDelayTextBox.Text = Convert.ToString((ui32RxData >> 16) & 0xFFFF);
+
                         setStatusBarContent("EEPROM Data Read: OK!");
                     }
                 }
@@ -895,7 +902,7 @@ namespace SwarmRobotControlAndCommunication
                 Int32 i32Data;
                 float fData;
 
-                byte unit = 4;
+                byte unit = 5;
                 const byte UNIT_STEP = 6;
                 byte[] data = new byte[unit * UNIT_STEP + 1];
            
@@ -938,6 +945,14 @@ namespace SwarmRobotControlAndCommunication
                 fillPairIndexAndWordToByteArray(ui16WordIndex, ui32Data, data, dataPointer);
                 dataPointer += UNIT_STEP;
 
+                /* 5 */
+                ui16WordIndex = Convert.ToUInt16(this.EepromMotorWordIndexTextBox.Text);
+
+                ui32Data = (UInt32)((Byte.Parse(this.EepromMotor1TextBox.Text)) |
+                                    ((Byte.Parse(this.EepromMotor2TextBox.Text)) << 8) |
+                                    ((UInt16.Parse(this.EepromMotorDelayTextBox.Text)) << 16));
+                fillPairIndexAndWordToByteArray(ui16WordIndex, ui32Data, data, dataPointer);
+                dataPointer += UNIT_STEP;
 
                 SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_EEPROM_DATA_WRITE);
                 SwarmMessage message = new SwarmMessage(header, data);
@@ -1729,16 +1744,16 @@ namespace SwarmRobotControlAndCommunication
                 Byte[] data = new Byte[4];
 
                 if (motor1ReverseCheckBox.IsChecked == true)
-                    data[0] = MOTOR_REVERSE_DIRECTION;
+                    data[0] = (byte)e_MotorDirection.MOTOR_REVERSE_DIRECTION;
                 else
-                    data[0] = MOTOR_FORWARD_DIRECTION;
+                    data[0] = (byte)e_MotorDirection.MOTOR_FORWARD_DIRECTION;
 
                 data[1] = Convert.ToByte(this.motor1SpeedTextBox.Text);
 
                 if (motor2ReverseCheckBox.IsChecked == true)
-                    data[2] = MOTOR_REVERSE_DIRECTION;
+                    data[2] = (byte)e_MotorDirection.MOTOR_REVERSE_DIRECTION;
                 else
-                    data[2] = MOTOR_FORWARD_DIRECTION;
+                    data[2] = (byte)e_MotorDirection.MOTOR_FORWARD_DIRECTION;
 
                 data[3] = Convert.ToByte(this.motor2SpeedTextBox.Text);
 
@@ -1845,6 +1860,58 @@ namespace SwarmRobotControlAndCommunication
         {
             theControlBoard.broadcastCommandToRobot(COMMAND_STOP_MOTOR2);
             setStatusBarContent("Broadcast Command: Pause right motor");
+        }
+
+        private void rotateButton_Click(object sender, RoutedEventArgs e)
+        {
+            bool bIsClockwise = this.motorRotateClockwiseCheckBox.IsChecked == true;
+            string direction = (bIsClockwise) ? ("CW") : ("CCW");
+            UInt16 ui16PeriodMs = Convert.ToUInt16(this.motorRotateDelayTextBox.Text);
+
+            try
+            {
+                Byte[] data = new Byte[3];
+
+                data[0] = (bIsClockwise) ? ((Byte)e_RobotRotateDirection.ROBOT_ROTATE_CW) : ((Byte)e_RobotRotateDirection.ROBOT_ROTATE_CCW);
+                data[1] = (Byte)((ui16PeriodMs >> 8) & 0xFF);
+                data[2] = (Byte)(ui16PeriodMs & 0xFF);
+
+                SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_ROTATE_WITH_PERIOD);
+                SwarmMessage message = new SwarmMessage(header, data);
+                theControlBoard.broadcastMessageToRobot(message);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Robot rotate " + ex.Message);
+            }
+
+            setStatusBarContent("Broadcast Command: rotate " + direction + " in " + ui16PeriodMs + "ms");
+        }
+
+        private void moveButton_Click(object sender, RoutedEventArgs e)
+        {
+            bool bIsForward = this.motorMoveForwardCheckBox.IsChecked == true;
+            string direction = (bIsForward) ? ("forward") : ("backward");
+            UInt16 ui16PeriodMs = Convert.ToUInt16(this.motorMoveDelayTextBox.Text);
+
+            try
+            {
+                Byte[] data = new Byte[3];
+
+                data[0] = (bIsForward) ? ((Byte)e_RobotMoveDirection.ROBOT_MOVE_FORWARD) : ((Byte)e_RobotMoveDirection.ROBOT_MOVE_BACKWARD);
+                data[1] = (Byte)((ui16PeriodMs >> 8) & 0xFF);
+                data[2] = (Byte)(ui16PeriodMs & 0xFF);
+
+                SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_MOVE_WITH_PERIOD);
+                SwarmMessage message = new SwarmMessage(header, data);
+                theControlBoard.broadcastMessageToRobot(message);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Robot move " + ex.Message);
+            }
+
+            setStatusBarContent("Broadcast Command: move " + direction + " in " + ui16PeriodMs + "ms");
         }
 
         #region Testing Only
@@ -2989,7 +3056,7 @@ namespace SwarmRobotControlAndCommunication
             uint length = 2;
             Byte[] transmittedData = new Byte[length];
 
-            transmittedData[0] = COMMAND_SET_ROBOT_STATE;
+           // transmittedData[0] = COMMAND_SET_ROBOT_STATE;
 
             transmittedData[1] = 0x06;
 
@@ -3001,7 +3068,7 @@ namespace SwarmRobotControlAndCommunication
             uint length = 1;
             Byte[] transmittedData = new Byte[length];
 
-            transmittedData[0] = COMMAND_ROTATE_CORRECTION_ANGLE;
+           // transmittedData[0] = COMMAND_ROTATE_CORRECTION_ANGLE;
 
             //theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
         }
@@ -3011,7 +3078,7 @@ namespace SwarmRobotControlAndCommunication
             uint length = 1;
             Byte[] transmittedData = new Byte[length];
 
-            transmittedData[0] = COMMAND_ROTATE_CORRECTION_ANGLE_DIFF;
+           // transmittedData[0] = COMMAND_ROTATE_CORRECTION_ANGLE_DIFF;
 
             //theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
         }
@@ -3021,7 +3088,7 @@ namespace SwarmRobotControlAndCommunication
             uint length = 1;
             Byte[] transmittedData = new Byte[length];
 
-            transmittedData[0] = COMMAND_ROTATE_CORRECTION_ANGLE_SAME;
+         //   transmittedData[0] = COMMAND_ROTATE_CORRECTION_ANGLE_SAME;
 
             //theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
         }
@@ -3031,7 +3098,7 @@ namespace SwarmRobotControlAndCommunication
             uint length = 2;
             Byte[] transmittedData = new Byte[length];
 
-            transmittedData[0] = COMMAND_SET_ROBOT_STATE;
+           // transmittedData[0] = COMMAND_SET_ROBOT_STATE;
 
             transmittedData[1] = 0x07;
 
@@ -3057,7 +3124,7 @@ namespace SwarmRobotControlAndCommunication
         {
             Byte[] transmittedData = new Byte[5]; // <set step size command><value>
 
-            transmittedData[0] = COMMAND_SET_STEPSIZE;
+          //  transmittedData[0] = COMMAND_SET_STEPSIZE;
 
             float valueF;
 
@@ -3082,7 +3149,7 @@ namespace SwarmRobotControlAndCommunication
         {
             Byte[] transmittedData = new Byte[5]; // <set stop 1 command><value>
 
-            transmittedData[0] = COMMAND_SET_STOP1;
+           // transmittedData[0] = COMMAND_SET_STOP1;
 
             float valueF;
 
@@ -3107,7 +3174,7 @@ namespace SwarmRobotControlAndCommunication
         {
             Byte[] transmittedData = new Byte[5]; // <set stop 2 command><value>
 
-            transmittedData[0] = COMMAND_SET_STOP2;
+            //transmittedData[0] = COMMAND_SET_STOP2;
 
             float valueF;
 
@@ -3133,7 +3200,7 @@ namespace SwarmRobotControlAndCommunication
             uint length = 5;
             Byte[] transmittedData = new Byte[length]; // <send rotate command><value>
 
-            transmittedData[0] = COMMAND_ROTATE_CLOCKWISE;
+           // transmittedData[0] = COMMAND_ROTATE_CLOCKWISE;
 
             UInt32 ui32Value;
 
@@ -3157,7 +3224,7 @@ namespace SwarmRobotControlAndCommunication
             uint length = 3;
             Byte[] transmittedData = new Byte[length]; // <send rotate angle command><value>
 
-            transmittedData[0] = COMMAND_ROTATE_CLOCKWISE_ANGLE;
+           // transmittedData[0] = COMMAND_ROTATE_CLOCKWISE_ANGLE;
 
             Int16 i16Value;
 
@@ -3179,7 +3246,7 @@ namespace SwarmRobotControlAndCommunication
             uint length = 5;
             Byte[] transmittedData = new Byte[length]; // <send forward period command><value>
 
-            transmittedData[0] = COMMAND_FORWARD_PERIOD;
+            //transmittedData[0] = COMMAND_FORWARD_PERIOD;
 
             UInt32 ui32Value;
 
@@ -3203,7 +3270,7 @@ namespace SwarmRobotControlAndCommunication
             uint length = 5;
             Byte[] transmittedData = new Byte[length]; // <send forward distance command><value>
 
-            transmittedData[0] = COMMAND_FORWARD_DISTANCE;
+            //transmittedData[0] = COMMAND_FORWARD_DISTANCE;
 
             float values;
 
@@ -3224,7 +3291,6 @@ namespace SwarmRobotControlAndCommunication
             }
         }
         #endregion
-
 
         #endregion
     }
