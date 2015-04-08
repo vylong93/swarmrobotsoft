@@ -757,6 +757,12 @@ namespace SwarmRobotControlAndCommunication
         #endregion
 
         #region EEPROM Tab
+        private void configureRFEEprom_Click(object sender, RoutedEventArgs e)
+        {
+            setTxAddress(this.TXAdrrEepromTextBox.Text);
+            setStatusBarContent("Set RF Tx Address: " + this.TXAdrrEepromTextBox.Text);
+        }
+        
         private BackgroundWorker backgroundWorker = null;
 
         private enum e_VerifyTableReturn
@@ -3291,7 +3297,6 @@ namespace SwarmRobotControlAndCommunication
             }
         }
         #endregion
-
         #endregion
     }
 
