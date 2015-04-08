@@ -504,11 +504,8 @@
                         <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
-                        <RowDefinition Height="28"/>
-                        <RowDefinition Height="28"/>
                         <RowDefinition/>
                     </Grid.RowDefinitions>
-
                     <StackPanel Grid.Row="0" x:Name="TxAddressPanel1" 
                         Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1.8,0" Grid.ColumnSpan="2">
                         <Label Content="Robot's Id " Width="64" 
@@ -550,28 +547,12 @@
                                 VerticalAlignment="Center" FlowDirection="RightToLeft" Width="135" HorizontalAlignment="Left" Click="sendGotoStateCommandButton_Click"/>
                     </StackPanel>
                     <StackPanel Grid.Row="3" Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1.8,0" Grid.ColumnSpan="2">
-                        <Button x:Name="setStop2Button" Content="Set Stop 2" Grid.Column="1" Grid.Row="4" 
-                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="120" HorizontalAlignment="Left" Click="setStop2Button_Click"/>
-                        <TextBox x:Name="stop2TextBox" Text="0.9" Width="35" Style="{DynamicResource PathTextbox}" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                        <Button x:Name="setStop1Button" Content="Set Stop 1" Grid.Column="1" Grid.Row="4" 
-                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="100" HorizontalAlignment="Left" Click="setStop1Button_Click"/>
-                        <TextBox x:Name="stop1TextBox" Text="0.3" Width="35" Style="{DynamicResource PathTextbox}" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                    </StackPanel>
-                    <StackPanel Grid.Row="4" Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1.8,0" Grid.ColumnSpan="2">
-                        <Button x:Name="rotateAngleButton" Content="Rotate Angle Degree" Grid.Column="1" Grid.Row="4" 
-                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="120" HorizontalAlignment="Left" Click="rotateAngleButton_Click"/>
-                        <TextBox x:Name="rotateAngleTextBox" Text="90" Style="{DynamicResource PathTextbox}" Width="35" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                        <Button x:Name="rotateClockwiseButton" Content="Rotate Clockwise" Grid.Column="1" Grid.Row="4" 
-                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="100" HorizontalAlignment="Left" Click="rotateClockwiseButton_Click"/>
-                        <TextBox x:Name="rotatePeriodTextBox" Text="700" Style="{DynamicResource PathTextbox}" local:TextBoxHelpers.IsNumeric="True" Width="35" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                    </StackPanel>
-                    <StackPanel Grid.Row="5" Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1.8,0" Grid.ColumnSpan="2">
-                        <Button x:Name="forwardDistanceButton" Content="Forward Distance" Grid.Column="1" Grid.Row="4" 
-                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="120" HorizontalAlignment="Left" Click="forwardDistanceButton_Click"/>
-                        <TextBox x:Name="forwardDistanceTextBox" Text="8.0" Style="{DynamicResource PathTextbox}" Width="35" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
-                        <Button x:Name="forwardPeriodButton" Content="Forward Period" Grid.Column="1" Grid.Row="4" 
-                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="100" HorizontalAlignment="Left" Click="forwardPeriodButton_Click"/>
-                        <TextBox x:Name="forwardPeriodTextBox" Text="700" Style="{DynamicResource PathTextbox}" local:TextBoxHelpers.IsNumeric="True" Width="35" Height="{Binding Height, ElementName=readAdc1StackPanel}"/>
+                        <Button x:Name="rotateAngleButton" Content="Rotate Angle Degree"
+                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="125" HorizontalAlignment="Left" Click="rotateAngleButton_Click"/>
+                        <TextBox x:Name="rotateAngleTextBox" Text="90.0" Style="{DynamicResource PathTextbox}" Width="30" Height="24"/>
+                        <Button x:Name="moveDistanceButton" Content="Move Distance Cm" Grid.Column="1" Grid.Row="4" 
+                            Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="105" HorizontalAlignment="Left" Click="moveDistanceButton_Click"/>
+                        <TextBox x:Name="moveDistanceTextBox" Text="8.0" Style="{DynamicResource PathTextbox}" Width="30" Height="24"/>
                     </StackPanel>
                 </Grid>
             </TabItem>

@@ -121,6 +121,7 @@ namespace SwarmRobotControlAndCommunication
             private byte lengthOfLeftOverData;
             private UInt32 transferSize;
             private double programSpeed;
+            private DateTime lastProgramMoment;
             private UInt32 numberOfLines;
             FileStream hexFile;
             private struct IntelHexFormat
@@ -439,6 +440,7 @@ namespace SwarmRobotControlAndCommunication
             nextHexLine = new IntelHexFormat();
             arrayDataFrame = new DataFrameFormat[maxNumberOfDataFrame];
             currentDataFramePointer = 0;
+            lastProgramMoment = DateTime.Now;
         }
 
         /// <summary>
@@ -612,22 +614,19 @@ namespace SwarmRobotControlAndCommunication
         }
         private void updateAddressesAndDataPointer(DateTime startProgramMoment)
         {
-            DateTime currentProgramMoment = System.DateTime.Now;
+            TimeSpan span = DateTime.Now.Subtract(lastProgramMoment);
 
-            double secondPast = calculateTheSecondPass(startProgramMoment, currentProgramMoment);
+            double milisecondPast = span.TotalMilliseconds;
 
-            programSpeed = ((startAddressNextProgramBlock - APP_START_ADDRESS) / secondPast) * 60;
+            lastProgramMoment = System.DateTime.Now;
+
+            programSpeed = SIZE_ONE_PROGRAM_BLOCK / (milisecondPast / 1000);
 
             startAddressCurrentProgramBlock += SIZE_ONE_PROGRAM_BLOCK;
             startAddressNextProgramBlock += SIZE_ONE_PROGRAM_BLOCK;
             dataPointer = 0;
         }
-        private double calculateTheSecondPass(DateTime start, DateTime end)
-        {
-            TimeSpan period = end.Subtract(start);
 
-            return (period.Hours * 24 + period.Minutes * 60 + period.Seconds * 60 + 0.01);
-        }
         private bool isNextAddressAndAllOfItsDataInsideCurrentBlock()
         {
             if (nextHexLine.address - startAddressCurrentProgramBlock + nextHexLine.byteCount <= SIZE_ONE_PROGRAM_BLOCK)

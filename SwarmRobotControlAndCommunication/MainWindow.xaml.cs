@@ -88,6 +88,8 @@ namespace SwarmRobotControlAndCommunication
 
         private const byte COMMAND_MOVE_WITH_PERIOD = 0x1E;
         private const byte COMMAND_ROTATE_WITH_PERIOD = 0x1F;
+        private const byte COMMAND_MOVE_WITH_DISTANCE = 0x20;
+        private const byte COMMAND_ROTATE_WITH_ANGLE = 0x21;
 
         enum e_MotorDirection
         {
@@ -728,9 +730,7 @@ namespace SwarmRobotControlAndCommunication
                 address += TivaBootLoader.convertCharToHex(addrString[i]);
             }
             return address;
-        }
-
-        
+        }        
 
         private void configureRF_Click(object sender, RoutedEventArgs e)
         {
@@ -1870,12 +1870,12 @@ namespace SwarmRobotControlAndCommunication
 
         private void rotateButton_Click(object sender, RoutedEventArgs e)
         {
-            bool bIsClockwise = this.motorRotateClockwiseCheckBox.IsChecked == true;
-            string direction = (bIsClockwise) ? ("CW") : ("CCW");
-            UInt16 ui16PeriodMs = Convert.ToUInt16(this.motorRotateDelayTextBox.Text);
-
             try
             {
+                bool bIsClockwise = this.motorRotateClockwiseCheckBox.IsChecked == true;
+                string direction = (bIsClockwise) ? ("CW") : ("CCW");
+                UInt16 ui16PeriodMs = Convert.ToUInt16(this.motorRotateDelayTextBox.Text);
+
                 Byte[] data = new Byte[3];
 
                 data[0] = (bIsClockwise) ? ((Byte)e_RobotRotateDirection.ROBOT_ROTATE_CW) : ((Byte)e_RobotRotateDirection.ROBOT_ROTATE_CCW);
@@ -1885,23 +1885,23 @@ namespace SwarmRobotControlAndCommunication
                 SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_ROTATE_WITH_PERIOD);
                 SwarmMessage message = new SwarmMessage(header, data);
                 theControlBoard.broadcastMessageToRobot(message);
+
+                setStatusBarContent("Broadcast Command: rotate " + direction + " in " + ui16PeriodMs + "ms");
             }
             catch (Exception ex)
             {
                 throw new Exception("Robot rotate " + ex.Message);
             }
-
-            setStatusBarContent("Broadcast Command: rotate " + direction + " in " + ui16PeriodMs + "ms");
         }
 
         private void moveButton_Click(object sender, RoutedEventArgs e)
         {
-            bool bIsForward = this.motorMoveForwardCheckBox.IsChecked == true;
-            string direction = (bIsForward) ? ("forward") : ("backward");
-            UInt16 ui16PeriodMs = Convert.ToUInt16(this.motorMoveDelayTextBox.Text);
-
             try
             {
+                bool bIsForward = this.motorMoveForwardCheckBox.IsChecked == true;
+                string direction = (bIsForward) ? ("forward") : ("backward");
+                UInt16 ui16PeriodMs = Convert.ToUInt16(this.motorMoveDelayTextBox.Text);
+
                 Byte[] data = new Byte[3];
 
                 data[0] = (bIsForward) ? ((Byte)e_RobotMoveDirection.ROBOT_MOVE_FORWARD) : ((Byte)e_RobotMoveDirection.ROBOT_MOVE_BACKWARD);
@@ -1911,13 +1911,13 @@ namespace SwarmRobotControlAndCommunication
                 SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_MOVE_WITH_PERIOD);
                 SwarmMessage message = new SwarmMessage(header, data);
                 theControlBoard.broadcastMessageToRobot(message);
+
+                setStatusBarContent("Broadcast Command: move " + direction + " in " + ui16PeriodMs + "ms");
             }
             catch (Exception ex)
             {
                 throw new Exception("Robot move " + ex.Message);
-            }
-
-            setStatusBarContent("Broadcast Command: move " + direction + " in " + ui16PeriodMs + "ms");
+            }         
         }
 
         #region Testing Only
@@ -2423,44 +2423,6 @@ namespace SwarmRobotControlAndCommunication
                         scanRobotIdentity();
                         break;
 
-                    //<ComboBoxItem Content="Calculate Average Vector From Files..."/>
-                    //<ComboBoxItem Content="Goto Locomotion State"/>
-                    //<ComboBoxItem Content="Scan Robots Oriented Angle"/>
-                    //<ComboBoxItem Content="Rotate Correction Angle"/>
-                    //<ComboBoxItem Content="Goto T Shape State"/>
-                    //<ComboBoxItem Content="Rotate Correction Angle Different"/>
-                    //<ComboBoxItem Content="Rotate Correction Angle Same"/>
-
-                    // ===== cases below is out of date ======================================
-
-                    case "Scan Robots Oriented Angle":
-                        scanCorrectionAngleAndOriented();
-                        break;
-
-                    case "Calculate Average Vector From Files...":
-                        calAvrFromFile();
-                        break;
-
-                    case "Goto Locomotion State":
-                        requestGotoLocomotionState();
-                        break;
-
-                    case "Rotate Correction Angle":
-                        requestRotateCorrectionAngle();
-                        break;
-
-                    case "Goto T Shape State":
-                        requestGotoTShapeState();
-                        break;
-
-                    case "Rotate Correction Angle Different":
-                        requestRotateCorrectionAngleDifferent();
-                        break;
-
-                    case "Rotate Correction Angle Same":
-                        requestRotateCorrectionAngleSame();
-                        break;
-
                     default:
                         throw new Exception("Send Debug Command: Can not recognise command!");
                 }
@@ -2806,497 +2768,59 @@ namespace SwarmRobotControlAndCommunication
             }
         }
 
-        #region OUT_OF_DATE
-        // === The funtions below is out of date ========================================
-        private void scanCorrectionAngleAndOriented()
+        private void rotateAngleButton_Click(object sender, RoutedEventArgs e)
         {
-            uint length = 8;
-            Byte[] receivedData = new Byte[length];
-
-            UInt32[] Plot_id = { 0xBEAD01, 0xBEAD02, 0xBEAD03, 0xBEAD04, 0xBEAD05, 0xBEAD06 };
-
-            float correctionAngleInRadian;
-            bool oriented;
-
-            List<bool> lstOriented = new List<bool>();
-            List<float> lstAngle = new List<float>();
-
-            List<UInt32> ui32ID = new List<UInt32>();
-
-            for (int i = 0; i < 6; i++)
-            {
-                configureRF(Plot_id[i].ToString("X6"));
-
-                Thread.Sleep(50);
-                //theControlBoard.transmitBytesToRobot(COMMAND_TOGGLE_LEDS);
-                Thread.Sleep(50);
-
-                try
-                {
-                    //theControlBoard.receiveBytesFromRobot(COMMAND_READ_CORRECTION_ANGLE, null, length, ref receivedData, 1000);
-
-                    correctionAngleInRadian = (float)((Int32)((receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3]) / 65536.0);
-                    lstAngle.Add(correctionAngleInRadian);
-
-                    oriented = (receivedData[4] == 0x01);
-                    lstOriented.Add(oriented);
-
-                    ui32ID.Add(Plot_id[i]);
-                }
-                catch (Exception ex)
-                {
-                }
-            }
-
-            configureRF("BEADFF");
-
-            String message = "Robots correction angle and oriented:\n";
-
-            for (int i = 0; i < ui32ID.Count; i++)
-            {
-                string orientedString = (lstOriented[i]) ? (" SAME ") : (" DIFFERENT ");
-                message += ui32ID[i].ToString("X6") + orientedString + lstAngle[i] + " (" + (lstAngle[i] * 180 / Math.PI) + " degree)\n";
-            }
-
-            MessageBox.Show(message, "Scan results", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        private void DrawMap()
-        {
-            uint length = 120;
-            Byte[] receivedData = new Byte[length];
-            String msg = "Coordination Table of Robot [0x" + this.TXAdrrComboBoxDebug.Text + "]:\n";
-            String title = "Robot [" + this.TXAdrrComboBoxDebug.Text + "] Coordination Table";
-
-            int pointer = 0;
-            uint dataCounter = 0;
-
-            uint[] id = new uint[10];
-
-            float[] dataX = new float[10];
-            float[] dataY = new float[10];
             try
             {
-                //theControlBoard.receiveBytesFromRobot(COMMAND_READ_LOCS_TABLE, null,length, ref receivedData, 1000);
+                float fAngleInDegree;
+                float.TryParse(this.rotateAngleTextBox.Text, out fAngleInDegree);
 
-                for (int i = 0; i < 10; i++)
-                {
-                    id[i] = (uint)((receivedData[pointer] << 24) | (receivedData[pointer + 1] << 16) | (receivedData[pointer + 2] << 8) | receivedData[pointer + 3]);
-                    dataX[i] = (float)((Int32)((receivedData[pointer + 4] << 24) | (receivedData[pointer + 5] << 16) | (receivedData[pointer + 6] << 8) | receivedData[pointer + 7]) / 65536.0);
-                    dataY[i] = (float)((Int32)((receivedData[pointer + 8] << 24) | (receivedData[pointer + 9] << 16) | (receivedData[pointer + 10] << 8) | receivedData[pointer + 11]) / 65536.0);
+                Byte[] data = new Byte[4];
 
-                    pointer += 12;
+                Int32 i32Values = (Int32)(fAngleInDegree * 65536 + 0.5);
+                data[0] = (Byte)((i32Values >> 24) & 0xFF);
+                data[1] = (Byte)((i32Values >> 16) & 0xFF);
+                data[2] = (Byte)((i32Values >> 8) & 0xFF);
+                data[3] = (Byte)(i32Values & 0xFF);
 
-                    msg += String.Format("Robot:0x{0} ({1}; {2})\n", id[i].ToString("X6"), dataX[i].ToString("G6"), dataY[i].ToString("G6"));
+                SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_ROTATE_WITH_ANGLE);
+                SwarmMessage message = new SwarmMessage(header, data);
+                theControlBoard.broadcastMessageToRobot(message);
 
-                    if (id[i] != 0)
-                        dataCounter++;
-                }
-
+                setStatusBarContent("Broadcast Command: rotate " + fAngleInDegree + " degree");
             }
             catch (Exception ex)
             {
-                defaultExceptionHandle(ex);
+                throw new Exception("rotateAngle " + ex.Message);
             }
-
-            UInt32[] Plot_id = new UInt32[dataCounter];
-            float[] Plot_dataX = new float[dataCounter];
-            float[] Plot_dataY = new float[dataCounter];
-
-            for (int i = 0; i < dataCounter; i++)
-            {
-                Plot_id[i] = id[i];
-                Plot_dataX[i] = dataX[i];
-                Plot_dataY[i] = dataY[i];
-            }
-
-            exportDataToTextFile("Output Coordinates", "Coordinates " + this.TXAdrrComboBoxDebug.Text + ".txt", msg);
-
-            OxyplotWindow oxyplotWindow = new OxyplotWindow(Plot_id, Plot_dataX, Plot_dataY, title, OxyplotWindow.ScatterPointAndLinePlot);
-
-            oxyplotWindow.Show();
         }
 
-        private void DrawFromFile()
+        private void moveDistanceButton_Click(object sender, RoutedEventArgs e)
         {
-            bool isValidFile = false;
-            OpenFileDialog dlg = new OpenFileDialog();
-            dlg.Title = "Select your file";
-            dlg.Filter = "Text files (*.TXT)|*.TXT" + "|All files (*.*)|*.*";
-
-            // Process open file dialog box results 
-            if (dlg.ShowDialog() == true)
+            try
             {
-                string pathToFile = dlg.FileName;
+                float fDistanceInCm;
+                float.TryParse(this.moveDistanceTextBox.Text, out fDistanceInCm);
 
-                System.IO.StreamReader file = new System.IO.StreamReader(@pathToFile);
+                Byte[] data = new Byte[4];
 
-                string title;
-                if ((title = file.ReadLine()) == null)
-                    return;
+                Int32 i32Values = (Int32)(fDistanceInCm * 65536 + 0.5);
+                data[0] = (Byte)((i32Values >> 24) & 0xFF);
+                data[1] = (Byte)((i32Values >> 16) & 0xFF);
+                data[2] = (Byte)((i32Values >> 8) & 0xFF);
+                data[3] = (Byte)(i32Values & 0xFF);
 
-                List<float> xAxis = new List<float>();
-                List<float> yAxis = new List<float>();
-                List<UInt32> ui32ID = new List<UInt32>();
+                SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_MOVE_WITH_DISTANCE);
+                SwarmMessage message = new SwarmMessage(header, data);
+                theControlBoard.broadcastMessageToRobot(message);
 
-                string line;
-                while ((line = file.ReadLine()) != null)
-                {
-                    Match match = Regex.Match(line, @"^Robot:(0x[A-Fa-f0-9]+)\s\W([+-]?[0-9]*(?:\.[0-9]+)?);\s([+-]?[0-9]*(?:\.[0-9]+)?)\W$", RegexOptions.IgnoreCase);
-
-                    if (match.Success)
-                    {
-                        if (!match.Groups[1].Value.Equals("0x000000"))
-                        {
-                            ui32ID.Add(UInt32.Parse(match.Groups[1].Value.Substring(2), System.Globalization.NumberStyles.HexNumber));
-                            xAxis.Add(float.Parse(match.Groups[2].Value));
-                            yAxis.Add(float.Parse(match.Groups[3].Value));
-
-                            isValidFile = true;
-                        }
-                    }
-                }
-
-                file.Close();
-
-                if (isValidFile)
-                {
-                    float[] Plot_dataX = new float[xAxis.Count];
-                    float[] Plot_dataY = new float[yAxis.Count];
-                    UInt32[] listID = new UInt32[ui32ID.Count];
-
-                    xAxis.CopyTo(Plot_dataX);
-                    yAxis.CopyTo(Plot_dataY);
-                    ui32ID.CopyTo(listID);
-
-                    OxyplotWindow oxyplotWindow = new OxyplotWindow(listID, Plot_dataX, Plot_dataY, title, OxyplotWindow.ScatterPointAndLinePlot);
-
-                    oxyplotWindow.Show();
-                }
+                setStatusBarContent("Broadcast Command: move " + fDistanceInCm + "cm");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("moveDistance " + ex.Message);
             }
         }
-
-        private void calAvrFromFile()
-        {
-            List<float> xAxis = new List<float>();
-            List<float> yAxis = new List<float>();
-            List<UInt32> ui32ID = new List<UInt32>();
-            List<int> dataCounter = new List<int>();
-
-            string folderPath = "";
-
-            //System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
-            //if (folderBrowserDialog1.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            //{
-            //    folderPath = folderBrowserDialog1.SelectedPath;
-            //    //TODO: Process here
-            //}
-
-            var userInputWindow = new UserInputTextWindow();
-            userInputWindow.setMessage("Please enter your output coordinates folder path:");
-            if (userInputWindow.ShowDialog() == false)
-            {
-                if (userInputWindow.UserConfirm)
-                {
-                    folderPath = userInputWindow.inputText;
-
-                    foreach (string file in Directory.EnumerateFiles(folderPath, "*.txt"))
-                    {
-                        System.IO.StreamReader selectedFile = new System.IO.StreamReader(file);
-
-                        string line;
-                        while ((line = selectedFile.ReadLine()) != null)
-                        {
-                            Match match = Regex.Match(line, @"^Robot:(0x[A-Fa-f0-9]+)\s\W([+-]?[0-9]*(?:\.[0-9]+)?);\s([+-]?[0-9]*(?:\.[0-9]+)?)\W$", RegexOptions.IgnoreCase);
-
-                            if (match.Success)
-                            {
-                                if (!match.Groups[1].Value.Equals("0x000000"))
-                                {
-                                    UInt32 robotId = UInt32.Parse(match.Groups[1].Value.Substring(2), System.Globalization.NumberStyles.HexNumber);
-                                    int index = ui32ID.IndexOf(robotId);
-
-                                    if (index < 0)
-                                    {
-                                        ui32ID.Add(UInt32.Parse(match.Groups[1].Value.Substring(2), System.Globalization.NumberStyles.HexNumber));
-                                        xAxis.Add(float.Parse(match.Groups[2].Value));
-                                        yAxis.Add(float.Parse(match.Groups[3].Value));
-                                        dataCounter.Add(1);
-                                    }
-                                    else
-                                    {
-                                        xAxis[index] += float.Parse(match.Groups[2].Value);
-                                        yAxis[index] += float.Parse(match.Groups[3].Value);
-                                        dataCounter[index] += 1;
-                                    }
-                                }
-                            }
-                        }
-
-                        selectedFile.Close();
-                    }
-
-                    for (int i = 0; i < ui32ID.Count; i++)
-                    {
-                        xAxis[i] /= dataCounter[i];
-                        yAxis[i] /= dataCounter[i];
-                    }
-
-                    float[] Plot_dataX = new float[xAxis.Count];
-                    float[] Plot_dataY = new float[yAxis.Count];
-                    UInt32[] listID = new UInt32[ui32ID.Count];
-
-                    xAxis.CopyTo(Plot_dataX);
-                    yAxis.CopyTo(Plot_dataY);
-                    ui32ID.CopyTo(listID);
-
-                    OxyplotWindow oxyplotWindow = new OxyplotWindow(listID, Plot_dataX, Plot_dataY, "Robot average vector", OxyplotWindow.ScatterPointAndLinePlot);
-
-                    oxyplotWindow.Show();
-                }
-            }
-        }
-
-        private void requestGotoLocomotionState()
-        {
-            uint length = 2;
-            Byte[] transmittedData = new Byte[length];
-
-           // transmittedData[0] = COMMAND_SET_ROBOT_STATE;
-
-            transmittedData[1] = 0x06;
-
-            //theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
-        }
-
-        private void requestRotateCorrectionAngle()
-        {
-            uint length = 1;
-            Byte[] transmittedData = new Byte[length];
-
-           // transmittedData[0] = COMMAND_ROTATE_CORRECTION_ANGLE;
-
-            //theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
-        }
-
-        private void requestRotateCorrectionAngleDifferent()
-        {
-            uint length = 1;
-            Byte[] transmittedData = new Byte[length];
-
-           // transmittedData[0] = COMMAND_ROTATE_CORRECTION_ANGLE_DIFF;
-
-            //theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
-        }
-
-        private void requestRotateCorrectionAngleSame()
-        {
-            uint length = 1;
-            Byte[] transmittedData = new Byte[length];
-
-         //   transmittedData[0] = COMMAND_ROTATE_CORRECTION_ANGLE_SAME;
-
-            //theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
-        }
-
-        private void requestGotoTShapeState()
-        {
-            uint length = 2;
-            Byte[] transmittedData = new Byte[length];
-
-           // transmittedData[0] = COMMAND_SET_ROBOT_STATE;
-
-            transmittedData[1] = 0x07;
-
-            //theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
-        }
-
-        private void setLocalLoopButton_Click(object sender, RoutedEventArgs e)
-        {
-            //Byte[] transmittedData = new Byte[5]; // <set stop loop command><value>
-
-            //transmittedData[0] = COMMAND_SET_LOCAL_LOOP_STOP;
-
-            //Int32 value = Convert.ToInt32(this.LocalLoopTextBox.Text);
-            //transmittedData[1] = (Byte)(value >> 24);
-            //transmittedData[2] = (Byte)(value >> 16);
-            //transmittedData[3] = (Byte)(value >> 8);
-            //transmittedData[4] = (Byte)(value & 0xFF);
-
-           // theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
-        }
-
-        private void setStepSizeButton_Click(object sender, RoutedEventArgs e)
-        {
-            Byte[] transmittedData = new Byte[5]; // <set step size command><value>
-
-          //  transmittedData[0] = COMMAND_SET_STEPSIZE;
-
-            float valueF;
-
-            //if (float.TryParse(this.StepSizeTextBox.Text, out valueF))
-            //{
-            //    Int32 value = (Int32)(valueF * 65536 + 0.5);
-
-            //    transmittedData[1] = (Byte)(value >> 24);
-            //    transmittedData[2] = (Byte)(value >> 16);
-            //    transmittedData[3] = (Byte)(value >> 8);
-            //    transmittedData[4] = (Byte)(value & 0xFF);
-
-            //   // theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
-            //}
-            //else
-            //{
-            //    MessageBox.Show("Unvalid stepsize!");
-            //}
-        }
-
-        private void setStop1Button_Click(object sender, RoutedEventArgs e)
-        {
-            Byte[] transmittedData = new Byte[5]; // <set stop 1 command><value>
-
-           // transmittedData[0] = COMMAND_SET_STOP1;
-
-            float valueF;
-
-            if (float.TryParse(this.stop1TextBox.Text, out valueF))
-            {
-                Int32 value = (Int32)(valueF * 65536 + 0.5);
-
-                transmittedData[1] = (Byte)(value >> 24);
-                transmittedData[2] = (Byte)(value >> 16);
-                transmittedData[3] = (Byte)(value >> 8);
-                transmittedData[4] = (Byte)(value & 0xFF);
-
-                // theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
-            }
-            else
-            {
-                MessageBox.Show("Unvalid stop 1!");
-            }
-        }
-
-        private void setStop2Button_Click(object sender, RoutedEventArgs e)
-        {
-            Byte[] transmittedData = new Byte[5]; // <set stop 2 command><value>
-
-            //transmittedData[0] = COMMAND_SET_STOP2;
-
-            float valueF;
-
-            if (float.TryParse(this.stop2TextBox.Text, out valueF))
-            {
-                Int32 value = (Int32)(valueF * 65536 + 0.5);
-
-                transmittedData[1] = (Byte)(value >> 24);
-                transmittedData[2] = (Byte)(value >> 16);
-                transmittedData[3] = (Byte)(value >> 8);
-                transmittedData[4] = (Byte)(value & 0xFF);
-
-               // theControlBoard.transmitBytesToRobot(transmittedData, 5, 1);
-            }
-            else
-            {
-                MessageBox.Show("Unvalid stop 2!");
-            }
-        }
-
-        private void rotateClockwiseButton_Click(object sender, RoutedEventArgs e)
-        {
-            uint length = 5;
-            Byte[] transmittedData = new Byte[length]; // <send rotate command><value>
-
-           // transmittedData[0] = COMMAND_ROTATE_CLOCKWISE;
-
-            UInt32 ui32Value;
-
-            if (UInt32.TryParse(this.rotatePeriodTextBox.Text, out ui32Value))
-            {
-                transmittedData[1] = (Byte)(ui32Value >> 24);
-                transmittedData[2] = (Byte)(ui32Value >> 16);
-                transmittedData[3] = (Byte)(ui32Value >> 8);
-                transmittedData[4] = (Byte)(ui32Value & 0xFF);
-
-             //   theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
-            }
-            else
-            {
-                MessageBox.Show("Unvalid rotate clockwise period!");
-            }
-        }
-
-        private void rotateAngleButton_Click(object sender, RoutedEventArgs e)
-        {
-            uint length = 3;
-            Byte[] transmittedData = new Byte[length]; // <send rotate angle command><value>
-
-           // transmittedData[0] = COMMAND_ROTATE_CLOCKWISE_ANGLE;
-
-            Int16 i16Value;
-
-            if (Int16.TryParse(this.rotateAngleTextBox.Text, out i16Value))
-            {
-                transmittedData[1] = (Byte)(i16Value >> 8);
-                transmittedData[2] = (Byte)(i16Value & 0xFF);
-
-               // theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
-            }
-            else
-            {
-                MessageBox.Show("Unvalid rotate clockwise angle!");
-            }
-        }
-
-        private void forwardPeriodButton_Click(object sender, RoutedEventArgs e)
-        {
-            uint length = 5;
-            Byte[] transmittedData = new Byte[length]; // <send forward period command><value>
-
-            //transmittedData[0] = COMMAND_FORWARD_PERIOD;
-
-            UInt32 ui32Value;
-
-            if (UInt32.TryParse(this.forwardPeriodTextBox.Text, out ui32Value))
-            {
-                transmittedData[1] = (Byte)(ui32Value >> 24);
-                transmittedData[2] = (Byte)(ui32Value >> 16);
-                transmittedData[3] = (Byte)(ui32Value >> 8);
-                transmittedData[4] = (Byte)(ui32Value & 0xFF);
-
-            //    theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
-            }
-            else
-            {
-                MessageBox.Show("Unvalid forward period!");
-            }
-        }
-
-        private void forwardDistanceButton_Click(object sender, RoutedEventArgs e)
-        {
-            uint length = 5;
-            Byte[] transmittedData = new Byte[length]; // <send forward distance command><value>
-
-            //transmittedData[0] = COMMAND_FORWARD_DISTANCE;
-
-            float values;
-
-            if (float.TryParse(this.forwardDistanceTextBox.Text, out values))
-            {
-                Int32 i32Values = (Int32)(values * 65536 + 0.5);
-
-                transmittedData[1] = (Byte)(i32Values >> 24);
-                transmittedData[2] = (Byte)(i32Values >> 16);
-                transmittedData[3] = (Byte)(i32Values >> 8);
-                transmittedData[4] = (Byte)(i32Values & 0xFF);
-
-                //theControlBoard.transmitBytesToRobot(transmittedData, length, 1);
-            }
-            else
-            {
-                MessageBox.Show("Unvalid forward distance!");
-            }
-        }
-        #endregion
         #endregion
     }
 
