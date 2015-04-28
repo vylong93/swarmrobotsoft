@@ -24,6 +24,8 @@ namespace SwarmRobotControlAndCommunication
     /// </summary>
     public partial class OxyplotWindowTwoChart : Window
     {
+        private String FormTitle = "Hello World";
+
         private PlotWindowModel viewModel1;
         private PlotWindowModel viewModel2;
 
@@ -33,15 +35,16 @@ namespace SwarmRobotControlAndCommunication
         {
             InitializeComponent();
 
-            titlePlotWindown.Content = windownTitle;
-
-            //Binding Data Manually
+            // Binding Data Manually
             viewModel1 = new PlotWindowModel();
             viewModel2 = new PlotWindowModel();
             this.Plot1.DataContext = viewModel1;
             this.Plot2.DataContext = viewModel2;
             viewModel1.PlotModel = plot(title1, data1);
             viewModel2.PlotModel = plot(title2, data2);
+
+            //NOTE: FormTitle will be used in OxyplotWindowTwoChart_Loaded() after this function return
+            FormTitle = windownTitle;
         }
 
         #region UI
@@ -75,7 +78,7 @@ namespace SwarmRobotControlAndCommunication
             this.titlePlotWindown = (Label)this.Template.FindName("PlotTitle", this);
             if (this.titlePlotWindown != null)
             {
-                titlePlotWindown.Content = "Hello world";
+                titlePlotWindown.Content = FormTitle;
             }
 
             this.titleButtonMainWindow = (FrameworkElement)this.Template.FindName("Title", this);

@@ -27,6 +27,8 @@ namespace SwarmRobotControlAndCommunication
     {
         #region Constructor
 
+        private String FormTitle = "Hello World";
+
         public PlotModel MyModel { get; private set; }
         private PlotWindowModel viewModel;
 
@@ -42,6 +44,9 @@ namespace SwarmRobotControlAndCommunication
             viewModel = new PlotWindowModel();
             DataContext = viewModel;
             viewModel.PlotModel = plot(id, dataX, dataY, Title);
+
+            //NOTE: FormTitle will be used in OxyplotWindowTwoChart_Loaded() after this function return
+            FormTitle = Title;
         }
 
         public OxyplotWindow(float[] dataX, float[] dataY, String Title, delegateScatterPointPlot plot)
@@ -64,6 +69,7 @@ namespace SwarmRobotControlAndCommunication
             viewModel.PlotModel = plot(data, Title);
         }
 
+        private Label titlePlotWindown = new Label();
         private Button closeButtonPlotWindow = new Button();
         private Button minimizeButtonPlotWindow = new Button();
         private Button maximizeButtonPlotWindow = new Button();
@@ -89,6 +95,12 @@ namespace SwarmRobotControlAndCommunication
             if (this.minimizeButtonPlotWindow != null)
             {
                 this.minimizeButtonPlotWindow.Click += PlotWindowMinimizeApplicationWindow;
+            }
+
+            this.titlePlotWindown = (Label)this.Template.FindName("PlotTitle", this);
+            if (this.titlePlotWindown != null)
+            {
+                titlePlotWindown.Content = FormTitle;
             }
 
             this.titleButtonMainWindow = (FrameworkElement)this.Template.FindName("Title", this);

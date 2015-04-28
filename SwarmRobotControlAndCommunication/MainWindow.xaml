@@ -466,7 +466,7 @@
                         <StackPanel x:Name="distanceSensingStackPanel" Grid.Row="0" Margin="0,0,-0.2,0" VerticalAlignment="Bottom" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
                             <Button x:Name="testDistacneSensingButton" Content="Calibrate TDOA" HorizontalAlignment="Center" Margin="2,0,0,0" VerticalAlignment="Center" Height="24" Width="100" Click="testDistacneSensingButton_Click"/>
                             <Label Content="Distance (cm):" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Center"/>
-                            <TextBox x:Name="distanceTextBox" Text="15" Style="{DynamicResource PathTextbox}" Width="34" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                            <TextBox x:Name="distanceTextBox" Text="15" Style="{DynamicResource PathTextbox}" Width="37" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
                             <Label Content="Times:" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Center"/>
                             <TextBox x:Name="testTimesTextBox"  local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="100" local:TextBoxHelpers.MinValue="1" Text="10" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
                         </StackPanel>
@@ -474,12 +474,12 @@
                             <Label Content="Tx:" HorizontalAlignment="Left" VerticalAlignment="Center"/>
                             <TextBox x:Name="speakerRobotTextBox" Text="00BEAD01" Style="{DynamicResource PathTextbox}" Width="77" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
                             <Label Content="Rx:" HorizontalAlignment="Left" VerticalAlignment="Center"/>
-                            <TextBox x:Name="micsRobotTextBox" Text="00BEAD02" Style="{DynamicResource PathTextbox}" Width="76" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                            <TextBox x:Name="micsRobotTextBox" Text="00BEAD02" Style="{DynamicResource PathTextbox}" Width="79" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
                             <Label Content="Delay ms:" HorizontalAlignment="Left" Margin="1,0,0,0" VerticalAlignment="Center"/>
                             <TextBox x:Name="delayTestingTextBox" local:TextBoxHelpers.IsNumeric="True" Text="400" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
                         </StackPanel>
                     </Grid>                                   
-                    <Label Content="--------------------- TESTING ONLY ---------------------" HorizontalAlignment="Center" Margin="0,0,0,0" Grid.Row="10" VerticalAlignment="Center"/>              
+                    <Label Content="------------------- Rotate Alpha use PID -------------------" HorizontalAlignment="Center" Margin="0,0,0,0" Grid.Row="10" VerticalAlignment="Center"/>              
                     <StackPanel x:Name="PIDPanel" Grid.Row="11" Margin="0,0,-0.2,0" VerticalAlignment="Bottom"
                                 Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
                         <Label Content="P" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
@@ -488,12 +488,10 @@
                         <TextBox x:Name="PIDkITextBox" Text="0.01" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
                         <Label Content="D" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
                         <TextBox x:Name="PIDkDTextBox" Text="0.0" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
-                        <Label Content="ref" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
+                        <Label Content="Alpha (Deg)" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
                         <TextBox x:Name="PIDrefTextBox" Text="0" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
-                        <Label Content="run" HorizontalAlignment="Left" Margin="0,0,0,0" VerticalAlignment="Center"/>
-                        <CheckBox x:Name="runPIDCheckBox" IsChecked="true" Margin="0,3,5,3" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        <Button x:Name="SetPIDParameterButton" Content="Set" Grid.Row="4"
-                            Margin="4.2,1,0,1" Height="24" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="40" HorizontalAlignment="Left" Click="SetPIDParameterButton_Click"/>
+                        <Button x:Name="SetPIDParameterButton" Content="Set" Grid.Row="4" Width="36" 
+                            Margin="4.2,0,0,0" Height="24" VerticalAlignment="Center" FlowDirection="RightToLeft" HorizontalAlignment="Left" Click="SetPIDParameterButton_Click"/>
                     </StackPanel>       
                 </Grid>
             </TabItem>

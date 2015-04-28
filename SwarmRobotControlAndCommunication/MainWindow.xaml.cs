@@ -91,6 +91,9 @@ namespace SwarmRobotControlAndCommunication
         private const byte COMMAND_MOVE_WITH_DISTANCE = 0x20;
         private const byte COMMAND_ROTATE_WITH_ANGLE = 0x21;
 
+        private const byte COMMAND_TOGGLE_IR_LED = 0x22;
+        private const byte COMMAND_REQUEST_PROXIMITY_RAW = 0x23;
+
         enum e_MotorDirection
         {
             MOTOR_FORWARD_DIRECTION = 0,
@@ -1644,6 +1647,14 @@ namespace SwarmRobotControlAndCommunication
                         theControlBoard.broadcastCommandToRobot(COMMAND_INDICATE_BATT_VOLT);
                         break;
 
+                    case "Toggle IR Led":
+                        theControlBoard.broadcastCommandToRobot(COMMAND_TOGGLE_IR_LED);
+                        break;
+
+                    case "Read IR Proximity Raw":
+                        readIrProximityRaw();
+                        break;
+
                     default:
                         throw new Exception("Broadcast Command: Can not recognise command!");
                 }
@@ -1777,13 +1788,13 @@ namespace SwarmRobotControlAndCommunication
 
         private void readAdc1Button_Click(object sender, RoutedEventArgs e)
         {
-            readADC(COMMAND_READ_ADC1, this.readAdc1TextBox, "Mic 1");
+            readADC(COMMAND_READ_ADC1, this.readAdc1TextBox, "Robot[0x" + this.TXAddressCalibrationSelectBox.Text + "]'s Mic 1");
             setStatusBarContent("Read ADC1 successful!");
         }
 
         private void readAdc2Button_Click(object sender, RoutedEventArgs e)
         {
-            readADC(COMMAND_READ_ADC2, this.readAdc2TextBox, "Mic 2");
+            readADC(COMMAND_READ_ADC2, this.readAdc2TextBox, "Robot[0x" + this.TXAddressCalibrationSelectBox.Text + "]'s Mic 2");
             setStatusBarContent("Read ADC2 successful!");
         }
 
@@ -1839,7 +1850,7 @@ namespace SwarmRobotControlAndCommunication
                     && rxMessage.getHeader().getCmd() == ROBOT_RESPONSE_TO_HOST_OK)
                 {
                     adcData = (rxMessage.getData()[1] << 8) | rxMessage.getData()[0];
-                    BatteryVoltage = (adcData * 3330) / 2048;
+                    BatteryVoltage = (2 * adcData) * 3330 / 4096;
                     string mess = BatteryVoltage.ToString() + "mV (ADCvalue = " + adcData.ToString() + ")";
                     setStatusBarContent("Robot's V_batt = " + mess);
                 }
@@ -1853,6 +1864,42 @@ namespace SwarmRobotControlAndCommunication
             {
                 //defaultExceptionHandle(ex);
                 setStatusBarContent("Failed to read robot's V_batt...");
+            }
+        }
+
+        private void readIrProximityRaw()
+        {
+            uint length = 4;
+            Byte[] receivedData = new Byte[length];
+            int adcData;
+            float IrProximityRaw;
+
+            try
+            {
+                SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_REQUEST_PROXIMITY_RAW);
+                SwarmMessage message = new SwarmMessage(header);
+
+                theControlBoard.receivedDataFromRobot(receivedData, length, 1000, message);
+
+                SwarmMessage rxMessage = SwarmMessage.ConstructFromByteArray(receivedData);
+                if (rxMessage.getHeader().getMessageType() == e_MessageType.MESSAGE_TYPE_ROBOT_RESPONSE
+                    && rxMessage.getHeader().getCmd() == ROBOT_RESPONSE_TO_HOST_OK)
+                {
+                    adcData = (rxMessage.getData()[1] << 8) | rxMessage.getData()[0];
+                    IrProximityRaw = adcData * 3330 / 4096;
+                    string mess = IrProximityRaw.ToString() + "mV (ADCvalue = " + adcData.ToString() + ")";
+                    setStatusBarContent("Robot's Ir Proximity Raw = " + mess);
+                }
+                else
+                {
+                    setStatusBarContent("Wrong Ir Proximity Raw response from robot...");
+                }
+
+            }
+            catch (Exception ex)
+            {
+                //defaultExceptionHandle(ex);
+                setStatusBarContent("Failed to read robot's Ir Proximity Raw...");
             }
         }
 
@@ -1962,29 +2009,15 @@ namespace SwarmRobotControlAndCommunication
                 messageContent[15] = (byte)(i32Data & 0xFF);
 
                 /* Run flag */
-                if (this.runPIDCheckBox.IsChecked == true)
-                {
-                    messageContent[16] = 1;
-                    this.runPIDCheckBox.IsChecked = false;
-                }
-                else 
-                {
-                    messageContent[16] = 0;
-                    this.runPIDCheckBox.IsChecked = true;
-                }
-
+                messageContent[16] = 0;
+           
                 SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_CONFIG_PID_CONTROLLER);
                 SwarmMessage message = new SwarmMessage(header, messageContent);
 
                 if (theControlBoard.sendMessageToRobot(message))
-                {
-                    setStatusBarContent("PID Controller tx susscess! Toggle Run Flag");
-                }
+                    setStatusBarContent("Transmit command Rotate To Angle " + this.PIDrefTextBox.Text + " susscess!");
                 else
-                {
                     setStatusBarContent("Failed to configure PID Controller...");
-                    this.runPIDCheckBox.IsChecked = true;
-                }
             }
             catch (Exception ex)
             {
