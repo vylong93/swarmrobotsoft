@@ -314,7 +314,7 @@ namespace SwarmRobotControlAndCommunication
             this.Dispatcher.Invoke((Action)delegate
             {
                 this.progressProgramBar.Value = value;
-                this.statusDeviceAttached.Content = String.Format("File size {0:0} KB, Transfer rate {1:0.000} KB/sec, Time left {2:0} sec",
+                this.statusDeviceAttached.Content = String.Format("File size {0:0} KB, Transfer rate {1:0.000} KB/s, Time left {2:0} s",
                     bootLoader.getLastTransferSize() / 1000, bootLoader.getProgramSpeed() / 1000, (bootLoader.getLastTransferSize() - bootLoader.getTransferedSize()) / bootLoader.getProgramSpeed());
             }
             );

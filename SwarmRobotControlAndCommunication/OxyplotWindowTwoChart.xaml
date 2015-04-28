@@ -3,7 +3,7 @@
         xmlns:oxy="http://oxyplot.codeplex.com"
         xmlns:local="clr-namespace:SwarmRobotControlAndCommunication"       
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="OxyplotWindowTwoChart"
-        Height="550" Width="700" Loaded="OxyplotWindowTwoChart_Loaded" WindowStartupLocation="CenterScreen" 
+        Height="550" Width="600" Loaded="OxyplotWindowTwoChart_Loaded" WindowStartupLocation="CenterScreen" 
         Style="{StaticResource PlotWindow}" ScrollViewer.CanContentScroll="True" ResizeMode="NoResize">
     <Grid>
         <Grid.RowDefinitions>
