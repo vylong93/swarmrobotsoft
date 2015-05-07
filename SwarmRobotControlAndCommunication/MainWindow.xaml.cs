@@ -93,7 +93,7 @@ namespace SwarmRobotControlAndCommunication
 
         private const byte COMMAND_TOGGLE_IR_LED = 0x22;
         private const byte COMMAND_REQUEST_PROXIMITY_RAW = 0x23;
-        private const byte COMMAND_CONFIG_CALIBRATE_CONTROLLER = 0x24;
+        private const byte COMMAND_CONFIG_STEP_CONTROLLER = 0x24;
         private const byte COMMAND_CONFIG_PID_CONTROLLER_FORWRAD = 0x25;
 
         enum e_MotorDirection
@@ -2029,39 +2029,37 @@ namespace SwarmRobotControlAndCommunication
             }
         }
 
-        private void SetCalParameterButton_Click(object sender, RoutedEventArgs e)
+        private void ConfigStepControllerButton_Click(object sender, RoutedEventArgs e)
         {
             try
             {
                 int length = 6;
                 byte[] messageContent = new byte[length];
 
-                /* LeftM */
-                messageContent[0] = Convert.ToByte(this.CalLeftMTextBox.Text);
+                /* Activation period */
+                messageContent[0] = Convert.ToByte(this.StepActivateInMsTextBox.Text);
 
-                /* RightM */
-                messageContent[1] = Convert.ToByte(this.CalRightMTextBox.Text);
+                /* Pause period */
+                messageContent[1] = Convert.ToByte(this.StepPauseInMsTextBox.Text);
 
-                /* ref */
+                /* Ref Angle */
                 float fData;
-                float.TryParse(this.CalrefTextBox.Text, out fData);
+                float.TryParse(this.AngleRefTextBox.Text, out fData);
                 Int32 i32Data = (Int32)(fData * 65536);
                 messageContent[2] = (byte)((i32Data >> 24) & 0xFF);
                 messageContent[3] = (byte)((i32Data >> 16) & 0xFF);
                 messageContent[4] = (byte)((i32Data >> 8) & 0xFF);
                 messageContent[5] = (byte)(i32Data & 0xFF);
 
-                SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_CONFIG_CALIBRATE_CONTROLLER);
+                SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_CONFIG_STEP_CONTROLLER);
                 SwarmMessage message = new SwarmMessage(header, messageContent);
 
-                if (theControlBoard.sendMessageToRobot(message))
-                    setStatusBarContent("Cal: command Rotate To Angle " + this.PIDrefTextBox.Text + " done!");
-                else
-                    setStatusBarContent("Failed to configure Calibrate Controller...");
+                theControlBoard.broadcastMessageToRobot(message);
+                setStatusBarContent("Step: broadcast command Rotate To Angle " + this.PIDrefTextBox.Text + " done!");
             }
             catch (Exception ex)
             {
-                throw new Exception("Set Cal Button: " + ex.Message);
+                throw new Exception("Set Step Button: " + ex.Message);
             }
         }
 
