@@ -5,7 +5,7 @@
         xmlns:local="clr-namespace:SwarmRobotControlAndCommunication"
         xmlns:System="clr-namespace:System;assembly=mscorlib" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d" x:Name="window" x:Class="SwarmRobotControlAndCommunication.MainWindow"
         Icon="favicon.ico"
-        Title="Swarm Robot Control &amp; Communication" Height="450" Width="312" WindowStartupLocation="CenterScreen" Style="{StaticResource MainWindow}"  Loaded="this_Loaded" SizeToContent="WidthAndHeight" ResizeMode="NoResize">
+        Title="Swarm Robot Control &amp; Communication" Height="500" Width="312" WindowStartupLocation="CenterScreen" Style="{StaticResource MainWindow}"  Loaded="this_Loaded" SizeToContent="WidthAndHeight" ResizeMode="NoResize">
     <Window.Resources>
         <AlternationConverter x:Key="AlternationConverter"/>
         <System:Double x:Key="ellipseRunningWidth">322</System:Double>
@@ -388,6 +388,7 @@
                         <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
+                        <RowDefinition Height="28"/>
                         <RowDefinition/>
                     </Grid.RowDefinitions>
                     <StackPanel x:Name="TxAddressPanel0" Grid.Column="0" Grid.Row="0" 
@@ -479,20 +480,45 @@
                             <TextBox x:Name="delayTestingTextBox" local:TextBoxHelpers.IsNumeric="True" Text="400" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
                         </StackPanel>
                     </Grid>                                   
-                    <Label Content="------------------- Rotate Alpha use PID -------------------" HorizontalAlignment="Center" Margin="0,0,0,0" Grid.Row="10" VerticalAlignment="Center"/>              
-                    <StackPanel x:Name="PIDPanel" Grid.Row="11" Margin="0,0,-0.2,0" VerticalAlignment="Bottom"
+                    <StackPanel x:Name="PIDPanel" Grid.Row="10" Margin="0,0,-0.2,0" VerticalAlignment="Bottom"
                                 Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
                         <Label Content="P" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
-                        <TextBox x:Name="PIDkPTextBox" Text="0.8" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                        <TextBox x:Name="PIDkPTextBox" Text="35" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
                         <Label Content="I" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
-                        <TextBox x:Name="PIDkITextBox" Text="0.01" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                        <TextBox x:Name="PIDkITextBox" Text="0.25" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
                         <Label Content="D" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
                         <TextBox x:Name="PIDkDTextBox" Text="0.0" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
-                        <Label Content="Alpha (Deg)" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
+                        <Label Content="Alpha (Deg)" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0" Width="75" />
                         <TextBox x:Name="PIDrefTextBox" Text="0" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
                         <Button x:Name="SetPIDParameterButton" Content="Set" Grid.Row="4" Width="36" 
                             Margin="4.2,0,0,0" Height="24" VerticalAlignment="Center" FlowDirection="RightToLeft" HorizontalAlignment="Left" Click="SetPIDParameterButton_Click"/>
-                    </StackPanel>       
+                    </StackPanel>
+                    <StackPanel x:Name="PIDFWPanel" Grid.Row="11" Margin="0,0,-0.2,0" VerticalAlignment="Bottom"
+                                Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                        <Label Content="P" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
+                        <TextBox x:Name="PIDFWkPTextBox" Text="35" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                        <Label Content="I" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
+                        <TextBox x:Name="PIDFWkITextBox" Text="0.25" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                        <Label Content="D" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
+                        <TextBox x:Name="PIDFWkDTextBox" Text="0.0" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                        <Label Content="Step" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
+                        <TextBox x:Name="PIDFWstepTextBox" Text="0" Style="{DynamicResource PathTextbox}" Width="26" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                        <Label Content="v" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
+                        <TextBox x:Name="PIDFWspeedTextBox" Text="0" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                        <Button x:Name="SetPIDFWParameterButton" Content="Set" Grid.Row="4" Width="36" 
+                            Margin="4.2,0,0,0" Height="24" VerticalAlignment="Center" FlowDirection="RightToLeft" HorizontalAlignment="Left" Click="SetPIDFWParameterButton_Click"/>
+                    </StackPanel>
+                    <StackPanel x:Name="CalControllerPanel" Grid.Row="12" Margin="0,0,-0.2,0" VerticalAlignment="Bottom"
+                                Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                        <Label Content="LeftM" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
+                        <TextBox x:Name="CalLeftMTextBox" Text="53" Style="{DynamicResource PathTextbox}" Width="33" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                        <Label Content="RightM" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
+                        <TextBox x:Name="CalRightMTextBox" Text="58" Style="{DynamicResource PathTextbox}" Width="33" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                        <Label Content="Alpha (Deg)" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0" Width="75"/>
+                        <TextBox x:Name="CalrefTextBox" Text="0" Style="{DynamicResource PathTextbox}" Width="35" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                        <Button x:Name="SetCalParameterButton" Content="Set" Grid.Row="4" Width="36" 
+                            Margin="4.2,0,0,0" Height="24" VerticalAlignment="Top" FlowDirection="RightToLeft" HorizontalAlignment="Left" Click="SetCalParameterButton_Click"/>
+                    </StackPanel>
                 </Grid>
             </TabItem>
             <TabItem Header="Debug" Margin="{Binding Margin, ElementName=controlTab}">
@@ -540,6 +566,10 @@
                             <ComboBoxItem Content="State 5: Average Vector"/>
                             <ComboBoxItem Content="State 6: Correct Locations"/>
                             <ComboBoxItem Content="State 7: Locomotion"/>
+                            <ComboBoxItem Content="State 8:"/>
+                            <ComboBoxItem Content="State 9:"/>
+                            <ComboBoxItem Content="State 10:"/>
+                            <ComboBoxItem Content="State 11: Test Motor"/>
                         </ComboBox>
                         <Button x:Name="sendGotoStateCommandButton" Content="Goto State" Margin="4.2,1,0,1" Height="26" 
                                 VerticalAlignment="Center" FlowDirection="RightToLeft" Width="135" HorizontalAlignment="Left" Click="sendGotoStateCommandButton_Click"/>

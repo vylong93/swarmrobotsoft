@@ -93,6 +93,8 @@ namespace SwarmRobotControlAndCommunication
 
         private const byte COMMAND_TOGGLE_IR_LED = 0x22;
         private const byte COMMAND_REQUEST_PROXIMITY_RAW = 0x23;
+        private const byte COMMAND_CONFIG_CALIBRATE_CONTROLLER = 0x24;
+        private const byte COMMAND_CONFIG_PID_CONTROLLER_FORWRAD = 0x25;
 
         enum e_MotorDirection
         {
@@ -1597,6 +1599,7 @@ namespace SwarmRobotControlAndCommunication
         }
         #endregion
 
+        #region Basic calibration
         private void ConfigureRFCalibration_Click(object sender, RoutedEventArgs e)
         {
             setTxAddress(this.TXAddressCalibrationSelectBox.Text);
@@ -1966,8 +1969,9 @@ namespace SwarmRobotControlAndCommunication
                 throw new Exception("Robot move " + ex.Message);
             }         
         }
+        #endregion
 
-        #region Testing Only
+        #region Testing Controllers
         private void SetPIDParameterButton_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -2025,6 +2029,100 @@ namespace SwarmRobotControlAndCommunication
             }
         }
 
+        private void SetCalParameterButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                int length = 6;
+                byte[] messageContent = new byte[length];
+
+                /* LeftM */
+                messageContent[0] = Convert.ToByte(this.CalLeftMTextBox.Text);
+
+                /* RightM */
+                messageContent[1] = Convert.ToByte(this.CalRightMTextBox.Text);
+
+                /* ref */
+                float fData;
+                float.TryParse(this.CalrefTextBox.Text, out fData);
+                Int32 i32Data = (Int32)(fData * 65536);
+                messageContent[2] = (byte)((i32Data >> 24) & 0xFF);
+                messageContent[3] = (byte)((i32Data >> 16) & 0xFF);
+                messageContent[4] = (byte)((i32Data >> 8) & 0xFF);
+                messageContent[5] = (byte)(i32Data & 0xFF);
+
+                SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_CONFIG_CALIBRATE_CONTROLLER);
+                SwarmMessage message = new SwarmMessage(header, messageContent);
+
+                if (theControlBoard.sendMessageToRobot(message))
+                    setStatusBarContent("Cal: command Rotate To Angle " + this.PIDrefTextBox.Text + " done!");
+                else
+                    setStatusBarContent("Failed to configure Calibrate Controller...");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Set Cal Button: " + ex.Message);
+            }
+        }
+
+        private void SetPIDFWParameterButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                byte[] messageContent = new byte[17];
+                float fData;
+                Int32 i32Data;
+
+                /* P */
+                float.TryParse(this.PIDFWkPTextBox.Text, out fData);
+                i32Data = (Int32)(fData * 65536);
+                messageContent[0] = (byte)((i32Data >> 24) & 0xFF);
+                messageContent[1] = (byte)((i32Data >> 16) & 0xFF);
+                messageContent[2] = (byte)((i32Data >> 8) & 0xFF);
+                messageContent[3] = (byte)(i32Data & 0xFF);
+
+                /* I */
+                float.TryParse(this.PIDFWkITextBox.Text, out fData);
+                i32Data = (Int32)(fData * 65536);
+                messageContent[4] = (byte)((i32Data >> 24) & 0xFF);
+                messageContent[5] = (byte)((i32Data >> 16) & 0xFF);
+                messageContent[6] = (byte)((i32Data >> 8) & 0xFF);
+                messageContent[7] = (byte)(i32Data & 0xFF);
+
+                /* D */
+                float.TryParse(this.PIDFWkDTextBox.Text, out fData);
+                i32Data = (Int32)(fData * 65536);
+                messageContent[8] = (byte)((i32Data >> 24) & 0xFF);
+                messageContent[9] = (byte)((i32Data >> 16) & 0xFF);
+                messageContent[10] = (byte)((i32Data >> 8) & 0xFF);
+                messageContent[11] = (byte)(i32Data & 0xFF);
+
+                /* step */
+                i32Data = Convert.ToInt32(this.PIDFWstepTextBox.Text);
+                messageContent[12] = (byte)((i32Data >> 24) & 0xFF);
+                messageContent[13] = (byte)((i32Data >> 16) & 0xFF);
+                messageContent[14] = (byte)((i32Data >> 8) & 0xFF);
+                messageContent[15] = (byte)(i32Data & 0xFF);
+
+                /* speed */
+                messageContent[16] = Convert.ToByte(this.PIDFWspeedTextBox.Text);
+
+                SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_CONFIG_PID_CONTROLLER_FORWRAD);
+                SwarmMessage message = new SwarmMessage(header, messageContent);
+
+                if (theControlBoard.sendMessageToRobot(message))
+                    setStatusBarContent("Transmit command forward PID " + this.PIDrefTextBox.Text + " susscess!");
+                else
+                    setStatusBarContent("Failed to configure PID FW Controller...");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Set PID FW Button: " + ex.Message);
+            }
+        }
+        #endregion
+
+        #region Calibrate TDOA and Graph Region
         public const UInt32 TESTING_BUFFER_SIZE = 1024;
 
         public UInt16 g_ui16TDOABufferPointer1 = 0;
@@ -2377,9 +2475,8 @@ namespace SwarmRobotControlAndCommunication
 
             return true;
         }
-        
         #endregion
-
+        
         #endregion
 
         #region Debug Tab
@@ -2600,19 +2697,19 @@ namespace SwarmRobotControlAndCommunication
         {
             string textEditor1 = @"D:\\Program Files\\Notepad++\\notepad++.exe";
             string textEditor2 = @"C:\\Program Files\\Notepad++\\notepad++.exe";
+            string textEditor3 = @"E:\\ProgramFiles(x86)\\Notepad++\\notepad++.exe";
 
-            if (File.Exists(textEditor1))
+            string[] textEditors = { textEditor1, textEditor2, textEditor3 };
+
+            foreach (var item in textEditors)
             {
-                Process.Start(textEditor1, fileFullPath);
+                if (File.Exists(item))
+                {
+                    Process.Start(item, fileFullPath);
+                    return;
+                }
             }
-            else if (File.Exists(textEditor2))
-            {
-                Process.Start(textEditor2, fileFullPath);
-            }
-            else
-            {
-                Process.Start(@"notepad.exe", fileFullPath);
-            }
+            Process.Start(@"notepad.exe", fileFullPath);
         }
 
         private void readLocationsTable()
@@ -2741,7 +2838,7 @@ namespace SwarmRobotControlAndCommunication
             String foundRobot = " robot(s): ";
             int numberOfFoundRobot = 0;
 
-            uint length = 31;
+            uint length = 35;
             byte[] receivedData = new byte[length];
 
             for (int i = 0; i < ROBOT_ID_LIST.Length; i++)
@@ -2768,8 +2865,10 @@ namespace SwarmRobotControlAndCommunication
                     float y = (float)((Int32)((receivedData[19] << 24) | (receivedData[20] << 16) | (receivedData[21] << 8) | receivedData[22]) / 65536.0);
                     float RotationHop_x = (float)((Int32)((receivedData[23] << 24) | (receivedData[24] << 16) | (receivedData[25] << 8) | receivedData[26]) / 65536.0);
                     float RotationHop_y = (float)((Int32)((receivedData[27] << 24) | (receivedData[28] << 16) | (receivedData[29] << 8) | receivedData[30]) / 65536.0);
-
+                    float theta = (float)((Int32)((receivedData[31] << 24) | (receivedData[32] << 16) | (receivedData[33] << 8) | receivedData[34]) / 65536.0);
+                    double thetaInDeg = theta * 180.0f / Math.PI;
                     outputContent += String.Format("Robot:0x{0} ({1}; {2})\n", Self_ID.ToString("X6"), x.ToString("G6"), y.ToString("G6"));
+                    outputContent += String.Format("Robot direction = {0} degree\n", thetaInDeg.ToString());
                     outputContent += String.Format("Self neighbors = {0}\n", Self_NeighborsCount.ToString());
                     outputContent += String.Format("Origin:0x{0}, neighbors = {1}, Hopth = {2}\n", Origin_ID.ToString("X6"), Origin_NeighborsCount.ToString(), Origin_Hopth.ToString());
                     outputContent += String.Format("Rotation Hop:0x{0} ({1}; {2})\n", RotationHop_ID.ToString("X6"), RotationHop_x.ToString("G6"), RotationHop_y.ToString("G6"));
@@ -2855,6 +2954,7 @@ namespace SwarmRobotControlAndCommunication
             }
         }
         #endregion
+
     }
 
     #region IValueConverter Members
