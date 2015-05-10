@@ -46,7 +46,22 @@ namespace SwarmRobotControlAndCommunication
         private const string DEFAULT_RX_ADDRESS = "00C1AC02";
         private UInt32[] ROBOT_ID_LIST = { 0xBEAD01, 0xBEAD02, 0xBEAD03, 0xBEAD04, 0xBEAD05,
                                            0xBEAD06, 0xBEAD07, 0xBEAD08, 0xBEAD09};
-        
+
+        private String[] ROBOT_STATES = { 
+            "State 0: Idle",
+            "State 1: Measure Distance",
+            "State 2: Exchange Table",
+            "State 3: Vote Origin",
+            "State 4: Rotate Coordinates",
+            "State 5: Average Vector",
+            "State 6: Correct Locations",
+            "State 7: Locomotion",
+            "State 8: Rotate To Angle Use Step Controller",
+            "State 9: Forward In Period Use Step Controller",
+            "State 10: Test Motor Left",
+            "State 11: Test Motor Right"
+                                        };
+
         //------------Commands from Robots---------------------
         private const byte ROBOT_RESPONSE_TO_HOST_OK = 0x0A;
 
@@ -73,28 +88,26 @@ namespace SwarmRobotControlAndCommunication
         private const byte COMMAND_EEPROM_DATA_READ_BULK = 0x12;
         private const byte COMMAND_EEPROM_DATA_WRITE_BULK = 0x13;
 
-        private const byte COMMAND_CONFIG_PID_CONTROLLER = 0x14;
+        private const byte COMMAND_INDICATE_BATT_VOLT = 0x14; 
         private const byte COMMAND_CALIBRATE_TDOA_TX = 0x15;
+        private const byte COMMAND_MOVE_WITH_PERIOD = 0x16;
+        private const byte COMMAND_ROTATE_WITH_PERIOD = 0x17;
+        private const byte COMMAND_TOGGLE_IR_LED = 0x18;    // Not used
+        private const byte COMMAND_REQUEST_PROXIMITY_RAW = 0x19;    // Not used
 
-        private const byte COMMAND_INDICATE_BATT_VOLT = 0x16;
+        private const byte COMMAND_READ_ROBOT_IDENTITY = 0x1A;
+        private const byte COMMAND_READ_NEIGHBORS_TABLE = 0x1B;
+        private const byte COMMAND_READ_ONEHOP_NEIGHBORS_TABLE = 0x1C;
+        private const byte COMMAND_READ_LOCATIONS_TABLE = 0x1D;
+        private const byte COMMAND_SELF_CORRECT_LOCATIONS_TABLE = 0x1E;
+        private const byte COMMAND_SELF_CORRECT_LOCATIONS_TABLE_EXCEPT_ROTATION_HOP = 0x1F;
+        private const byte COMMAND_GOTO_STATE = 0x20;
 
-        private const byte COMMAND_READ_ROBOT_IDENTITY = 0x17;
-        private const byte COMMAND_READ_NEIGHBORS_TABLE = 0x18;
-        private const byte COMMAND_READ_ONEHOP_NEIGHBORS_TABLE = 0x19;
-        private const byte COMMAND_READ_LOCATIONS_TABLE = 0x1A;
-        private const byte COMMAND_SELF_CORRECT_LOCATIONS_TABLE = 0x1B;
-        private const byte COMMAND_SELF_CORRECT_LOCATIONS_TABLE_EXCEPT_ROTATION_HOP = 0x1C;
-        private const byte COMMAND_GOTO_STATE = 0x1D;
+        private const byte COMMAND_MOVE_WITH_DISTANCE = 0x21;
+        private const byte COMMAND_ROTATE_WITH_ANGLE = 0x22;
 
-        private const byte COMMAND_MOVE_WITH_PERIOD = 0x1E;
-        private const byte COMMAND_ROTATE_WITH_PERIOD = 0x1F;
-        private const byte COMMAND_MOVE_WITH_DISTANCE = 0x20;
-        private const byte COMMAND_ROTATE_WITH_ANGLE = 0x21;
-
-        private const byte COMMAND_TOGGLE_IR_LED = 0x22;
-        private const byte COMMAND_REQUEST_PROXIMITY_RAW = 0x23;
-        private const byte COMMAND_CONFIG_STEP_CONTROLLER = 0x24;
-        private const byte COMMAND_CONFIG_PID_CONTROLLER_FORWRAD = 0x25;
+        private const byte COMMAND_CONFIG_STEP_CONTROLLER = 0x23;
+        private const byte COMMAND_CONFIG_STEP_FORWARD_CONTROLLER = 0x24;
 
         enum e_MotorDirection
         {
@@ -248,6 +261,8 @@ namespace SwarmRobotControlAndCommunication
             addRobotIdListToCombobox(ref this.TXAddressCalibrationSelectBox, ROBOT_ID_LIST);
             addRobotIdListToCombobox(ref this.TXAdrrComboBoxDebug, ROBOT_ID_LIST);
 
+            addRobotStatesToCombobox(ref this.robotStateSelectBox, ROBOT_STATES);
+
             listTupeEepromTable = new List<Tuple<UInt32, UInt16[]>>();
 
             listTupeEepromTable.Add(new Tuple<uint, ushort[]>(0x0080, SineTableBlock0));
@@ -271,6 +286,13 @@ namespace SwarmRobotControlAndCommunication
             for (int i = 0; i < content.Length; i++)
                 target.Items.Add(content[i].ToString("X8"));
             target.Items.Add(DEFAULT_ROBOT_ID);
+            target.SelectedIndex = 0;
+        }
+        private void addRobotStatesToCombobox(ref ComboBox target, String[] content)
+        {
+            target.Items.Clear();
+            foreach (var item in content)
+                target.Items.Add(item);
             target.SelectedIndex = 0;
         }
 
@@ -1972,64 +1994,7 @@ namespace SwarmRobotControlAndCommunication
         #endregion
 
         #region Testing Controllers
-        private void SetPIDParameterButton_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                byte[] messageContent = new byte[17];
-                float fData;
-                Int32 i32Data;
-
-                /* P */
-                float.TryParse(this.PIDkPTextBox.Text, out fData);
-                i32Data = (Int32)(fData * 65536);
-                messageContent[0] = (byte)((i32Data >> 24) & 0xFF);
-                messageContent[1] = (byte)((i32Data >> 16) & 0xFF);
-                messageContent[2] = (byte)((i32Data >> 8) & 0xFF);
-                messageContent[3] = (byte)(i32Data & 0xFF);
-
-                /* I */
-                float.TryParse(this.PIDkITextBox.Text, out fData);
-                i32Data = (Int32)(fData * 65536);
-                messageContent[4] = (byte)((i32Data >> 24) & 0xFF);
-                messageContent[5] = (byte)((i32Data >> 16) & 0xFF);
-                messageContent[6] = (byte)((i32Data >> 8) & 0xFF);
-                messageContent[7] = (byte)(i32Data & 0xFF);
-
-                /* D */
-                float.TryParse(this.PIDkDTextBox.Text, out fData);
-                i32Data = (Int32)(fData * 65536);
-                messageContent[8] = (byte)((i32Data >> 24) & 0xFF);
-                messageContent[9] = (byte)((i32Data >> 16) & 0xFF);
-                messageContent[10] = (byte)((i32Data >> 8) & 0xFF);
-                messageContent[11] = (byte)(i32Data & 0xFF);
-
-                /* ref */
-                float.TryParse(this.PIDrefTextBox.Text, out fData);
-                i32Data = (Int32)(fData * 65536);
-                messageContent[12] = (byte)((i32Data >> 24) & 0xFF);
-                messageContent[13] = (byte)((i32Data >> 16) & 0xFF);
-                messageContent[14] = (byte)((i32Data >> 8) & 0xFF);
-                messageContent[15] = (byte)(i32Data & 0xFF);
-
-                /* Run flag */
-                messageContent[16] = 0;
-           
-                SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_CONFIG_PID_CONTROLLER);
-                SwarmMessage message = new SwarmMessage(header, messageContent);
-
-                if (theControlBoard.sendMessageToRobot(message))
-                    setStatusBarContent("Transmit command Rotate To Angle " + this.PIDrefTextBox.Text + " susscess!");
-                else
-                    setStatusBarContent("Failed to configure PID Controller...");
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Set PID Button: " + ex.Message);
-            }
-        }
-
-        private void ConfigStepControllerButton_Click(object sender, RoutedEventArgs e)
+        private void ConfigStepRotateControllerButton_Click(object sender, RoutedEventArgs e)
         {
             try
             {
@@ -2055,7 +2020,7 @@ namespace SwarmRobotControlAndCommunication
                 SwarmMessage message = new SwarmMessage(header, messageContent);
 
                 theControlBoard.broadcastMessageToRobot(message);
-                setStatusBarContent("Step: broadcast command Rotate To Angle " + this.PIDrefTextBox.Text + " done!");
+                setStatusBarContent("Step: broadcast command Rotate To Angle " + this.AngleRefTextBox.Text + " done!");
             }
             catch (Exception ex)
             {
@@ -2063,59 +2028,35 @@ namespace SwarmRobotControlAndCommunication
             }
         }
 
-        private void SetPIDFWParameterButton_Click(object sender, RoutedEventArgs e)
+        private void ConfigStepForwardControllerButton_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                byte[] messageContent = new byte[17];
-                float fData;
-                Int32 i32Data;
+                int length = 6;
+                byte[] messageContent = new byte[length];
 
-                /* P */
-                float.TryParse(this.PIDFWkPTextBox.Text, out fData);
-                i32Data = (Int32)(fData * 65536);
-                messageContent[0] = (byte)((i32Data >> 24) & 0xFF);
-                messageContent[1] = (byte)((i32Data >> 16) & 0xFF);
-                messageContent[2] = (byte)((i32Data >> 8) & 0xFF);
-                messageContent[3] = (byte)(i32Data & 0xFF);
+                /* Active ms Motor Left */
+                messageContent[0] = Convert.ToByte(this.FwActiveLeftMsTextBox.Text);
 
-                /* I */
-                float.TryParse(this.PIDFWkITextBox.Text, out fData);
-                i32Data = (Int32)(fData * 65536);
-                messageContent[4] = (byte)((i32Data >> 24) & 0xFF);
-                messageContent[5] = (byte)((i32Data >> 16) & 0xFF);
-                messageContent[6] = (byte)((i32Data >> 8) & 0xFF);
-                messageContent[7] = (byte)(i32Data & 0xFF);
+                /* Active ms Motor Right */
+                messageContent[1] = Convert.ToByte(this.FwActiveRightMsTextBox.Text);
 
-                /* D */
-                float.TryParse(this.PIDFWkDTextBox.Text, out fData);
-                i32Data = (Int32)(fData * 65536);
-                messageContent[8] = (byte)((i32Data >> 24) & 0xFF);
-                messageContent[9] = (byte)((i32Data >> 16) & 0xFF);
-                messageContent[10] = (byte)((i32Data >> 8) & 0xFF);
-                messageContent[11] = (byte)(i32Data & 0xFF);
+                /* Forward delay ms */
+                Int32 i32Data = Convert.ToInt32(this.FwDelayMsTextBox.Text);
+                messageContent[2] = (byte)((i32Data >> 24) & 0xFF);
+                messageContent[3] = (byte)((i32Data >> 16) & 0xFF);
+                messageContent[4] = (byte)((i32Data >> 8) & 0xFF);
+                messageContent[5] = (byte)(i32Data & 0xFF);
 
-                /* step */
-                i32Data = Convert.ToInt32(this.PIDFWstepTextBox.Text);
-                messageContent[12] = (byte)((i32Data >> 24) & 0xFF);
-                messageContent[13] = (byte)((i32Data >> 16) & 0xFF);
-                messageContent[14] = (byte)((i32Data >> 8) & 0xFF);
-                messageContent[15] = (byte)(i32Data & 0xFF);
-
-                /* speed */
-                messageContent[16] = Convert.ToByte(this.PIDFWspeedTextBox.Text);
-
-                SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_CONFIG_PID_CONTROLLER_FORWRAD);
+                SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_CONFIG_STEP_FORWARD_CONTROLLER);
                 SwarmMessage message = new SwarmMessage(header, messageContent);
 
-                if (theControlBoard.sendMessageToRobot(message))
-                    setStatusBarContent("Transmit command forward PID " + this.PIDrefTextBox.Text + " susscess!");
-                else
-                    setStatusBarContent("Failed to configure PID FW Controller...");
+                theControlBoard.broadcastMessageToRobot(message);
+                setStatusBarContent("Boardcast command step forward controller susscess!");
             }
             catch (Exception ex)
             {
-                throw new Exception("Set PID FW Button: " + ex.Message);
+                throw new Exception("Set Step Forward Button: " + ex.Message);
             }
         }
         #endregion
