@@ -58,9 +58,10 @@ namespace SwarmRobotControlAndCommunication
             "State 7: Locomotion",
             "State 8: Rotate To Angle Use Step Controller",
             "State 9: Forward In Period Use Step Controller",
-            "State 10: Test Motor Left",
-            "State 11: Test Motor Right"
-                                        };
+            "State 10: Forward In Rotate Use Step Controller",
+            "State 11: Test Forward In Rotate Pure Controller",
+            "State 12: Test PID Controller"
+         };
 
         //------------Commands from Robots---------------------
         private const byte ROBOT_RESPONSE_TO_HOST_OK = 0x0A;
@@ -107,7 +108,9 @@ namespace SwarmRobotControlAndCommunication
         private const byte COMMAND_ROTATE_WITH_ANGLE = 0x22;
 
         private const byte COMMAND_CONFIG_STEP_CONTROLLER = 0x23;
-        private const byte COMMAND_CONFIG_STEP_FORWARD_CONTROLLER = 0x24;
+        private const byte COMMAND_CONFIG_STEP_FORWARD_IN_PERIOD_CONTROLLER = 0x24;
+        private const byte COMMAND_CONFIG_STEP_FORWARD_IN_ROTATE_CONTOLLER = 0x25;
+        private const byte COMMAND_CONFIG_PID_CONTROLLER = 0x26;
 
         enum e_MotorDirection
         {
@@ -2011,10 +2014,7 @@ namespace SwarmRobotControlAndCommunication
                 float fData;
                 float.TryParse(this.AngleRefTextBox.Text, out fData);
                 Int32 i32Data = (Int32)(fData * 65536);
-                messageContent[2] = (byte)((i32Data >> 24) & 0xFF);
-                messageContent[3] = (byte)((i32Data >> 16) & 0xFF);
-                messageContent[4] = (byte)((i32Data >> 8) & 0xFF);
-                messageContent[5] = (byte)(i32Data & 0xFF);
+                parse32bitTo4Bytes(messageContent, 2, i32Data);
 
                 SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_CONFIG_STEP_CONTROLLER);
                 SwarmMessage message = new SwarmMessage(header, messageContent);
@@ -2028,7 +2028,7 @@ namespace SwarmRobotControlAndCommunication
             }
         }
 
-        private void ConfigStepForwardControllerButton_Click(object sender, RoutedEventArgs e)
+        private void ConfigStepForwardInPeriodControllerButton_Click(object sender, RoutedEventArgs e)
         {
             try
             {
@@ -2043,20 +2043,88 @@ namespace SwarmRobotControlAndCommunication
 
                 /* Forward delay ms */
                 Int32 i32Data = Convert.ToInt32(this.FwDelayMsTextBox.Text);
-                messageContent[2] = (byte)((i32Data >> 24) & 0xFF);
-                messageContent[3] = (byte)((i32Data >> 16) & 0xFF);
-                messageContent[4] = (byte)((i32Data >> 8) & 0xFF);
-                messageContent[5] = (byte)(i32Data & 0xFF);
+                parse32bitTo4Bytes(messageContent, 2, i32Data);
 
-                SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_CONFIG_STEP_FORWARD_CONTROLLER);
+                SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_CONFIG_STEP_FORWARD_IN_PERIOD_CONTROLLER);
                 SwarmMessage message = new SwarmMessage(header, messageContent);
 
                 theControlBoard.broadcastMessageToRobot(message);
-                setStatusBarContent("Boardcast command step forward controller susscess!");
+                setStatusBarContent("Boardcast command step forward in period controller susscess!");
             }
             catch (Exception ex)
             {
                 throw new Exception("Set Step Forward Button: " + ex.Message);
+            }
+        }
+
+        private void ConfigStepForwardInRotateControllerButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                int length = 7;
+                byte[] messageContent = new byte[length];
+
+                /* Motors Activate ms */
+                messageContent[0] = Convert.ToByte(this.FwRtMotorsActivateMsTextBox.Text);
+
+                /* Motors Pause ms */
+                messageContent[1] = Convert.ToByte(this.FwRtMotorsPauseMsTextBox.Text);
+
+                /* Step Count */
+                messageContent[2] = Convert.ToByte(this.FwRtStepCountTextBox.Text);
+
+                /* Step Angle */
+                float fData;
+                float.TryParse(this.FwRtStepAngleTextBox.Text, out fData);
+                Int32 i32Data = (Int32)(fData * 65536);
+                parse32bitTo4Bytes(messageContent, 3, i32Data);
+
+                SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_CONFIG_STEP_FORWARD_IN_ROTATE_CONTOLLER);
+                SwarmMessage message = new SwarmMessage(header, messageContent);
+
+                theControlBoard.broadcastMessageToRobot(message);
+                setStatusBarContent("Boardcast command step forward in rotate controller susscess!");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Set Step Forward Rotate Button: " + ex.Message);
+            }
+        }
+
+        private void ConfigPIDControllerButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                int length = 12;
+                byte[] messageContent = new byte[length];
+
+                float fData;
+                Int32 i32Data;
+
+                /* kP */
+                float.TryParse(this.GrainPTextBox.Text, out fData);
+                i32Data = (Int32)(fData * 65536);
+                parse32bitTo4Bytes(messageContent, 0, i32Data);
+
+                /* kI */
+                float.TryParse(this.GrainITextBox.Text, out fData);
+                i32Data = (Int32)(fData * 65536);
+                parse32bitTo4Bytes(messageContent, 4, i32Data);
+
+                /* kD */
+                float.TryParse(this.GrainDTextBox.Text, out fData);
+                i32Data = (Int32)(fData * 65536);
+                parse32bitTo4Bytes(messageContent, 8, i32Data);
+
+                SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_CONFIG_PID_CONTROLLER);
+                SwarmMessage message = new SwarmMessage(header, messageContent);
+
+                theControlBoard.broadcastMessageToRobot(message);
+                setStatusBarContent("PID: broadcast forward command done!");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("PID Button: " + ex.Message);
             }
         }
         #endregion
@@ -2893,7 +2961,32 @@ namespace SwarmRobotControlAndCommunication
             }
         }
         #endregion
+    
+        #region Helper Data manipulation methods
+        private void parse32bitTo4Bytes(byte[] pBuff, int offset, Int32 i32Data)
+        {
+            pBuff[offset] = (byte)((i32Data >> 24) & 0xFF);
+            pBuff[offset + 1] = (byte)((i32Data >> 16) & 0xFF);
+            pBuff[offset + 2] = (byte)((i32Data >> 8) & 0xFF);
+            pBuff[offset + 3] = (byte)(i32Data & 0xFF);
+        }
 
+        private Int32 construct4Byte(byte[] pBuff, int offset)
+        {
+            return ((pBuff[offset] << 24) | (pBuff[offset + 1] << 16) | (pBuff[offset + 2] << 8) | pBuff[offset + 3]);
+        }
+
+        private void parse16bitTo2Bytes(byte[] pBuff, int offset, Int16 i16Data)
+        {
+            pBuff[offset] = (byte)((i16Data >> 8) & 0xFF);
+            pBuff[offset + 1] = (byte)(i16Data & 0xFF);
+        }
+
+        private Int16 construct2Byte(byte[] pBuff, int offset)
+        {
+            return (Int16)((pBuff[offset] << 8) | pBuff[offset + 1]);
+        }
+        #endregion
     }
 
     #region IValueConverter Members

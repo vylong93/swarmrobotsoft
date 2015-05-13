@@ -388,6 +388,8 @@
                         <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
+                        <RowDefinition Height="28"/>
+                        <RowDefinition Height="28"/>
                         <RowDefinition/>
                     </Grid.RowDefinitions>
                     <StackPanel x:Name="TxAddressPanel0" Grid.Column="0" Grid.Row="0" 
@@ -487,23 +489,49 @@
                         <Label Content="Stp ms" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0" Width="47"/>
                         <TextBox x:Name="StepPauseInMsTextBox" Text="50" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="255" local:TextBoxHelpers.MinValue="0"
                                  Style="{DynamicResource PathTextbox}" Width="30" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
-                        <Label Content="Alpha (Deg)" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0" Width="73"/>
+                        <Label Content="Alpha (Deg)" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
                         <TextBox x:Name="AngleRefTextBox" Text="90" Style="{DynamicResource PathTextbox}" Width="33" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
                         <Button x:Name="ConfigStepRotateControllerButton" Content="Rot" Grid.Row="4" Width="36" 
                             Margin="4.2,0,0,0" Height="24" VerticalAlignment="Top" FlowDirection="RightToLeft" HorizontalAlignment="Left" Click="ConfigStepRotateControllerButton_Click"/>
                     </StackPanel>
-                    <StackPanel x:Name="StepForwardControllerPanel" Grid.Row="11" Margin="0,0,-0.2,0" VerticalAlignment="Bottom"
+                    <StackPanel x:Name="StepForwardInPeriodControllerPanel" Grid.Row="11" Margin="0,0,-0.2,0" VerticalAlignment="Bottom"
                                 Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
-                        <Label Content="Act ms: M1" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
+                        <Label Content="Act ms M1" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0" Width="69"/>
                         <TextBox x:Name="FwActiveLeftMsTextBox" Text="20" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="255" local:TextBoxHelpers.MinValue="0"
                                  Style="{DynamicResource PathTextbox}" Width="30" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
                         <Label Content="M2" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
                         <TextBox x:Name="FwActiveRightMsTextBox" Text="20" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="255" local:TextBoxHelpers.MinValue="0"
                                  Style="{DynamicResource PathTextbox}" Width="30" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
-                        <Label Content="Delay ms:" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
-                        <TextBox x:Name="FwDelayMsTextBox" Text="1000" Style="{DynamicResource PathTextbox}" Width="45" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
-                        <Button x:Name="ConfigStepForwardControllerButton" Content="Fw" Grid.Row="4" Width="36" 
-                            Margin="4.2,0,0,0" Height="24" VerticalAlignment="Center" FlowDirection="RightToLeft" HorizontalAlignment="Left" Click="ConfigStepForwardControllerButton_Click"/>
+                        <Label Content="Delay ms" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
+                        <TextBox x:Name="FwDelayMsTextBox" Text="1000" Style="{DynamicResource PathTextbox}" Width="49" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                        <Button x:Name="ConfigStepForwardInPeriodControllerButton" Content="Fw" Grid.Row="4" Width="36" 
+                            Margin="4.2,0,0,0" Height="24" VerticalAlignment="Center" FlowDirection="RightToLeft" HorizontalAlignment="Left" Click="ConfigStepForwardInPeriodControllerButton_Click"/>
+                    </StackPanel>
+                    <StackPanel x:Name="StepForwardInRotateControllerPanel" Grid.Row="12" Margin="0,0,-0.2,0" VerticalAlignment="Bottom"
+                                Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                        <Label Content="Act/Stop ms" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
+                        <TextBox x:Name="FwRtMotorsActivateMsTextBox" Text="50" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="255" local:TextBoxHelpers.MinValue="0"
+                                 Style="{DynamicResource PathTextbox}" Width="25" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                        <Label Content="/" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
+                        <TextBox x:Name="FwRtMotorsPauseMsTextBox" Text="75" local:TextBoxHelpers.IsNumeric="True" local:TextBoxHelpers.MaxValue="255" local:TextBoxHelpers.MinValue="0"
+                                 Style="{DynamicResource PathTextbox}" Width="25" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                        <Label Content="Step" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
+                        <TextBox x:Name="FwRtStepCountTextBox" Text="4" Style="{DynamicResource PathTextbox}" Width="25" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                        <Label Content="Deg" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
+                        <TextBox x:Name="FwRtStepAngleTextBox" Text="22.5" Style="{DynamicResource PathTextbox}" Width="34" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                        <Button x:Name="ConfigStepForwardInRotateControllerButton" Content="FR" Grid.Row="4" Width="36" 
+                            Margin="4.2,0,0,0" Height="24" VerticalAlignment="Center" FlowDirection="RightToLeft" HorizontalAlignment="Left" Click="ConfigStepForwardInRotateControllerButton_Click"/>
+                    </StackPanel>
+                    <StackPanel x:Name="PIDControllerPanel" Grid.Row="13" Margin="0,0,-0.2,0" VerticalAlignment="Bottom"
+                                Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
+                        <Label Content="kP" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
+                        <TextBox x:Name="GrainPTextBox" Text="1.0" Width="50" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                        <Label Content="kI" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
+                        <TextBox x:Name="GrainITextBox" Text="0.0" Width="50" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                        <Label Content="kD" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
+                        <TextBox x:Name="GrainDTextBox" Text="0.0" Width="50" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
+                        <Button x:Name="ConfigPIDControllerButton" Content="PID Forward" Grid.Row="4" Width="84" 
+                            Margin="5,0,0,0" Height="24" VerticalAlignment="Center" FlowDirection="RightToLeft" HorizontalAlignment="Left" Click="ConfigPIDControllerButton_Click"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
