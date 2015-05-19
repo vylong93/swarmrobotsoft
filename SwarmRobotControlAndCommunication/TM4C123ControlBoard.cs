@@ -366,7 +366,8 @@ namespace SwarmRobotControlAndCommunication
             }
             catch (Exception ex)
             {
-                throw new Exception("tryToReceivedDataFromRobot: " + ex.Message);
+                //throw new Exception("tryToReceivedDataFromRobot: " + ex.Message);
+                return false;
             }
         }
 

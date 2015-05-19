@@ -112,6 +112,8 @@ namespace SwarmRobotControlAndCommunication
         private const byte COMMAND_CONFIG_STEP_FORWARD_IN_ROTATE_CONTOLLER = 0x25;
         private const byte COMMAND_CONFIG_PID_CONTROLLER = 0x26;
 
+        private const byte COMMAND_UPDATE_GRADIENT_MAP = 0x27;
+
         enum e_MotorDirection
         {
             MOTOR_FORWARD_DIRECTION = 0,
@@ -2786,21 +2788,46 @@ namespace SwarmRobotControlAndCommunication
             List<float> xAxis = new List<float>();
             List<float> yAxis = new List<float>();
             List<UInt32> ui32ID = new List<UInt32>();
+            List<float> theta = new List<float>();
 
+            int lineCounter = 1;
             string line;
             while ((line = file.ReadLine()) != null)
             {
+                lineCounter++;
+
                 Match match = Regex.Match(line, @"^Robot:(0x[A-Fa-f0-9]+)\s\W([+-]?[0-9]*(?:\.[0-9]+)?);\s([+-]?[0-9]*(?:\.[0-9]+)?)\W$", RegexOptions.IgnoreCase);
 
                 if (match.Success)
                 {
                     if (!match.Groups[1].Value.Equals("0x000000"))
                     {
-                        ui32ID.Add(UInt32.Parse(match.Groups[1].Value.Substring(2), System.Globalization.NumberStyles.HexNumber));
-                        xAxis.Add(float.Parse(match.Groups[2].Value));
-                        yAxis.Add(float.Parse(match.Groups[3].Value));
-
-                        isValidFile = true;
+                        lineCounter++;
+                        line = file.ReadLine();
+                        if (line == null)
+                        {
+                            isValidFile = false;
+                            break;
+                        }
+                        Match match2 = Regex.Match(line, @"^Robot direction\s=\s([+-]?[0-9]*(?:\.[0-9]+)?)\sdegree$", RegexOptions.IgnoreCase);
+                        if (match2.Success)
+                        {
+                            ui32ID.Add(UInt32.Parse(match.Groups[1].Value.Substring(2), System.Globalization.NumberStyles.HexNumber));
+                            xAxis.Add(float.Parse(match.Groups[2].Value));
+                            yAxis.Add(float.Parse(match.Groups[3].Value));
+                            theta.Add(float.Parse(match2.Groups[1].Value));
+                            isValidFile = true;
+                        }
+                        else
+                        {
+                            isValidFile = false;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        isValidFile = false;
+                        break;
                     }
                 }
             }
@@ -2812,14 +2839,20 @@ namespace SwarmRobotControlAndCommunication
                 float[] Plot_dataX = new float[xAxis.Count];
                 float[] Plot_dataY = new float[yAxis.Count];
                 UInt32[] listID = new UInt32[ui32ID.Count];
+                float[] listTheta = new float[theta.Count];
 
                 xAxis.CopyTo(Plot_dataX);
                 yAxis.CopyTo(Plot_dataY);
                 ui32ID.CopyTo(listID);
+                theta.CopyTo(listTheta);
 
-                OxyplotWindow oxyplotWindow = new OxyplotWindow(listID, Plot_dataX, Plot_dataY, title, OxyplotWindow.ScatterPointAndLinePlot);
+                OxyplotWindow oxyplotWindow = new OxyplotWindow(listID, listTheta, Plot_dataX, Plot_dataY, title, OxyplotWindow.ScatterPointAndLinePlot);
 
                 oxyplotWindow.Show();
+            }
+            else
+            {
+                MessageBox.Show("plotLocationsTable:: Invalid line structure at line " + lineCounter);
             }
         }
 
@@ -2960,6 +2993,206 @@ namespace SwarmRobotControlAndCommunication
                 throw new Exception("moveDistance " + ex.Message);
             }
         }
+
+        BackgroundWorker bgwProgramGradientMap;
+        private void updateGradientMapButton_Click(object sender, RoutedEventArgs e)
+        {
+            bgwProgramGradientMap = new BackgroundWorker();
+            bgwProgramGradientMap.WorkerReportsProgress = true;
+            bgwProgramGradientMap.WorkerSupportsCancellation = false;
+
+            bgwProgramGradientMap.DoWork += new DoWorkEventHandler(bgwProgramGradientMap_DoWork);
+            bgwProgramGradientMap.ProgressChanged += new ProgressChangedEventHandler(bgwProgramGradientMap_ProgressChanged);
+            bgwProgramGradientMap.RunWorkerCompleted += new RunWorkerCompletedEventHandler(bgwProgramGradientMap_RunWorkerCompleted);
+
+            // TODO: get from txt file ============
+            UInt32 ui32Row = 11;
+            UInt32 ui32Column = 8;
+            sbyte offsetHeight = -1;
+            sbyte offsetWidth = -1;
+            UInt32 trappedCount = 3;
+            sbyte[] pGradientMap = new sbyte[11 * 8]{	
+                0, 0,  0,  0,  0,  0, 0, 0,
+                0, 1,  1,  1,  1,  1, 1, 0,
+                0, 1, -1,  1, -2, -2, 1, 0,
+                0, 1, -1, -1,  1, -2, 1, 0,
+                0, 1, -1,  1,  1,  1, 1, 0,
+                0, 1,  1,  1,  1,  1, 1, 0,
+                0, 1, -3,  1, -3, -3, 1, 0,
+                0, 1, -3,  1,  1, -3, 1, 0,
+                0, 1, -3, -3, -3, -3, 1, 0,
+                0, 1,  1,  1,  1,  1, 1, 0,
+                0, 0,  0,  0,  0,  0, 0, 0 };
+
+            sendStartUpdateGradientMapPacket(ui32Row, ui32Column, offsetHeight, offsetWidth, trappedCount);
+
+            toggleAllButtonStatusExceptSelected((Button)sender);
+            setStatusBarContentAndColor("updating gradient map: 0%", Brushes.Indigo);
+            bgwProgramGradientMap.RunWorkerAsync(pGradientMap);
+        }
+        private void sendStartUpdateGradientMapPacket(UInt32 ui32Row, UInt32 ui32Column, sbyte offsetHeight, sbyte offsetWidth, UInt32 ui32TrappedCount)
+        {
+            // COMMAND_UPDATE_GRADIENT_MAP: <4-byte row><4-byte column><1-byte offsetHeight><1-byte offsetWidth>
+            Byte[] startUpdateGradientMapPacket = new Byte[14];
+
+            parse32bitTo4Bytes(startUpdateGradientMapPacket, 0, (Int32)ui32Row);
+            parse32bitTo4Bytes(startUpdateGradientMapPacket, 4, (Int32)ui32Column);
+            startUpdateGradientMapPacket[8] = (byte)offsetHeight;
+            startUpdateGradientMapPacket[9] = (byte)offsetWidth;
+            parse32bitTo4Bytes(startUpdateGradientMapPacket, 10, (Int32)ui32TrappedCount);
+
+            SwarmMessageHeader headerStartUpdateGradientMapMessage = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_UPDATE_GRADIENT_MAP);
+            SwarmMessage messageStartUpdateGradientMap = new SwarmMessage(headerStartUpdateGradientMapMessage, startUpdateGradientMapPacket);
+            theControlBoard.broadcastMessageToRobot(messageStartUpdateGradientMap);
+        }
+        private class GradientMapFrameFormat
+        {
+            public const int GRADIENT_MAP_PACKET_HEADER_LENGTH = 6;
+            public const int GRADIENT_MAP_PACKET_FULL_DATA_LENGTH = 8;
+            public const int GRADIENT_MAP_PACKET_FULL_LENGTG = 14; // GRADIENT_MAP_PACKET_HEADER_LENGTH + GRADIENT_MAP_PACKET_FULL_DATA_LENGTH
+            
+            public UInt32 startIndex;
+            public byte checksum;
+            public sbyte[] data;
+
+            public byte[] ToByteArray() 
+            {
+                byte[] byteArray = new byte[4 + 1 + 1 + data.Length];
+                byteArray[0] = (byte)((startIndex >> 24) & 0xFF);
+                byteArray[1] = (byte)((startIndex >> 16) & 0xFF);
+                byteArray[2] = (byte)((startIndex >> 8) & 0xFF);
+                byteArray[3] = (byte)(startIndex & 0xFF);
+                byteArray[4] = (byte)data.Length;
+                byteArray[5] = checksum;
+                for (int i = 0; i < data.Length; i++)
+                    byteArray[i + GRADIENT_MAP_PACKET_HEADER_LENGTH] = (byte)data[i];
+                return byteArray;
+            }
+        };
+        private void bgwProgramGradientMap_DoWork(object sender, DoWorkEventArgs e)
+        {
+            sbyte[] pGradientMap = (sbyte[])e.Argument;
+
+            // Allocated memory spaces
+            uint maxNumberOfDataFrame = (uint)pGradientMap.Length / GradientMapFrameFormat.GRADIENT_MAP_PACKET_FULL_DATA_LENGTH;
+            byte numberOfDataNotFitInOneFrame = (byte)(pGradientMap.Length % GradientMapFrameFormat.GRADIENT_MAP_PACKET_FULL_DATA_LENGTH);
+            int numberOfExtraFrame = (numberOfDataNotFitInOneFrame == 0) ? (0) : (1);
+            GradientMapFrameFormat[] arrayDataFrame = new GradientMapFrameFormat[maxNumberOfDataFrame + numberOfExtraFrame];
+
+            // Prepare all frame
+            UInt32 ui32PacketID = 0;
+            byte checkSum;
+            for (int i = 0; i < maxNumberOfDataFrame; i++)
+            {
+                arrayDataFrame[i] = new GradientMapFrameFormat();
+                arrayDataFrame[i].startIndex = ui32PacketID;
+
+                arrayDataFrame[i].data = new sbyte[GradientMapFrameFormat.GRADIENT_MAP_PACKET_FULL_DATA_LENGTH];
+
+                checkSum = 0;
+                for (int j = 0; j < arrayDataFrame[i].data.Length; j++)
+                {
+                    arrayDataFrame[i].data[j] = pGradientMap[arrayDataFrame[i].startIndex + j];
+                    checkSum = (byte)(checkSum + arrayDataFrame[i].data[j]);
+                }
+                checkSum = (byte)(checkSum + ((arrayDataFrame[i].startIndex >> 24) & 0xFF) + ((arrayDataFrame[i].startIndex >> 16) & 0xFF)
+                    + ((arrayDataFrame[i].startIndex >> 8) & 0xFF) + ((arrayDataFrame[i].startIndex) & 0xFF) + (byte)arrayDataFrame[i].data.Length);
+                arrayDataFrame[i].checksum = (byte)(~checkSum + 1);
+
+                ui32PacketID += (uint)arrayDataFrame[i].data.Length;
+            }
+
+            // Prepare extra frame if need
+            if (numberOfExtraFrame == 1)
+            {
+                arrayDataFrame[maxNumberOfDataFrame] = new GradientMapFrameFormat();
+                arrayDataFrame[maxNumberOfDataFrame].startIndex = ui32PacketID;
+
+                arrayDataFrame[maxNumberOfDataFrame].data = new sbyte[numberOfDataNotFitInOneFrame];
+                checkSum = 0;
+                for (int j = 0; j < arrayDataFrame[maxNumberOfDataFrame].data.Length; j++)
+                {
+                    arrayDataFrame[maxNumberOfDataFrame].data[j] = pGradientMap[arrayDataFrame[maxNumberOfDataFrame].startIndex + j];
+                    checkSum = (byte)(checkSum + arrayDataFrame[maxNumberOfDataFrame].data[j]);
+                }
+                checkSum = (byte)(checkSum + ((arrayDataFrame[maxNumberOfDataFrame].startIndex >> 24) & 0xFF)
+                    + ((arrayDataFrame[maxNumberOfDataFrame].startIndex >> 16) & 0xFF)
+                    + ((arrayDataFrame[maxNumberOfDataFrame].startIndex >> 8) & 0xFF)
+                    + ((arrayDataFrame[maxNumberOfDataFrame].startIndex) & 0xFF)
+                    + (byte)arrayDataFrame[maxNumberOfDataFrame].data.Length);
+                arrayDataFrame[maxNumberOfDataFrame].checksum = (byte)(~checkSum + 1);
+
+                ui32PacketID += (uint)arrayDataFrame[maxNumberOfDataFrame].data.Length;
+            }
+
+            // Program Packet
+            const int SINGLE_PACKET_TIMEOUT_US = 1000000;
+            const int UPDATE_PACKET_WAIT_TIMES = 15;
+
+            const int DATA_FRAME_NACK_WAIT_TIME = 15; // unit ms
+            const int BACKWARD_STEP_FOR_RESEND_PACKET = 4;
+            const int NUMBER_OF_RESEND_LAST_PACKET = 8;
+
+            byte[] receivedDataBuffer = new byte[2];
+            for (int i = 0; i < arrayDataFrame.Length; )
+            {
+                bgwProgramGradientMap.ReportProgress(i * 100 / arrayDataFrame.Length);
+
+                if (i == (arrayDataFrame.Length - 1))
+                {
+                    for (int k = 0; k < NUMBER_OF_RESEND_LAST_PACKET; k++)
+                    {
+                        theControlBoard.broadcastDataToRobot(arrayDataFrame[i].ToByteArray());
+                        if (theControlBoard.tryToReceivedDataFromRobot(receivedDataBuffer, (uint)receivedDataBuffer.Length, DATA_FRAME_NACK_WAIT_TIME))
+                        {
+                            // Received NACK
+                            if (i < BACKWARD_STEP_FOR_RESEND_PACKET)
+                                i = 0;
+                            else
+                                i -= BACKWARD_STEP_FOR_RESEND_PACKET;
+
+                            break;
+                        }
+                    }
+                    i++;
+                }
+                else
+                {
+                    theControlBoard.broadcastDataToRobot(arrayDataFrame[i].ToByteArray());
+
+                    if (theControlBoard.tryToReceivedDataFromRobot(receivedDataBuffer, (uint)receivedDataBuffer.Length, DATA_FRAME_NACK_WAIT_TIME))
+                    {
+                        // Received NACK
+                        if (i < BACKWARD_STEP_FOR_RESEND_PACKET)
+                            i = 0;
+                        else
+                            i -= BACKWARD_STEP_FOR_RESEND_PACKET;
+                    }
+                    else
+                    {
+                        //TODO: prepare next packet
+                        i++;
+                    }
+                }
+            }
+
+            e.Result = 0;
+        }
+        private void bgwProgramGradientMap_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            setStatusBarContent(e.ProgressPercentage.ToString() + "% " + "::gradient map updating...");
+        }
+        private void bgwProgramGradientMap_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            setStatusBarAndButtonsAppearanceFromDeviceState();
+            setStatusBarContent("Gradient Map updated!");
+
+            bgwProgramGradientMap.DoWork -= bgwProgramGradientMap_DoWork;
+            bgwProgramGradientMap.ProgressChanged -= bgwProgramGradientMap_ProgressChanged;
+            bgwProgramGradientMap.RunWorkerCompleted -= bgwProgramGradientMap_RunWorkerCompleted;
+            bgwProgramGradientMap = null;
+        }
+
         #endregion
     
         #region Helper Data manipulation methods

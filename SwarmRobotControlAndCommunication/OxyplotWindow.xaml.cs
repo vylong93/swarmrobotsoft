@@ -34,16 +34,16 @@ namespace SwarmRobotControlAndCommunication
 
         public delegate PlotModel delegatePolyPlot(UInt32[] data, string Title);
         public delegate PlotModel delegateScatterPointPlot(float[] dataX, float[] dataY, string Title);
-        public delegate PlotModel delegateScatterPointAndLinePlot(UInt32[] id, float[] dataX, float[] dataY, string Title);
+        public delegate PlotModel delegateScatterPointAndLinePlot(UInt32[] id, float[] theta, float[] dataX, float[] dataY, string Title);
 
-        public OxyplotWindow(UInt32[] id, float[] dataX, float[] dataY, String Title, delegateScatterPointAndLinePlot plot)
+        public OxyplotWindow(UInt32[] id, float[] theta, float[] dataX, float[] dataY, String Title, delegateScatterPointAndLinePlot plot)
         {
             InitializeComponent();
 
             //Binding Data Manually
             viewModel = new PlotWindowModel();
             DataContext = viewModel;
-            viewModel.PlotModel = plot(id, dataX, dataY, Title);
+            viewModel.PlotModel = plot(id, theta, dataX, dataY, Title);
 
             //NOTE: FormTitle will be used in OxyplotWindowTwoChart_Loaded() after this function return
             FormTitle = Title;
@@ -298,7 +298,7 @@ namespace SwarmRobotControlAndCommunication
             return plotModel1;
         }
 
-        public static PlotModel ScatterPointAndLinePlot(UInt32[] id, float[] dataX, float[] dataY, string Title)
+        public static PlotModel ScatterPointAndLinePlot(UInt32[] id, float[] theta, float[] dataX, float[] dataY, string Title)
         {
             List<OxyPlot.OxyColor> randomColor = new List<OxyPlot.OxyColor>();
             randomColor.Add(OxyColors.Red);
@@ -360,13 +360,23 @@ namespace SwarmRobotControlAndCommunication
                 plotModel1.Annotations.Add(pointAnnotation1);
             }
 
-            for (int i = 0; i < dataX.Length; i++)
+            for (int i = 0; i < theta.Length; i++)
             {
-                if (dataX[i] == 0 && dataY[i] == 0)
-                    continue;
-
                 var arrowAnnotation2 = new ArrowAnnotation();
-                arrowAnnotation2.EndPoint = new DataPoint(dataX[i], dataY[i]);
+                arrowAnnotation2.StrokeThickness = 3;
+                arrowAnnotation2.HeadLength = 3;
+                arrowAnnotation2.HeadWidth = 2;
+                
+                arrowAnnotation2.StartPoint = new DataPoint(dataX[i], dataY[i]);
+
+                DataPoint unitVector = new DataPoint(6.0, 0); // 1 is unit vector length
+                double angle = theta[i] * Math.PI / 180.0f;
+                double direction = Math.Atan2(Math.Sin(angle), Math.Cos(angle));
+                //g_RobotLocationsTable[i].vector.x = x * cosf(fAngle) - y * sinf(fAngle);
+                //g_RobotLocationsTable[i].vector.y = x * sinf(fAngle) + y * cosf(fAngle);
+                arrowAnnotation2.EndPoint = new DataPoint(unitVector.X * Math.Cos(direction) - unitVector.Y * Math.Sin(direction) + dataX[i],
+                    unitVector.X * Math.Sin(direction) + unitVector.Y * Math.Cos(direction) + dataY[i]);
+
                 //arrowAnnotation2.Text = "0x" + id[i].ToString("X6");
                 //arrowAnnotation2.TextPosition = new DataPoint(dataX[i], dataY[i]);
                 //arrowAnnotation2.TextHorizontalAlignment = OxyPlot.HorizontalAlignment.Left;
