@@ -1364,7 +1364,7 @@ namespace SwarmRobotControlAndCommunication
         }
         private void tableManipulation_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         { 
-                    if (e.Cancelled)
+            if (e.Cancelled)
             {
                 ArcSineTableStatusTextBox.Text = "0%";
                 SineTableStatusTextBox.Text = "0%";
@@ -2559,7 +2559,7 @@ namespace SwarmRobotControlAndCommunication
                         break;
 
                     case "Scan Robot Identity":
-                        scanRobotIdentity();
+                        scanRobotIdentity((Button)sender);
                         break;
 
                     default:
@@ -2871,7 +2871,32 @@ namespace SwarmRobotControlAndCommunication
             }
         }
 
-        private void scanRobotIdentity()
+        String mRobotIdentityTextFilePath;
+        private BackgroundWorker bgwScanRobotIdentity;
+        private void scanRobotIdentity(Button buttonClicked)
+        {
+            if (bgwScanRobotIdentity != null && bgwScanRobotIdentity.IsBusy)
+            {
+                bgwScanRobotIdentity.CancelAsync();
+                return;
+            }
+
+            bgwScanRobotIdentity = new BackgroundWorker();
+            bgwScanRobotIdentity.WorkerReportsProgress = true;
+            bgwScanRobotIdentity.WorkerSupportsCancellation = true;
+
+            bgwScanRobotIdentity.DoWork += new DoWorkEventHandler(bgwScanRobotIdentity_DoWork);
+            bgwScanRobotIdentity.ProgressChanged += new ProgressChangedEventHandler(bgwScanRobotIdentity_ProgressChanged);
+            bgwScanRobotIdentity.RunWorkerCompleted += new RunWorkerCompletedEventHandler(bgwScanRobotIdentity_RunWorkerCompleted);
+
+            mRobotIdentityTextFilePath = null;
+            this.debugCommandSelectBox.IsEnabled = false;
+            this.sendDebugCommandButton.Content = "Stop Scanning";
+            toggleAllButtonStatusExceptSelected(buttonClicked);
+            setStatusBarContentAndColor("0%::scanning robot identities...", Brushes.Indigo);
+            bgwScanRobotIdentity.RunWorkerAsync();
+        }
+        private void bgwScanRobotIdentity_DoWork(object sender, DoWorkEventArgs e)
         {
             String outputContent = "Robot Identities Information\n";
 
@@ -2883,6 +2908,12 @@ namespace SwarmRobotControlAndCommunication
 
             for (int i = 0; i < ROBOT_ID_LIST.Length; i++)
             {
+                if (bgwScanRobotIdentity.CancellationPending)
+                {
+                    e.Cancel = true;
+                    break;
+                }
+
                 Thread.Sleep(100);
                 setTxAddress(ROBOT_ID_LIST[i].ToString("X8"));
                 Thread.Sleep(100);
@@ -2891,7 +2922,7 @@ namespace SwarmRobotControlAndCommunication
                     SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_READ_ROBOT_IDENTITY);
                     SwarmMessage message = new SwarmMessage(header);
 
-                    theControlBoard.receivedDataFromRobot(receivedData, length, 1000, message);
+                    theControlBoard.receivedDataFromRobot(receivedData, length, 2000, message);
 
                     SwarmMessage rxMessage = SwarmMessage.ConstructFromByteArray(receivedData);
 
@@ -2920,24 +2951,52 @@ namespace SwarmRobotControlAndCommunication
                 catch (Exception ex)
                 {
                 }
+
+                bgwScanRobotIdentity.ReportProgress(i * 100 / ROBOT_ID_LIST.Length);
             }
             setTxAddress(DEFAULT_TX_ADDRESS);
 
             if (numberOfFoundRobot > 0)
             {
-                String fileFullPath = exportDataToTextFile("Output RobotIdentity", "RobotIdentity.txt", outputContent);
-
-                MessageBoxResult result = MessageBox.Show("Found " + numberOfFoundRobot + foundRobot, "Display Robot Identity Table", MessageBoxButton.YesNo, MessageBoxImage.Information);
-                if (result == MessageBoxResult.Yes)
-                {
-                    displayTextDataFile(fileFullPath);
-                    plotLocationsTable(fileFullPath);
-                }
+                mRobotIdentityTextFilePath = exportDataToTextFile("Output RobotIdentity", "RobotIdentity.txt", outputContent);
+                displayTextDataFile(mRobotIdentityTextFilePath);
+                e.Result = "Found " + numberOfFoundRobot + foundRobot;
             }
             else
             {
-                MessageBox.Show("Control Board didn't find any robot that matches the Robot's Id array!", "Robot Identity Table Request", MessageBoxButton.OK, MessageBoxImage.Warning);
+                mRobotIdentityTextFilePath = null;
+                e.Result = "Not found any robot";
             }
+        }
+        private void bgwScanRobotIdentity_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            setStatusBarContent(e.ProgressPercentage.ToString() + "% " + "::scanning robot identities...");
+        }
+        private void bgwScanRobotIdentity_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            setStatusBarAndButtonsAppearanceFromDeviceState();
+            
+            if (e.Cancelled)
+                setStatusBarContent("Scanning process is terminated.");
+            else
+            {
+                if (mRobotIdentityTextFilePath == null)
+                    MessageBox.Show((string)e.Result, "Scanning completed");
+                else
+                {
+                    MessageBoxResult result = MessageBox.Show((string)e.Result, "Do you want to plot the result?", MessageBoxButton.YesNo, MessageBoxImage.Information);
+                    if (result == MessageBoxResult.Yes)
+                        plotLocationsTable(mRobotIdentityTextFilePath);
+                }
+            }
+
+            this.sendDebugCommandButton.Content = "Send Command";
+            this.debugCommandSelectBox.IsEnabled = true;
+
+            bgwScanRobotIdentity.DoWork -= bgwScanRobotIdentity_DoWork;
+            bgwScanRobotIdentity.ProgressChanged -= bgwScanRobotIdentity_ProgressChanged;
+            bgwScanRobotIdentity.RunWorkerCompleted -= bgwScanRobotIdentity_RunWorkerCompleted;
+            bgwScanRobotIdentity = null;
         }
 
         private void rotateAngleButton_Click(object sender, RoutedEventArgs e)
@@ -3005,7 +3064,7 @@ namespace SwarmRobotControlAndCommunication
             bgwProgramGradientMap.ProgressChanged += new ProgressChangedEventHandler(bgwProgramGradientMap_ProgressChanged);
             bgwProgramGradientMap.RunWorkerCompleted += new RunWorkerCompletedEventHandler(bgwProgramGradientMap_RunWorkerCompleted);
 
-            // TODO: get from txt file ============
+            // TODO: get from txt file =======================
             UInt32 ui32Row = 11;
             UInt32 ui32Column = 8;
             sbyte offsetHeight = -1;
@@ -3023,11 +3082,12 @@ namespace SwarmRobotControlAndCommunication
                 0, 1, -3, -3, -3, -3, 1, 0,
                 0, 1,  1,  1,  1,  1, 1, 0,
                 0, 0,  0,  0,  0,  0, 0, 0 };
+            //================================================
 
             sendStartUpdateGradientMapPacket(ui32Row, ui32Column, offsetHeight, offsetWidth, trappedCount);
 
-            toggleAllButtonStatusExceptSelected((Button)sender);
-            setStatusBarContentAndColor("updating gradient map: 0%", Brushes.Indigo);
+            toggleAllButtonStatusExceptSelected(null); //(Button)sender);
+            setStatusBarContentAndColor("0%::gradient map updating", Brushes.Indigo);
             bgwProgramGradientMap.RunWorkerAsync(pGradientMap);
         }
         private void sendStartUpdateGradientMapPacket(UInt32 ui32Row, UInt32 ui32Column, sbyte offsetHeight, sbyte offsetWidth, UInt32 ui32TrappedCount)
