@@ -97,6 +97,13 @@
                           Template="{StaticResource SubMenuItem}"
                           Click="plotLocs_Click"/>
             </MenuItem>
+            <MenuItem Header="_Tools">
+                <MenuItem x:Name="imageGenerator"
+                          Header="_Image Generator"
+                          HorizontalAlignment="Left"
+                          Template="{StaticResource SubMenuItem}"
+                          Click="imageGenerator_Click" />
+            </MenuItem>
             <MenuItem Header="_Help">
                 <MenuItem x:Name="aboutMenuItem" 
                           Header="_About" 

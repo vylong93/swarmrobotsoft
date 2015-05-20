@@ -42,6 +42,33 @@
     <SolidColorBrush x:Key="ButtonOrangeBorderBrushHighlighted" Color="White"/>
     <SolidColorBrush x:Key="ButtonOrangeBorderBrushSelected" Color="White"/>
 
+    <!--Button White-->
+    <SolidColorBrush x:Key="ButtonWhiteBackgroundNormal" Color="White"/>
+    <SolidColorBrush x:Key="ButtonWhiteBackgroundHighlighted" Color="LightGray"/>
+    <SolidColorBrush x:Key="ButtonWhiteBackgroundSelected" Color="Gray"/>
+
+    <SolidColorBrush x:Key="ButtonWhiteForegroundNormal" Color="Black"/>
+    <SolidColorBrush x:Key="ButtonWhiteForegroundHighlighted" Color="Black"/>
+    <SolidColorBrush x:Key="ButtonWhiteForegroundSelected" Color="White"/>
+
+    <SolidColorBrush x:Key="ButtonWhiteBorderBrushNormal" Color="White"/>
+    <SolidColorBrush x:Key="ButtonWhiteBorderBrushHighlighted" Color="LightGray"/>
+    <SolidColorBrush x:Key="ButtonWhiteBorderBrushSelected" Color="Gray"/>
+
+    <!--Button Black-->
+    <SolidColorBrush x:Key="ButtonBlackBackgroundNormal" Color="Black"/>
+    <SolidColorBrush x:Key="ButtonBlackBackgroundHighlighted" Color="Gray"/>
+    <SolidColorBrush x:Key="ButtonBlackBackgroundSelected" Color="LightGray"/>
+
+    <SolidColorBrush x:Key="ButtonBlackForegroundNormal" Color="White"/>
+    <SolidColorBrush x:Key="ButtonBlackForegroundHighlighted" Color="White"/>
+    <SolidColorBrush x:Key="ButtonBlackForegroundSelected" Color="Black"/>
+
+    <SolidColorBrush x:Key="ButtonBlackBorderBrushNormal" Color="Black"/>
+    <SolidColorBrush x:Key="ButtonBlackBorderBrushHighlighted" Color="Gray"/>
+    <SolidColorBrush x:Key="ButtonBlackBorderBrushSelected" Color="LightGray"/>
+
+
     <!--Link Button-->
     <SolidColorBrush x:Key="LinkButtonForeground" Color="#1297FB"/>
     <SolidColorBrush x:Key="LinkButtonForegroundHighlighted" Color="#55AAFF"/>
@@ -183,6 +210,80 @@
                             <Setter Property="Background" Value="{StaticResource ButtonOrangeBackgroundSelected}"/>
                             <Setter Property="Foreground" Value="{StaticResource ButtonOrangeForegroundSelected}" />
                             <Setter Property="BorderBrush" Value="{StaticResource ButtonOrangeBorderBrushSelected}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value=".5"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- White Button-->
+    <Style x:Key="WhiteButton" TargetType="{x:Type Button}">
+        <Setter Property="Visibility" Value="Visible"/>
+        <Setter Property="Background" Value="{StaticResource ButtonWhiteBackgroundNormal}"/>
+        <Setter Property="Foreground" Value="{StaticResource ButtonWhiteForegroundNormal}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource ButtonWhiteBorderBrushNormal}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Border SnapsToDevicePixels="True"
+    						BorderThickness="1"
+    						BorderBrush="{TemplateBinding BorderBrush}" 
+    						Background="{TemplateBinding Background}">
+                        <Grid SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="{StaticResource ButtonWhiteBackgroundHighlighted}" />
+                            <Setter Property="Foreground" Value="{StaticResource ButtonWhiteForegroundHighlighted}" />
+                            <Setter Property="BorderBrush" Value="{StaticResource ButtonWhiteBorderBrushHighlighted}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter Property="Background" Value="{StaticResource ButtonWhiteBackgroundSelected}"/>
+                            <Setter Property="Foreground" Value="{StaticResource ButtonWhiteForegroundSelected}" />
+                            <Setter Property="BorderBrush" Value="{StaticResource ButtonWhiteBorderBrushSelected}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value=".5"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Black Button-->
+    <Style x:Key="BlackButton" TargetType="{x:Type Button}">
+        <Setter Property="Visibility" Value="Visible"/>
+        <Setter Property="Background" Value="{StaticResource ButtonBlackBackgroundNormal}"/>
+        <Setter Property="Foreground" Value="{StaticResource ButtonBlackForegroundNormal}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource ButtonBlackBorderBrushNormal}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Border SnapsToDevicePixels="True"
+    						BorderThickness="1"
+    						BorderBrush="{TemplateBinding BorderBrush}" 
+    						Background="{TemplateBinding Background}">
+                        <Grid SnapsToDevicePixels="True">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="{StaticResource ButtonBlackBackgroundHighlighted}" />
+                            <Setter Property="Foreground" Value="{StaticResource ButtonBlackForegroundHighlighted}" />
+                            <Setter Property="BorderBrush" Value="{StaticResource ButtonBlackBorderBrushHighlighted}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter Property="Background" Value="{StaticResource ButtonBlackBackgroundSelected}"/>
+                            <Setter Property="Foreground" Value="{StaticResource ButtonBlackForegroundSelected}" />
+                            <Setter Property="BorderBrush" Value="{StaticResource ButtonBlackBorderBrushSelected}"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value=".5"/>

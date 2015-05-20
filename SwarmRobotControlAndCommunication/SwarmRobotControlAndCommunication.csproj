@@ -71,6 +71,9 @@
     <Compile Include="AboutWindow.xaml.cs">
       <DependentUpon>AboutWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ImageGeneratorWindow.xaml.cs">
+      <DependentUpon>ImageGeneratorWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="OxyplotWindowTwoChart.xaml.cs">
       <DependentUpon>OxyplotWindowTwoChart.xaml</DependentUpon>
     </Compile>
@@ -82,6 +85,10 @@
     <Compile Include="UserInputTextWindow.xaml.cs">
       <DependentUpon>UserInputTextWindow.xaml</DependentUpon>
     </Compile>
+    <Page Include="ImageGeneratorWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MergeResourcesDictionary.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

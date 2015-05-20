@@ -455,6 +455,12 @@ namespace SwarmRobotControlAndCommunication
             aboutWindow.ShowDialog();
         }
 
+        private void imageGenerator_Click(object sender, RoutedEventArgs e)
+        {
+            ImageGeneratorWindow imageGenWindow = new ImageGeneratorWindow();
+            imageGenWindow.Show();
+        }
+
         private void viewModeCheckChange(object sender, RoutedEventArgs e)
         {
             try
@@ -2704,11 +2710,14 @@ namespace SwarmRobotControlAndCommunication
         }
         private void displayTextDataFile(String fileFullPath)
         {
-            string textEditor1 = @"D:\\Program Files\\Notepad++\\notepad++.exe";
-            string textEditor2 = @"C:\\Program Files\\Notepad++\\notepad++.exe";
-            string textEditor3 = @"E:\\ProgramFiles(x86)\\Notepad++\\notepad++.exe";
+            string textEditor1 = @"C:\\Program Files\\Notepad++\\notepad++.exe";
+            string textEditor2 = @"D:\\Program Files\\Notepad++\\notepad++.exe";
+            string textEditor3 = @"E:\\Program Files\\Notepad++\\notepad++.exe";
+            string textEditor4 = @"C:\\ProgramFiles(x86)\\Notepad++\\notepad++.exe";
+            string textEditor5 = @"D:\\ProgramFiles(x86)\\Notepad++\\notepad++.exe";
+            string textEditor6 = @"E:\\ProgramFiles(x86)\\Notepad++\\notepad++.exe";
 
-            string[] textEditors = { textEditor1, textEditor2, textEditor3 };
+            string[] textEditors = { textEditor1, textEditor2, textEditor3, textEditor4, textEditor5, textEditor6 };
 
             foreach (var item in textEditors)
             {
@@ -3078,7 +3087,8 @@ namespace SwarmRobotControlAndCommunication
             //    0, 1, -3,  1,  1, -3, 1, 0,
             //    0, 1, -3, -3, -3, -3, 1, 0,
             //    0, 1,  1,  1,  1,  1, 1, 0,
-            //    0, 0,  0,  0,  0,  0, 0, 0 };
+            //    0, 0,  0,  0,  0,  0, 0, 0 }; // 1.9ms
+
             UInt32 ui32Row = 11;
             UInt32 ui32Column = 15;
             sbyte offsetHeight = -1;
@@ -3095,7 +3105,7 @@ namespace SwarmRobotControlAndCommunication
                 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0,
                 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
                 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // 3.4ms
             //================================================
 
             sendStartUpdateGradientMapPacket(ui32Row, ui32Column, offsetHeight, offsetWidth, trappedCount);
