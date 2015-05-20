@@ -2875,12 +2875,14 @@ namespace SwarmRobotControlAndCommunication
         private BackgroundWorker bgwScanRobotIdentity;
         private void scanRobotIdentity(Button buttonClicked)
         {
+            // Hanlde for second event when scanning
             if (bgwScanRobotIdentity != null && bgwScanRobotIdentity.IsBusy)
             {
                 bgwScanRobotIdentity.CancelAsync();
                 return;
             }
 
+            // Init BackgroundWorker
             bgwScanRobotIdentity = new BackgroundWorker();
             bgwScanRobotIdentity.WorkerReportsProgress = true;
             bgwScanRobotIdentity.WorkerSupportsCancellation = true;
@@ -2889,11 +2891,14 @@ namespace SwarmRobotControlAndCommunication
             bgwScanRobotIdentity.ProgressChanged += new ProgressChangedEventHandler(bgwScanRobotIdentity_ProgressChanged);
             bgwScanRobotIdentity.RunWorkerCompleted += new RunWorkerCompletedEventHandler(bgwScanRobotIdentity_RunWorkerCompleted);
 
+            // Lock UI
             mRobotIdentityTextFilePath = null;
             this.debugCommandSelectBox.IsEnabled = false;
             this.sendDebugCommandButton.Content = "Stop Scanning";
             toggleAllButtonStatusExceptSelected(buttonClicked);
             setStatusBarContentAndColor("0%::scanning robot identities...", Brushes.Indigo);
+
+            // Active BackgroundWorker
             bgwScanRobotIdentity.RunWorkerAsync();
         }
         private void bgwScanRobotIdentity_DoWork(object sender, DoWorkEventArgs e)
@@ -3055,7 +3060,51 @@ namespace SwarmRobotControlAndCommunication
 
         BackgroundWorker bgwProgramGradientMap;
         private void updateGradientMapButton_Click(object sender, RoutedEventArgs e)
-        {
+        {           
+            // TODO: get from txt file =======================
+            //UInt32 ui32Row = 11;
+            //UInt32 ui32Column = 8;
+            //sbyte offsetHeight = -1;
+            //sbyte offsetWidth = -1;
+            //UInt32 trappedCount = 3;
+            //sbyte[] pGradientMap = new sbyte[11 * 8]{	
+            //    0, 0,  0,  0,  0,  0, 0, 0,
+            //    0, 1,  1,  1,  1,  1, 1, 0,
+            //    0, 1, -1,  1, -2, -2, 1, 0,
+            //    0, 1, -1, -1,  1, -2, 1, 0,
+            //    0, 1, -1,  1,  1,  1, 1, 0,
+            //    0, 1,  1,  1,  1,  1, 1, 0,
+            //    0, 1, -3,  1, -3, -3, 1, 0,
+            //    0, 1, -3,  1,  1, -3, 1, 0,
+            //    0, 1, -3, -3, -3, -3, 1, 0,
+            //    0, 1,  1,  1,  1,  1, 1, 0,
+            //    0, 0,  0,  0,  0,  0, 0, 0 };
+            UInt32 ui32Row = 11;
+            UInt32 ui32Column = 15;
+            sbyte offsetHeight = -1;
+            sbyte offsetWidth = -1;
+            UInt32 trappedCount = 0;
+            sbyte[] pGradientMap = new sbyte[11 * 15]{	
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+                0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+                0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0,
+                0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0,
+                0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0,
+                0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0,
+                0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0,
+                0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+                0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+            //================================================
+
+            sendStartUpdateGradientMapPacket(ui32Row, ui32Column, offsetHeight, offsetWidth, trappedCount);
+
+            // Lock UI
+            toggleAllButtonStatusExceptSelected(null); //(Button)sender);W
+            setStatusBarContentAndColor("0%::gradient map updating", Brushes.Indigo);
+
+            // Init BackgroundWorker
             bgwProgramGradientMap = new BackgroundWorker();
             bgwProgramGradientMap.WorkerReportsProgress = true;
             bgwProgramGradientMap.WorkerSupportsCancellation = false;
@@ -3063,31 +3112,8 @@ namespace SwarmRobotControlAndCommunication
             bgwProgramGradientMap.DoWork += new DoWorkEventHandler(bgwProgramGradientMap_DoWork);
             bgwProgramGradientMap.ProgressChanged += new ProgressChangedEventHandler(bgwProgramGradientMap_ProgressChanged);
             bgwProgramGradientMap.RunWorkerCompleted += new RunWorkerCompletedEventHandler(bgwProgramGradientMap_RunWorkerCompleted);
-
-            // TODO: get from txt file =======================
-            UInt32 ui32Row = 11;
-            UInt32 ui32Column = 8;
-            sbyte offsetHeight = -1;
-            sbyte offsetWidth = -1;
-            UInt32 trappedCount = 3;
-            sbyte[] pGradientMap = new sbyte[11 * 8]{	
-                0, 0,  0,  0,  0,  0, 0, 0,
-                0, 1,  1,  1,  1,  1, 1, 0,
-                0, 1, -1,  1, -2, -2, 1, 0,
-                0, 1, -1, -1,  1, -2, 1, 0,
-                0, 1, -1,  1,  1,  1, 1, 0,
-                0, 1,  1,  1,  1,  1, 1, 0,
-                0, 1, -3,  1, -3, -3, 1, 0,
-                0, 1, -3,  1,  1, -3, 1, 0,
-                0, 1, -3, -3, -3, -3, 1, 0,
-                0, 1,  1,  1,  1,  1, 1, 0,
-                0, 0,  0,  0,  0,  0, 0, 0 };
-            //================================================
-
-            sendStartUpdateGradientMapPacket(ui32Row, ui32Column, offsetHeight, offsetWidth, trappedCount);
-
-            toggleAllButtonStatusExceptSelected(null); //(Button)sender);
-            setStatusBarContentAndColor("0%::gradient map updating", Brushes.Indigo);
+            
+            // Active BackgroundWorker
             bgwProgramGradientMap.RunWorkerAsync(pGradientMap);
         }
         private void sendStartUpdateGradientMapPacket(UInt32 ui32Row, UInt32 ui32Column, sbyte offsetHeight, sbyte offsetWidth, UInt32 ui32TrappedCount)
@@ -3104,6 +3130,8 @@ namespace SwarmRobotControlAndCommunication
             SwarmMessageHeader headerStartUpdateGradientMapMessage = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_UPDATE_GRADIENT_MAP);
             SwarmMessage messageStartUpdateGradientMap = new SwarmMessage(headerStartUpdateGradientMapMessage, startUpdateGradientMapPacket);
             theControlBoard.broadcastMessageToRobot(messageStartUpdateGradientMap);
+
+            Thread.Sleep(15);
         }
         private class GradientMapFrameFormat
         {
