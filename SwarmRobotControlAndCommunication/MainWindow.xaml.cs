@@ -525,6 +525,21 @@ namespace SwarmRobotControlAndCommunication
                 }
             });
         }
+
+        private void scrollToEndForPathTextBox(TextBox target)
+        {
+            string content = target.Text;
+
+            target.Text = "";
+            target.CaretIndex = target.Text.Length;
+            var rect = target.GetRectFromCharacterIndex(target.CaretIndex);
+            target.ScrollToHorizontalOffset(rect.Right);
+
+            target.Text = content;
+            target.CaretIndex = target.Text.Length;
+            var rect2 = target.GetRectFromCharacterIndex(target.CaretIndex);
+            target.ScrollToHorizontalOffset(rect2.Right);
+        }
         #endregion
 
         #region Control & Program Tab
@@ -559,7 +574,8 @@ namespace SwarmRobotControlAndCommunication
             if (dlg.ShowDialog() == true)
             {
                 string pathToFile = dlg.FileName;
-                this.pathOfHexFile.Text = pathToFile;  // <?>
+                this.pathOfHexFile.Text = pathToFile;
+                scrollToEndForPathTextBox(this.pathOfHexFile);
             }
         }
 
@@ -3385,6 +3401,7 @@ namespace SwarmRobotControlAndCommunication
             {
                 string pathToFile = dlg.FileName;
                 this.pathOfImageTextFile.Text = pathToFile;
+                scrollToEndForPathTextBox(this.pathOfImageTextFile);
                 return true;
             }
             return false;
@@ -3401,18 +3418,10 @@ namespace SwarmRobotControlAndCommunication
             TextBox target = sender as TextBox;
             if (target != null)
             {
-                target.Text = "";
-                target.CaretIndex = target.Text.Length;
-                var rect = target.GetRectFromCharacterIndex(target.CaretIndex);
-                target.ScrollToHorizontalOffset(rect.Right);
-
                 target.Text = string.Format("{0}", ((string[])text)[0]);
-                target.CaretIndex = target.Text.Length;
-                var rect2 = target.GetRectFromCharacterIndex(target.CaretIndex);
-                target.ScrollToHorizontalOffset(rect2.Right);
+                scrollToEndForPathTextBox(target);
             }
         }
-        
         #endregion
     
         #region Helper Data manipulation methods
