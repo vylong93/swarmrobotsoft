@@ -387,7 +387,6 @@ namespace SwarmRobotControlAndCommunication
             {
                 this.titleButtonMainWindow.MouseLeftButtonDown += title_MouseLeftButtonDown;
             }
-
         }
 
         private void closeApllication(object sender, RoutedEventArgs e)
@@ -457,8 +456,37 @@ namespace SwarmRobotControlAndCommunication
 
         private void imageGenerator_Click(object sender, RoutedEventArgs e)
         {
-            ImageGeneratorWindow imageGenWindow = new ImageGeneratorWindow();
-            imageGenWindow.Show();
+            var userInputWindow = new UserInputTextWindow();
+            userInputWindow.Title = "Image Generator v1.0 input";
+            userInputWindow.setMessage("Please declaration you requirement at the format: \r\n<uint Row> <uint Column> <uint Size> <bool ShowText>\r\n Example: 6, 8, 25, true");
+            var userContainer = userInputWindow.FindName("ContainerGrid");
+            var userMessage = userInputWindow.FindName("messageLable");
+            var userInput = userInputWindow.FindName("inputTextBox");
+            ((Grid)userContainer).RowDefinitions[0].Height = new GridLength(60);
+            ((Label)userMessage).Height = 60;
+            ((TextBox)userInput).Text = "6 10 50 false";
+
+            if (userInputWindow.ShowDialog() == false)
+            {
+                if (userInputWindow.UserConfirm)
+                {
+                    String userParameter = userInputWindow.inputText;
+                    Match match = Regex.Match(userParameter, @"([0-9]+)\s([0-9]+)\s([0-9]+)\s([A-Za-z]+)", RegexOptions.IgnoreCase);
+                    if (match.Success)
+                    {
+                        int Row = Convert.ToInt32(match.Groups[1].Value);
+                        int Column = Convert.ToInt32(match.Groups[2].Value);
+                        int PixelSize = Convert.ToInt32(match.Groups[3].Value);
+                        bool ShowPixelText = match.Groups[4].Value.ToLower().Equals("true");
+                        ImageGeneratorWindow imageGenWindow = new ImageGeneratorWindow(Row, Column, PixelSize, ShowPixelText);
+                        imageGenWindow.Show();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Something wrong, please try again.", "Invalid input parameter", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+            }
         }
 
         private void viewModeCheckChange(object sender, RoutedEventArgs e)
@@ -532,6 +560,29 @@ namespace SwarmRobotControlAndCommunication
             {
                 string pathToFile = dlg.FileName;
                 this.pathOfHexFile.Text = pathToFile;  // <?>
+            }
+        }
+
+        private void pathOfHexFile_PreviewDragEnter(object sender, DragEventArgs e)
+        {
+            e.Effects = DragDropEffects.Copy;
+            e.Handled = true;
+        }
+        private void pathOfHexFile_PreviewDrop(object sender, DragEventArgs e)
+        {
+            object text = e.Data.GetData(DataFormats.FileDrop);
+            TextBox target = sender as TextBox;
+            if (target != null)
+            {
+                target.Text = "";
+                target.CaretIndex = target.Text.Length;
+                var rect = target.GetRectFromCharacterIndex(target.CaretIndex);
+                target.ScrollToHorizontalOffset(rect.Right);
+
+                target.Text = string.Format("{0}", ((string[])text)[0]);
+                target.CaretIndex = target.Text.Length;
+                var rect2 = target.GetRectFromCharacterIndex(target.CaretIndex);
+                target.ScrollToHorizontalOffset(rect2.Right);
             }
         }
 
@@ -2482,6 +2533,7 @@ namespace SwarmRobotControlAndCommunication
                 }
                 else
                 {
+                    file.Close();
                     return false;
                 }
             }
@@ -2792,7 +2844,10 @@ namespace SwarmRobotControlAndCommunication
 
             string title;
             if ((title = file.ReadLine()) == null)
+            {
+                file.Close();
                 return;
+            }
 
             List<float> xAxis = new List<float>();
             List<float> yAxis = new List<float>();
@@ -3070,72 +3125,46 @@ namespace SwarmRobotControlAndCommunication
         BackgroundWorker bgwProgramGradientMap;
         private void updateGradientMapButton_Click(object sender, RoutedEventArgs e)
         {           
-            // TODO: get from txt file =======================
-            //UInt32 ui32Row = 11;
-            //UInt32 ui32Column = 8;
-            //sbyte offsetHeight = -1;
-            //sbyte offsetWidth = -1;
-            //UInt32 trappedCount = 3;
-            //sbyte[] pGradientMap = new sbyte[11 * 8]{	
-            //    0, 0,  0,  0,  0,  0, 0, 0,
-            //    0, 1,  1,  1,  1,  1, 1, 0,
-            //    0, 1, -1,  1, -2, -2, 1, 0,
-            //    0, 1, -1, -1,  1, -2, 1, 0,
-            //    0, 1, -1,  1,  1,  1, 1, 0,
-            //    0, 1,  1,  1,  1,  1, 1, 0,
-            //    0, 1, -3,  1, -3, -3, 1, 0,
-            //    0, 1, -3,  1,  1, -3, 1, 0,
-            //    0, 1, -3, -3, -3, -3, 1, 0,
-            //    0, 1,  1,  1,  1,  1, 1, 0,
-            //    0, 0,  0,  0,  0,  0, 0, 0 }; // 1.9ms
+            UInt32 ui32Row;
+            UInt32 ui32Column;
+            UInt32 trappedCount;
+            sbyte[] pGradientMap;
+            try
+            {
+                if (loadImageFromFile(out pGradientMap, out ui32Row, out ui32Column, out trappedCount))
+                {
+                    sendStartUpdateGradientMapPacket(ui32Row, ui32Column, trappedCount);
 
-            UInt32 ui32Row = 11;
-            UInt32 ui32Column = 15;
-            sbyte offsetHeight = -1;
-            sbyte offsetWidth = -1;
-            UInt32 trappedCount = 0;
-            sbyte[] pGradientMap = new sbyte[11 * 15]{	
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
-                0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
-                0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0,
-                0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0,
-                0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0,
-                0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0,
-                0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0,
-                0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
-                0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // 3.4ms
-            //================================================
+                    // Lock UI
+                    toggleAllButtonStatusExceptSelected(null); //(Button)sender);W
+                    setStatusBarContentAndColor("0%::gradient map updating", Brushes.Indigo);
 
-            sendStartUpdateGradientMapPacket(ui32Row, ui32Column, offsetHeight, offsetWidth, trappedCount);
+                    // Init BackgroundWorker
+                    bgwProgramGradientMap = new BackgroundWorker();
+                    bgwProgramGradientMap.WorkerReportsProgress = true;
+                    bgwProgramGradientMap.WorkerSupportsCancellation = false;
 
-            // Lock UI
-            toggleAllButtonStatusExceptSelected(null); //(Button)sender);W
-            setStatusBarContentAndColor("0%::gradient map updating", Brushes.Indigo);
+                    bgwProgramGradientMap.DoWork += new DoWorkEventHandler(bgwProgramGradientMap_DoWork);
+                    bgwProgramGradientMap.ProgressChanged += new ProgressChangedEventHandler(bgwProgramGradientMap_ProgressChanged);
+                    bgwProgramGradientMap.RunWorkerCompleted += new RunWorkerCompletedEventHandler(bgwProgramGradientMap_RunWorkerCompleted);
 
-            // Init BackgroundWorker
-            bgwProgramGradientMap = new BackgroundWorker();
-            bgwProgramGradientMap.WorkerReportsProgress = true;
-            bgwProgramGradientMap.WorkerSupportsCancellation = false;
-
-            bgwProgramGradientMap.DoWork += new DoWorkEventHandler(bgwProgramGradientMap_DoWork);
-            bgwProgramGradientMap.ProgressChanged += new ProgressChangedEventHandler(bgwProgramGradientMap_ProgressChanged);
-            bgwProgramGradientMap.RunWorkerCompleted += new RunWorkerCompletedEventHandler(bgwProgramGradientMap_RunWorkerCompleted);
-            
-            // Active BackgroundWorker
-            bgwProgramGradientMap.RunWorkerAsync(pGradientMap);
+                    // Active BackgroundWorker
+                    bgwProgramGradientMap.RunWorkerAsync(pGradientMap);
+                }
+            }
+            catch (Exception ex)
+            {
+                defaultExceptionHandle(new Exception("Construct Gradient Map: " + ex.Message));
+            }
         }
-        private void sendStartUpdateGradientMapPacket(UInt32 ui32Row, UInt32 ui32Column, sbyte offsetHeight, sbyte offsetWidth, UInt32 ui32TrappedCount)
+        private void sendStartUpdateGradientMapPacket(UInt32 ui32Row, UInt32 ui32Column, UInt32 ui32TrappedCount)
         {
             // COMMAND_UPDATE_GRADIENT_MAP: <4-byte row><4-byte column><1-byte offsetHeight><1-byte offsetWidth>
             Byte[] startUpdateGradientMapPacket = new Byte[14];
 
             parse32bitTo4Bytes(startUpdateGradientMapPacket, 0, (Int32)ui32Row);
             parse32bitTo4Bytes(startUpdateGradientMapPacket, 4, (Int32)ui32Column);
-            startUpdateGradientMapPacket[8] = (byte)offsetHeight;
-            startUpdateGradientMapPacket[9] = (byte)offsetWidth;
-            parse32bitTo4Bytes(startUpdateGradientMapPacket, 10, (Int32)ui32TrappedCount);
+            parse32bitTo4Bytes(startUpdateGradientMapPacket, 8, (Int32)ui32TrappedCount);
 
             SwarmMessageHeader headerStartUpdateGradientMapMessage = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_UPDATE_GRADIENT_MAP);
             SwarmMessage messageStartUpdateGradientMap = new SwarmMessage(headerStartUpdateGradientMapMessage, startUpdateGradientMapPacket);
@@ -3291,6 +3320,99 @@ namespace SwarmRobotControlAndCommunication
             bgwProgramGradientMap = null;
         }
 
+        private void loadImageTextFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            browserTextImage();
+        }
+        private bool loadImageFromFile(out sbyte[] pGradientMap, out UInt32 ui32Height, out UInt32 ui32Width, out UInt32 ui32TrappedCount)
+        {
+            if (pathOfImageTextFile.Text == "" || pathOfImageTextFile.Text == null)
+            {
+                if (!browserTextImage())
+                {
+                    pGradientMap = null;
+                    ui32Height = 0;
+                    ui32Width = 0;
+                    ui32TrappedCount = 0;
+                    return false;
+                }
+            }
+
+            String pathToFileText = this.pathOfImageTextFile.Text;
+            System.IO.StreamReader file = new System.IO.StreamReader(@pathToFileText);
+
+            string line = file.ReadLine();
+            Match match = Regex.Match(line, @"([0-9]+)\s([0-9]+)\s([0-9]+)", RegexOptions.IgnoreCase);
+            if (match.Success)
+            {
+                ui32Height = Convert.ToUInt32(match.Groups[1].Value);
+                ui32Width = Convert.ToUInt32(match.Groups[2].Value);
+                ui32TrappedCount = Convert.ToUInt32(match.Groups[3].Value);
+                pGradientMap = new sbyte[ui32Height * ui32Width];
+                int DataPointer = 0;
+                for (int i = 1; i <= ui32Height; i++)
+                { 
+                    line = file.ReadLine();
+                    String[] inputArray = Regex.Split(line, @"\s+");
+                    if (inputArray.Length == ui32Width)
+                    {
+                        foreach (var item in inputArray)
+                            pGradientMap[DataPointer++] = Convert.ToSByte(item);
+                    }
+                    else
+                    {
+                        file.Close();
+                        throw new Exception("Unrecognized Image File Format::Invalid number of data in line " + i);
+                    }
+                }
+
+                file.Close();
+                return true;
+            }
+            else
+            {
+                file.Close();
+                throw new Exception("Unrecognized Image File Format::Header invalid!");
+            }
+        }
+        private bool browserTextImage()
+        {
+            OpenFileDialog dlg = new OpenFileDialog();
+            dlg.Title = "Open Text File";
+            dlg.Filter = "Text files (*.TXT)|*.TXT" + "|All files (*.*)|*.*";
+
+            if (dlg.ShowDialog() == true)
+            {
+                string pathToFile = dlg.FileName;
+                this.pathOfImageTextFile.Text = pathToFile;
+                return true;
+            }
+            return false;
+        }
+
+        private void pathOfImageTextFile_PreviewDragEnter(object sender, DragEventArgs e)
+        {
+            e.Effects = DragDropEffects.Copy;
+            e.Handled = true;
+        }
+        private void pathOfImageTextFile_PreviewDrop(object sender, DragEventArgs e)
+        {
+            object text = e.Data.GetData(DataFormats.FileDrop);
+            TextBox target = sender as TextBox;
+            if (target != null)
+            {
+                target.Text = "";
+                target.CaretIndex = target.Text.Length;
+                var rect = target.GetRectFromCharacterIndex(target.CaretIndex);
+                target.ScrollToHorizontalOffset(rect.Right);
+
+                target.Text = string.Format("{0}", ((string[])text)[0]);
+                target.CaretIndex = target.Text.Length;
+                var rect2 = target.GetRectFromCharacterIndex(target.CaretIndex);
+                target.ScrollToHorizontalOffset(rect2.Right);
+            }
+        }
+        
         #endregion
     
         #region Helper Data manipulation methods

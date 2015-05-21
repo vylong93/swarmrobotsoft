@@ -177,7 +177,9 @@
                     </Ellipse>
                     <StackPanel Grid.Row="1" HorizontalAlignment="Left" Height="24" Margin="0,9.4,-11.2,0" VerticalAlignment="Top" Width="{Binding ActualWidth, ElementName=window, Mode=OneWay}" Orientation="Horizontal" Grid.RowSpan="2">
                         <Label x:Name="label" Content="HEX File" HorizontalAlignment="Left" Margin="0" VerticalAlignment="Top" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Left" Height="{Binding Parent.ActualHeight, ElementName=label, Mode=OneWay}" Width="49"/>
-                        <TextBox x:Name="pathOfHexFile" Text="" HorizontalAlignment="Center" Height="18" VerticalAlignment="Center" Width="230" VerticalContentAlignment="Center" Margin="0,3" BorderBrush="Black" Style="{DynamicResource PathTextbox}" ScrollViewer.CanContentScroll="True" SnapsToDevicePixels="True" VerticalScrollBarVisibility="Disabled"/>
+                        <TextBox x:Name="pathOfHexFile" Text="" AllowDrop="True" HorizontalAlignment="Center" PreviewDragEnter="pathOfHexFile_PreviewDragEnter" PreviewDragOver="pathOfHexFile_PreviewDragEnter"
+                                 Height="18" VerticalAlignment="Center" Width="230" VerticalContentAlignment="Center" PreviewDrop="pathOfHexFile_PreviewDrop"
+                                 Margin="0,3" BorderBrush="Black" Style="{DynamicResource PathTextbox}" ScrollViewer.CanContentScroll="True" SnapsToDevicePixels="True" VerticalScrollBarVisibility="Disabled"/>
                         <Button x:Name="loadHexButton" 
                                 Content="..." Width="20" Style="{StaticResource PathButton}" Margin="0,3" Click="loadHexButton_Click" />
                     </StackPanel>
@@ -593,9 +595,16 @@
                             Margin="4.2,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="RightToLeft" Width="105" HorizontalAlignment="Left" Click="moveDistanceButton_Click"/>
                         <TextBox x:Name="moveDistanceTextBox" Text="8.0" Style="{DynamicResource PathTextbox}" Width="30" Height="24"/>
                     </StackPanel>
-                    <StackPanel Grid.Row="4" Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1.8,0" Grid.ColumnSpan="2">
-                        <Button x:Name="updateGradientMapButton" Content="Update Gradient Map"
-                            Margin="55,1,0,1" Height="26" VerticalAlignment="Center" FlowDirection="LeftToRight" Width="200" HorizontalAlignment="Left" Click="updateGradientMapButton_Click"/>
+                    <StackPanel Grid.Row="4" Orientation="Horizontal" FlowDirection="LeftToRight" Margin="0,0,1,0" Grid.ColumnSpan="2">
+                        <TextBox x:Name="pathOfImageTextFile" Text="" AllowDrop="True"  PreviewDrop="pathOfImageTextFile_PreviewDrop"
+                                 PreviewDragEnter="pathOfImageTextFile_PreviewDragEnter" PreviewDragOver="pathOfImageTextFile_PreviewDragEnter"
+                                 Height="18" Width="135" VerticalAlignment="Center"  HorizontalAlignment="Center"
+                                 VerticalContentAlignment="Center" Margin="5,0,0,0" BorderBrush="Black" Style="{DynamicResource PathTextbox}" 
+                                 ScrollViewer.CanContentScroll="True" SnapsToDevicePixels="True" VerticalScrollBarVisibility="Disabled"/>
+                        <Button x:Name="loadImageTextFileButton" Content="..." Width="20" Style="{StaticResource PathButton}" 
+                                 VerticalAlignment="Center"  HorizontalAlignment="Center" Margin="0,0,0,0" Click="loadImageTextFileButton_Click"/>
+                        <Button x:Name="updateGradientMapButton" Content="Update Gradient Map" Margin="4,1,0,1" Height="26" 
+                                VerticalAlignment="Center" FlowDirection="RightToLeft" Width="135" HorizontalAlignment="Left" Click="updateGradientMapButton_Click"/>
                     </StackPanel>
                 </Grid>
             </TabItem>

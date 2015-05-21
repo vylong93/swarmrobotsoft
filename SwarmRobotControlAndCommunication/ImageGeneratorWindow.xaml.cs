@@ -35,15 +35,28 @@ namespace SwarmRobotControlAndCommunication
         int mHeight;
         int mWidth;
         int mPixelSize;
+        bool mShowPixelText;
 
         public ImageGeneratorWindow()
         {
             InitializeComponent();
 
-            //TODO: pass by argument
-            mHeight = 11;
-            mWidth = 8;
-            mPixelSize = 25;
+            mHeight = 4;
+            mWidth = 6;
+            mPixelSize = 30;
+            mShowPixelText = true;
+
+            createImageGeneratorUI();
+        }
+
+        public ImageGeneratorWindow(int Height, int Width, int PixelSize, bool ShowPixelText)
+        {
+            InitializeComponent();
+
+            mHeight = Height;
+            mWidth = Width;
+            mPixelSize = PixelSize;
+            mShowPixelText = ShowPixelText;
 
             createImageGeneratorUI();
         }
@@ -238,12 +251,12 @@ namespace SwarmRobotControlAndCommunication
                 {
                     Button btnButton = new Button();
                     btnButton.Name = "r" + row.ToString() + "c" + col.ToString();
-                    btnButton.Content = row.ToString() + "." + col.ToString();
+                    if(mShowPixelText)
+                        btnButton.Content = row.ToString() + "." + col.ToString();
                     btnButton.Width = pixelSize;
                     btnButton.Height = pixelSize;
                     btnButton.Style = mPixelDeActiveStyle;
-                    btnButton.Click += pixelButton_Click;
-
+                    btnButton.Click += pixelButton_Clicked;
                     Grid.SetRow(btnButton, row);
                     Grid.SetColumn(btnButton, col);
 
@@ -253,27 +266,26 @@ namespace SwarmRobotControlAndCommunication
 
             return DynamicGrid;
         }
-        
-        private void pixelButton_Click(object sender, RoutedEventArgs e)
-        {
-            Button clickedPixel = (Button)sender;
 
-            Match match = Regex.Match(clickedPixel.Name, @"^r([0-9]+)c([0-9]+)", RegexOptions.IgnoreCase);
+        private void pixelButton_Clicked(object sender, RoutedEventArgs e)
+        {
+            Button enteredPixel = sender as Button;
+            Match match = Regex.Match(enteredPixel.Name, @"^r([0-9]+)c([0-9]+)", RegexOptions.IgnoreCase);
             if (match.Success)
             {
                 int row = Convert.ToInt32(match.Groups[1].Value);
                 int col = Convert.ToInt32(match.Groups[2].Value);
                 int index = row * mWidth + col;
 
-                if (clickedPixel.Style.Equals(mPixelDeActiveStyle))
+                if (enteredPixel.Style.Equals(mPixelDeActiveStyle))
                 {
-                    clickedPixel.Style = mPixelActiveStyle;
+                    enteredPixel.Style = mPixelActiveStyle;
                     mImage[index] = 1;
                     mActivePixelCount++;
                 }
                 else
                 {
-                    clickedPixel.Style = mPixelDeActiveStyle;
+                    enteredPixel.Style = mPixelDeActiveStyle;
                     mImage[index] = 0;
                     mActivePixelCount--;
                 }
@@ -319,6 +331,7 @@ namespace SwarmRobotControlAndCommunication
             MessageBoxResult result = MessageBox.Show("Generate completed!\nOutput file save to " + outputFile, "Do you want to view the output file?", MessageBoxButton.YesNo, MessageBoxImage.Information);
             if (result == MessageBoxResult.Yes)
                 displayTextDataFile(outputFile);
+            System.Diagnostics.Process.Start("explorer.exe", string.Format("/select, \"{0}\"", outputFile));
         }
         private String convertImageToStringArray(sbyte[] pImage)
         {
