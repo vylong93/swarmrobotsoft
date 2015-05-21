@@ -338,11 +338,9 @@ namespace SwarmRobotControlAndCommunication
             StringBuilder output = new StringBuilder();
 
             // Image header
-            //TODO: calculate the trapped segment count
-            output.Append(mHeight.ToString() + ' ' + mWidth.ToString() + ' ' + 0 + '\n');
+            output.Append(mHeight.ToString() + ' ' + mWidth.ToString() + '\n');
 
             // Image content
-            //TODO: set trapped segment pixel to negative value
             for (int row = 0; row < mHeight; row++)
             {
                 for (int col = 0; col < mWidth; col++)

@@ -3143,13 +3143,12 @@ namespace SwarmRobotControlAndCommunication
         {           
             UInt32 ui32Row;
             UInt32 ui32Column;
-            UInt32 trappedCount;
             sbyte[] pGradientMap;
             try
             {
-                if (loadImageFromFile(out pGradientMap, out ui32Row, out ui32Column, out trappedCount))
+                if (loadImageFromFile(out pGradientMap, out ui32Row, out ui32Column))
                 {
-                    sendStartUpdateGradientMapPacket(ui32Row, ui32Column, trappedCount);
+                    sendStartUpdateGradientMapPacket(ui32Row, ui32Column);
 
                     // Lock UI
                     toggleAllButtonStatusExceptSelected(null); //(Button)sender);W
@@ -3173,14 +3172,13 @@ namespace SwarmRobotControlAndCommunication
                 defaultExceptionHandle(new Exception("Construct Gradient Map: " + ex.Message));
             }
         }
-        private void sendStartUpdateGradientMapPacket(UInt32 ui32Row, UInt32 ui32Column, UInt32 ui32TrappedCount)
+        private void sendStartUpdateGradientMapPacket(UInt32 ui32Row, UInt32 ui32Column)
         {
-            // COMMAND_UPDATE_GRADIENT_MAP: <4-byte row><4-byte column><1-byte offsetHeight><1-byte offsetWidth>
-            Byte[] startUpdateGradientMapPacket = new Byte[14];
+            // COMMAND_UPDATE_GRADIENT_MAP: <4-byte row><4-byte column>
+            Byte[] startUpdateGradientMapPacket = new Byte[8];
 
             parse32bitTo4Bytes(startUpdateGradientMapPacket, 0, (Int32)ui32Row);
             parse32bitTo4Bytes(startUpdateGradientMapPacket, 4, (Int32)ui32Column);
-            parse32bitTo4Bytes(startUpdateGradientMapPacket, 8, (Int32)ui32TrappedCount);
 
             SwarmMessageHeader headerStartUpdateGradientMapMessage = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_UPDATE_GRADIENT_MAP);
             SwarmMessage messageStartUpdateGradientMap = new SwarmMessage(headerStartUpdateGradientMapMessage, startUpdateGradientMapPacket);
@@ -3269,9 +3267,6 @@ namespace SwarmRobotControlAndCommunication
             }
 
             // Program Packet
-            const int SINGLE_PACKET_TIMEOUT_US = 1000000;
-            const int UPDATE_PACKET_WAIT_TIMES = 15;
-
             const int DATA_FRAME_NACK_WAIT_TIME = 15; // unit ms
             const int BACKWARD_STEP_FOR_RESEND_PACKET = 4;
             const int NUMBER_OF_RESEND_LAST_PACKET = 8;
@@ -3313,7 +3308,6 @@ namespace SwarmRobotControlAndCommunication
                     }
                     else
                     {
-                        //TODO: prepare next packet
                         i++;
                     }
                 }
@@ -3340,7 +3334,7 @@ namespace SwarmRobotControlAndCommunication
         {
             browserTextImage();
         }
-        private bool loadImageFromFile(out sbyte[] pGradientMap, out UInt32 ui32Height, out UInt32 ui32Width, out UInt32 ui32TrappedCount)
+        private bool loadImageFromFile(out sbyte[] pGradientMap, out UInt32 ui32Height, out UInt32 ui32Width)
         {
             if (pathOfImageTextFile.Text == "" || pathOfImageTextFile.Text == null)
             {
@@ -3349,7 +3343,6 @@ namespace SwarmRobotControlAndCommunication
                     pGradientMap = null;
                     ui32Height = 0;
                     ui32Width = 0;
-                    ui32TrappedCount = 0;
                     return false;
                 }
             }
@@ -3358,12 +3351,11 @@ namespace SwarmRobotControlAndCommunication
             System.IO.StreamReader file = new System.IO.StreamReader(@pathToFileText);
 
             string line = file.ReadLine();
-            Match match = Regex.Match(line, @"([0-9]+)\s([0-9]+)\s([0-9]+)", RegexOptions.IgnoreCase);
+            Match match = Regex.Match(line, @"([0-9]+)\s([0-9]+)", RegexOptions.IgnoreCase);
             if (match.Success)
             {
                 ui32Height = Convert.ToUInt32(match.Groups[1].Value);
                 ui32Width = Convert.ToUInt32(match.Groups[2].Value);
-                ui32TrappedCount = Convert.ToUInt32(match.Groups[3].Value);
                 pGradientMap = new sbyte[ui32Height * ui32Width];
                 int DataPointer = 0;
                 for (int i = 1; i <= ui32Height; i++)
