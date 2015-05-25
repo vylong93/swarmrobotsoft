@@ -60,7 +60,8 @@ namespace SwarmRobotControlAndCommunication
             "State 9: Forward In Period Use Step Controller",
             "State 10: Forward In Rotate Use Step Controller",
             "State 11: Test Forward In Rotate Pure Controller",
-            "State 12: Test PID Controller"
+            "State 12: Test PID Controller",
+            "State 13: Update Location"
          };
 
         //------------Commands from Robots---------------------
@@ -445,7 +446,12 @@ namespace SwarmRobotControlAndCommunication
 
         private void plotLocs_Click(object sender, RoutedEventArgs e)
         {
-            plotLocationsTableFromFile();
+            plotLocationsTableFromFile(false);
+        }
+
+        private void plotLocsOri_Click(object sender, RoutedEventArgs e)
+        {
+            plotLocationsTableFromFile(true);
         }
 
         private void aboutMenuItem_Click(object sender, RoutedEventArgs e)
@@ -2852,7 +2858,7 @@ namespace SwarmRobotControlAndCommunication
 
             return table;
         }
-        private void plotLocationsTable(String fileFullPath)
+        private void plotLocationsTableWithOrientation(String fileFullPath)
         {
             bool isValidFile = false;
 
@@ -2932,11 +2938,75 @@ namespace SwarmRobotControlAndCommunication
             }
             else
             {
+                MessageBox.Show("plotLocationsTableWithOrientation:: Invalid line structure at line " + lineCounter);
+            }
+        }
+
+        private void plotLocationsTable(String fileFullPath)
+        {
+            bool isValidFile = false;
+
+            System.IO.StreamReader file = new System.IO.StreamReader(fileFullPath);
+
+            string title;
+            if ((title = file.ReadLine()) == null)
+            {
+                file.Close();
+                return;
+            }
+
+            List<float> xAxis = new List<float>();
+            List<float> yAxis = new List<float>();
+            List<UInt32> ui32ID = new List<UInt32>();
+
+            int lineCounter = 1;
+            string line;
+            while ((line = file.ReadLine()) != null)
+            {
+                lineCounter++;
+
+                Match match = Regex.Match(line, @"^Robot:(0x[A-Fa-f0-9]+)\s\W([+-]?[0-9]*(?:\.[0-9]+)?);\s([+-]?[0-9]*(?:\.[0-9]+)?)\W$", RegexOptions.IgnoreCase);
+
+                if (match.Success)
+                {
+                    if (!match.Groups[1].Value.Equals("0x000000"))
+                    {
+                        ui32ID.Add(UInt32.Parse(match.Groups[1].Value.Substring(2), System.Globalization.NumberStyles.HexNumber));
+                        xAxis.Add(float.Parse(match.Groups[2].Value));
+                        yAxis.Add(float.Parse(match.Groups[3].Value));
+                        isValidFile = true;
+                    }
+                    else
+                    {
+                        isValidFile = false;
+                        break;
+                    }
+                }
+            }
+
+            file.Close();
+
+            if (isValidFile)
+            {
+                float[] Plot_dataX = new float[xAxis.Count];
+                float[] Plot_dataY = new float[yAxis.Count];
+                UInt32[] listID = new UInt32[ui32ID.Count];
+
+                xAxis.CopyTo(Plot_dataX);
+                yAxis.CopyTo(Plot_dataY);
+                ui32ID.CopyTo(listID);
+
+                OxyplotWindow oxyplotWindow = new OxyplotWindow(listID, Plot_dataX, Plot_dataY, title, OxyplotWindow.ScatterPointOnlyPlot);
+
+                oxyplotWindow.Show();
+            }
+            else
+            {
                 MessageBox.Show("plotLocationsTable:: Invalid line structure at line " + lineCounter);
             }
         }
 
-        private void plotLocationsTableFromFile()
+        private void plotLocationsTableFromFile(bool bWithOrientation)
         {
             OpenFileDialog dlg = new OpenFileDialog();
             dlg.Title = "Select your file";
@@ -2947,7 +3017,10 @@ namespace SwarmRobotControlAndCommunication
             {
                 string pathToFile = dlg.FileName;
 
-                plotLocationsTable(pathToFile);
+                if (bWithOrientation)
+                    plotLocationsTableWithOrientation(pathToFile);
+                else
+                    plotLocationsTable(pathToFile);
             }
         }
 
@@ -2988,7 +3061,7 @@ namespace SwarmRobotControlAndCommunication
             String foundRobot = " robot(s): ";
             int numberOfFoundRobot = 0;
 
-            uint length = 35;
+            uint length = 49;
             byte[] receivedData = new byte[length];
 
             for (int i = 0; i < ROBOT_ID_LIST.Length; i++)
@@ -2999,9 +3072,8 @@ namespace SwarmRobotControlAndCommunication
                     break;
                 }
 
-                Thread.Sleep(100);
                 setTxAddress(ROBOT_ID_LIST[i].ToString("X8"));
-                Thread.Sleep(100);
+                Thread.Sleep(50);
                 try
                 {
                     SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_READ_ROBOT_IDENTITY);
@@ -3023,11 +3095,20 @@ namespace SwarmRobotControlAndCommunication
                     float RotationHop_y = (float)((Int32)((receivedData[27] << 24) | (receivedData[28] << 16) | (receivedData[29] << 8) | receivedData[30]) / 65536.0);
                     float theta = (float)((Int32)((receivedData[31] << 24) | (receivedData[32] << 16) | (receivedData[33] << 8) | receivedData[34]) / 65536.0);
                     double thetaInDeg = theta * 180.0f / Math.PI;
+                    string ValidOrientation = (receivedData[35] == 0x01) ? ("true") : ("false");
+                    string Locomotion = (receivedData[36] == 0) ? ("SAME") : ((receivedData[36] == 1) ? ("DIFFERENT") : ("INVALID"));
+                    Int32 GmHeight = construct4Byte(receivedData, 37);
+                    Int32 GmWidth = construct4Byte(receivedData, 41);
+                    Int32 GmValue = construct4Byte(receivedData, 45);
+                    
                     outputContent += String.Format("Robot:0x{0} ({1}; {2})\n", Self_ID.ToString("X6"), x.ToString("G6"), y.ToString("G6"));
                     outputContent += String.Format("Robot direction = {0} degree\n", thetaInDeg.ToString());
+                    outputContent += "Valid Orientation: " + ValidOrientation + "\n";
+                    outputContent += "Locomotion: " + Locomotion + "\n";
                     outputContent += String.Format("Self neighbors = {0}\n", Self_NeighborsCount.ToString());
                     outputContent += String.Format("Origin:0x{0}, neighbors = {1}, Hopth = {2}\n", Origin_ID.ToString("X6"), Origin_NeighborsCount.ToString(), Origin_Hopth.ToString());
                     outputContent += String.Format("Rotation Hop:0x{0} ({1}; {2})\n", RotationHop_ID.ToString("X6"), RotationHop_x.ToString("G6"), RotationHop_y.ToString("G6"));
+                    outputContent += String.Format("Gradient Map ({0} x {1}) value = {2}\n", GmHeight.ToString(), GmWidth.ToString(), GmValue.ToString());
                     outputContent += "\n";
 
                     numberOfFoundRobot += 1;
@@ -3071,7 +3152,7 @@ namespace SwarmRobotControlAndCommunication
                 {
                     MessageBoxResult result = MessageBox.Show((string)e.Result, "Do you want to plot the result?", MessageBoxButton.YesNo, MessageBoxImage.Information);
                     if (result == MessageBoxResult.Yes)
-                        plotLocationsTable(mRobotIdentityTextFilePath);
+                        plotLocationsTableWithOrientation(mRobotIdentityTextFilePath);
                 }
             }
 

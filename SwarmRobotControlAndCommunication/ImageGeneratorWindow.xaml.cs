@@ -257,6 +257,8 @@ namespace SwarmRobotControlAndCommunication
                     btnButton.Height = pixelSize;
                     btnButton.Style = mPixelDeActiveStyle;
                     btnButton.Click += pixelButton_Clicked;
+                    btnButton.MouseDown += pixelButton_Clicked;
+                    btnButton.MouseEnter += pixelButton_MouseEnter;
                     Grid.SetRow(btnButton, row);
                     Grid.SetColumn(btnButton, col);
 
@@ -290,6 +292,35 @@ namespace SwarmRobotControlAndCommunication
                     mActivePixelCount--;
                 }
                 mlblStatus.Content = "Point(s): " + mActivePixelCount;
+            }
+        }
+
+        private void pixelButton_MouseEnter(object sender, MouseEventArgs e)
+        {
+            if (Mouse.RightButton == MouseButtonState.Pressed)
+            {
+                Button enteredPixel = sender as Button;
+                Match match = Regex.Match(enteredPixel.Name, @"^r([0-9]+)c([0-9]+)", RegexOptions.IgnoreCase);
+                if (match.Success)
+                {
+                    int row = Convert.ToInt32(match.Groups[1].Value);
+                    int col = Convert.ToInt32(match.Groups[2].Value);
+                    int index = row * mWidth + col;
+
+                    if (enteredPixel.Style.Equals(mPixelDeActiveStyle))
+                    {
+                        enteredPixel.Style = mPixelActiveStyle;
+                        mImage[index] = 1;
+                        mActivePixelCount++;
+                    }
+                    else
+                    {
+                        enteredPixel.Style = mPixelDeActiveStyle;
+                        mImage[index] = 0;
+                        mActivePixelCount--;
+                    }
+                    mlblStatus.Content = "Point(s): " + mActivePixelCount;
+                }
             }
         }
 

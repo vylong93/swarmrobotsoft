@@ -34,7 +34,42 @@ namespace SwarmRobotControlAndCommunication
 
         public delegate PlotModel delegatePolyPlot(UInt32[] data, string Title);
         public delegate PlotModel delegateScatterPointPlot(float[] dataX, float[] dataY, string Title);
+
+        public delegate PlotModel delegateScatterPointOnlyPlot(UInt32[] id, float[] dataX, float[] dataY, string Title);
         public delegate PlotModel delegateScatterPointAndLinePlot(UInt32[] id, float[] theta, float[] dataX, float[] dataY, string Title);
+
+        public OxyplotWindow(UInt32[] data, String Title, delegatePolyPlot plot)
+        {
+            InitializeComponent();
+
+            //Binding Data Manually
+            viewModel = new PlotWindowModel();
+            DataContext = viewModel;
+            viewModel.PlotModel = plot(data, Title);
+        }
+
+        public OxyplotWindow(float[] dataX, float[] dataY, String Title, delegateScatterPointPlot plot)
+        {
+            InitializeComponent();
+
+            //Binding Data Manually
+            viewModel = new PlotWindowModel();
+            DataContext = viewModel;
+            viewModel.PlotModel = plot(dataX, dataY, Title);
+        }
+
+        public OxyplotWindow(UInt32[] id, float[] dataX, float[] dataY, String Title, delegateScatterPointOnlyPlot plot)
+        {
+            InitializeComponent();
+
+            //Binding Data Manually
+            viewModel = new PlotWindowModel();
+            DataContext = viewModel;
+            viewModel.PlotModel = plot(id, dataX, dataY, Title);
+
+            //NOTE: FormTitle will be used in OxyplotWindowTwoChart_Loaded() after this function return
+            FormTitle = Title;
+        }
 
         public OxyplotWindow(UInt32[] id, float[] theta, float[] dataX, float[] dataY, String Title, delegateScatterPointAndLinePlot plot)
         {
@@ -47,26 +82,6 @@ namespace SwarmRobotControlAndCommunication
 
             //NOTE: FormTitle will be used in OxyplotWindowTwoChart_Loaded() after this function return
             FormTitle = Title;
-        }
-
-        public OxyplotWindow(float[] dataX, float[] dataY, String Title, delegateScatterPointPlot plot)
-        {
-            InitializeComponent();
-
-            //Binding Data Manually
-            viewModel = new PlotWindowModel();
-            DataContext = viewModel;
-             viewModel.PlotModel = plot(dataX, dataY, Title);
-        }
-
-        public OxyplotWindow(UInt32[] data, String Title, delegatePolyPlot plot)
-        {
-            InitializeComponent();
-
-            //Binding Data Manually
-            viewModel = new PlotWindowModel();
-            DataContext = viewModel;
-            viewModel.PlotModel = plot(data, Title);
         }
 
         private Label titlePlotWindown = new Label();
@@ -394,6 +409,59 @@ namespace SwarmRobotControlAndCommunication
             //arrowAnnotation3.Text = "HeadLength = 20, HeadWidth = 10, Veeness = 4";
             //plotModel1.Annotations.Add(arrowAnnotation3);
 
+
+            return plotModel1;
+        }
+
+        public static PlotModel ScatterPointOnlyPlot(UInt32[] id, float[] dataX, float[] dataY, string Title)
+        {
+            var plotModel1 = new PlotModel();
+            plotModel1.PlotAreaBorderThickness = new OxyThickness(0, 0, 0, 0);
+            plotModel1.PlotMargins = new OxyThickness(10, 10, 10, 10);
+            plotModel1.Title = Title;
+
+            var linearAxis1 = new LinearAxis();
+            linearAxis1.Maximum = 70;
+            linearAxis1.Minimum = -70;
+            linearAxis1.PositionAtZeroCrossing = true;
+            linearAxis1.TickStyle = TickStyle.Crossing;
+            //linearAxis1.Position = AxisPosition.Bottom;
+            //linearAxis1.MajorGridlineStyle = LineStyle.Solid;
+            //linearAxis1.MinorGridlineStyle = LineStyle.Dot;
+            plotModel1.Axes.Add(linearAxis1);
+
+            var linearAxis2 = new LinearAxis();
+            linearAxis2.Maximum = 70;
+            linearAxis2.Minimum = -70;
+            linearAxis2.PositionAtZeroCrossing = true;
+            linearAxis2.TickStyle = TickStyle.Crossing;
+            linearAxis2.Position = AxisPosition.Bottom;
+            //linearAxis2.MajorGridlineStyle = LineStyle.Solid;
+            //linearAxis2.MinorGridlineStyle = LineStyle.Dot;
+            plotModel1.Axes.Add(linearAxis2);
+
+            if (dataX.Length != dataY.Length)
+                throw new Exception("Invalid length of X and Y!");
+
+            for (int i = 0; i < dataX.Length; i++)
+            {
+                var pointAnnotation1 = new PointAnnotation();
+                pointAnnotation1.X = dataX[i];
+                pointAnnotation1.Y = dataY[i];
+
+                //pointAnnotation1.Fill = OxyColors.Orange;
+                //pointAnnotation1.Stroke = OxyColors.IndianRed;
+
+                pointAnnotation1.Fill = OxyColors.Cyan;
+                pointAnnotation1.Stroke = OxyColors.DarkBlue;
+
+                //pointAnnotation1.Fill = OxyColors.DarkBlue;
+                //pointAnnotation1.Stroke = OxyColors.Cyan;
+                pointAnnotation1.StrokeThickness = 3;
+                pointAnnotation1.Size = 10;
+                pointAnnotation1.Text = "0x" + id[i].ToString("X6");
+                plotModel1.Annotations.Add(pointAnnotation1);
+            }
 
             return plotModel1;
         }

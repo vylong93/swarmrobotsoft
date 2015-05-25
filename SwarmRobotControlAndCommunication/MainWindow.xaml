@@ -96,6 +96,11 @@
                           HorizontalAlignment="Left" 
                           Template="{StaticResource SubMenuItem}"
                           Click="plotLocs_Click"/>
+                <MenuItem x:Name="plotLocsOri"
+                          Header="Locations Table with Orientation" 
+                          HorizontalAlignment="Left" 
+                          Template="{StaticResource SubMenuItem}"
+                          Click="plotLocsOri_Click"/>
             </MenuItem>
             <MenuItem Header="_Tools">
                 <MenuItem x:Name="imageGenerator"
