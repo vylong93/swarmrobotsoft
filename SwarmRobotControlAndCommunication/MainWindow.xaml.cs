@@ -3033,7 +3033,7 @@ namespace SwarmRobotControlAndCommunication
                 }
 
                 setTxAddress(ROBOT_ID_LIST[i].ToString("X8"));
-                Thread.Sleep(50);
+                Thread.Sleep(100);
                 try
                 {
                     SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_READ_ROBOT_IDENTITY);
