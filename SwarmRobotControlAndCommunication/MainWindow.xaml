@@ -403,7 +403,6 @@
                         <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
                         <RowDefinition Height="28"/>
-                        <RowDefinition Height="28"/>
                         <RowDefinition/>
                     </Grid.RowDefinitions>
                     <StackPanel x:Name="TxAddressPanel0" Grid.Column="0" Grid.Row="0" 
@@ -535,17 +534,6 @@
                         <TextBox x:Name="FwRtStepAngleTextBox" Text="22.5" Style="{DynamicResource PathTextbox}" Width="34" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
                         <Button x:Name="ConfigStepForwardInRotateControllerButton" Content="FR" Grid.Row="4" Width="36" 
                             Margin="4.2,0,0,0" Height="24" VerticalAlignment="Center" FlowDirection="RightToLeft" HorizontalAlignment="Left" Click="ConfigStepForwardInRotateControllerButton_Click"/>
-                    </StackPanel>
-                    <StackPanel x:Name="PIDControllerPanel" Grid.Row="13" Margin="0,0,-0.2,0" VerticalAlignment="Bottom"
-                                Height="{Binding Height, ElementName=readAdc1StackPanel}" Orientation="Horizontal" CanHorizontallyScroll="True" ScrollViewer.CanContentScroll="True">
-                        <Label Content="kP" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
-                        <TextBox x:Name="GrainPTextBox" Text="1.0" Width="50" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
-                        <Label Content="kI" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
-                        <TextBox x:Name="GrainITextBox" Text="0.0" Width="50" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
-                        <Label Content="kD" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,0,0"/>
-                        <TextBox x:Name="GrainDTextBox" Text="0.0" Width="50" VerticalContentAlignment="Center" Padding="2,0,0,0"/>
-                        <Button x:Name="ConfigPIDControllerButton" Content="PID Forward" Grid.Row="4" Width="84" 
-                            Margin="5,0,0,0" Height="24" VerticalAlignment="Center" FlowDirection="RightToLeft" HorizontalAlignment="Left" Click="ConfigPIDControllerButton_Click"/>
                     </StackPanel>
                 </Grid>
             </TabItem>

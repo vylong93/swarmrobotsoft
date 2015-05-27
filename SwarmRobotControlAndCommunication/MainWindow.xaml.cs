@@ -59,9 +59,7 @@ namespace SwarmRobotControlAndCommunication
             "State 8: Rotate To Angle Use Step Controller",
             "State 9: Forward In Period Use Step Controller",
             "State 10: Forward In Rotate Use Step Controller",
-            "State 11: Test Forward In Rotate Pure Controller",
-            "State 12: Test PID Controller",
-            "State 13: Update Location"
+            "State 11: Update Location"
          };
 
         //------------Commands from Robots---------------------
@@ -108,12 +106,11 @@ namespace SwarmRobotControlAndCommunication
         private const byte COMMAND_MOVE_WITH_DISTANCE = 0x21;
         private const byte COMMAND_ROTATE_WITH_ANGLE = 0x22;
 
-        private const byte COMMAND_CONFIG_STEP_CONTROLLER = 0x23;
+        private const byte COMMAND_CONFIG_STEP_ROTATE_CONTROLLER = 0x23;
         private const byte COMMAND_CONFIG_STEP_FORWARD_IN_PERIOD_CONTROLLER = 0x24;
         private const byte COMMAND_CONFIG_STEP_FORWARD_IN_ROTATE_CONTOLLER = 0x25;
-        private const byte COMMAND_CONFIG_PID_CONTROLLER = 0x26;
 
-        private const byte COMMAND_UPDATE_GRADIENT_MAP = 0x27;
+        private const byte COMMAND_UPDATE_GRADIENT_MAP = 0x26;
 
         enum e_MotorDirection
         {
@@ -2097,7 +2094,7 @@ namespace SwarmRobotControlAndCommunication
                 Int32 i32Data = (Int32)(fData * 65536);
                 parse32bitTo4Bytes(messageContent, 2, i32Data);
 
-                SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_CONFIG_STEP_CONTROLLER);
+                SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_CONFIG_STEP_ROTATE_CONTROLLER);
                 SwarmMessage message = new SwarmMessage(header, messageContent);
 
                 theControlBoard.broadcastMessageToRobot(message);
@@ -2169,43 +2166,6 @@ namespace SwarmRobotControlAndCommunication
             catch (Exception ex)
             {
                 throw new Exception("Set Step Forward Rotate Button: " + ex.Message);
-            }
-        }
-
-        private void ConfigPIDControllerButton_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                int length = 12;
-                byte[] messageContent = new byte[length];
-
-                float fData;
-                Int32 i32Data;
-
-                /* kP */
-                float.TryParse(this.GrainPTextBox.Text, out fData);
-                i32Data = (Int32)(fData * 65536);
-                parse32bitTo4Bytes(messageContent, 0, i32Data);
-
-                /* kI */
-                float.TryParse(this.GrainITextBox.Text, out fData);
-                i32Data = (Int32)(fData * 65536);
-                parse32bitTo4Bytes(messageContent, 4, i32Data);
-
-                /* kD */
-                float.TryParse(this.GrainDTextBox.Text, out fData);
-                i32Data = (Int32)(fData * 65536);
-                parse32bitTo4Bytes(messageContent, 8, i32Data);
-
-                SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_CONFIG_PID_CONTROLLER);
-                SwarmMessage message = new SwarmMessage(header, messageContent);
-
-                theControlBoard.broadcastMessageToRobot(message);
-                setStatusBarContent("PID: broadcast forward command done!");
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("PID Button: " + ex.Message);
             }
         }
         #endregion
