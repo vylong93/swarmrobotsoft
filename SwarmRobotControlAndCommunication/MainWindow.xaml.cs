@@ -1916,19 +1916,16 @@ namespace SwarmRobotControlAndCommunication
                 SwarmMessage message = new SwarmMessage(header);
 
                 theControlBoard.receivedDataFromRobot(receivedData, length, 1000, message);
-
+                string output = "";
                 uint i = 0;
                 for (uint pointer = 0; pointer < length / 2; pointer++)
                 {
                     adcData[pointer] = receivedData[i + 1];
                     adcData[pointer] = (adcData[pointer] << 8) | receivedData[i];
                     i += 2;
-                    tBox.Text += adcData[pointer].ToString();
-                    if (i >= length)
-                        break;
-                    tBox.Text += ", ";
+                    output += adcData[pointer] + ", ";
                 }
-
+                tBox.Text = output.Substring(0, output.Length - 2);
                 filterAndPlotResults(comment, adcData);
             }
             catch (Exception ex)
@@ -2835,6 +2832,7 @@ namespace SwarmRobotControlAndCommunication
             List<float> yAxis = new List<float>();
             List<UInt32> ui32ID = new List<UInt32>();
             List<float> theta = new List<float>();
+            List<bool> validOrientation = new List<bool>();
 
             int lineCounter = 1;
             string line;
@@ -2858,11 +2856,23 @@ namespace SwarmRobotControlAndCommunication
                         Match match2 = Regex.Match(line, @"^Robot direction\s=\s([+-]?[0-9]*(?:\.[0-9]+)?)\sdegree$", RegexOptions.IgnoreCase);
                         if (match2.Success)
                         {
-                            ui32ID.Add(UInt32.Parse(match.Groups[1].Value.Substring(2), System.Globalization.NumberStyles.HexNumber));
-                            xAxis.Add(float.Parse(match.Groups[2].Value));
-                            yAxis.Add(float.Parse(match.Groups[3].Value));
-                            theta.Add(float.Parse(match2.Groups[1].Value));
-                            isValidFile = true;
+                            lineCounter++;
+                            line = file.ReadLine();
+                            if (line == null)
+                            {
+                                isValidFile = false;
+                                break;
+                            }
+                            Match match3 = Regex.Match(line, @"^Valid Orientation:\s([A-Za-z]+)$", RegexOptions.IgnoreCase);
+                            if (match3.Success)
+                            {
+                                ui32ID.Add(UInt32.Parse(match.Groups[1].Value.Substring(2), System.Globalization.NumberStyles.HexNumber));
+                                xAxis.Add(float.Parse(match.Groups[2].Value));
+                                yAxis.Add(float.Parse(match.Groups[3].Value));
+                                theta.Add(float.Parse(match2.Groups[1].Value));
+                                validOrientation.Add(match3.Groups[1].Value.ToLower().Equals("true"));
+                                isValidFile = true;
+                            }
                         }
                         else
                         {
@@ -2886,13 +2896,15 @@ namespace SwarmRobotControlAndCommunication
                 float[] Plot_dataY = new float[yAxis.Count];
                 UInt32[] listID = new UInt32[ui32ID.Count];
                 float[] listTheta = new float[theta.Count];
+                bool[] listValidTheta = new bool[validOrientation.Count];
 
                 xAxis.CopyTo(Plot_dataX);
                 yAxis.CopyTo(Plot_dataY);
                 ui32ID.CopyTo(listID);
                 theta.CopyTo(listTheta);
+                validOrientation.CopyTo(listValidTheta);
 
-                OxyplotWindow oxyplotWindow = new OxyplotWindow(listID, listTheta, Plot_dataX, Plot_dataY, title, OxyplotWindow.ScatterPointAndLinePlot);
+                OxyplotWindow oxyplotWindow = new OxyplotWindow(listID, listTheta, listValidTheta, Plot_dataX, Plot_dataY, title, OxyplotWindow.ScatterPointAndLinePlot);
 
                 oxyplotWindow.Show();
             }

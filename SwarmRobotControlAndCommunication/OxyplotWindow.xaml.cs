@@ -12,6 +12,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Drawing;
+using System.IO;
 
 using OxyPlot;
 using OxyPlot.Annotations;
@@ -36,7 +38,7 @@ namespace SwarmRobotControlAndCommunication
         public delegate PlotModel delegateScatterPointPlot(float[] dataX, float[] dataY, string Title);
 
         public delegate PlotModel delegateScatterPointOnlyPlot(UInt32[] id, float[] dataX, float[] dataY, string Title);
-        public delegate PlotModel delegateScatterPointAndLinePlot(UInt32[] id, float[] theta, float[] dataX, float[] dataY, string Title);
+        public delegate PlotModel delegateScatterPointAndLinePlot(UInt32[] id, float[] theta, bool[] validTheta, float[] dataX, float[] dataY, string Title);
 
         public OxyplotWindow(UInt32[] data, String Title, delegatePolyPlot plot)
         {
@@ -71,14 +73,14 @@ namespace SwarmRobotControlAndCommunication
             FormTitle = Title;
         }
 
-        public OxyplotWindow(UInt32[] id, float[] theta, float[] dataX, float[] dataY, String Title, delegateScatterPointAndLinePlot plot)
+        public OxyplotWindow(UInt32[] id, float[] theta, bool[] validTheta, float[] dataX, float[] dataY, String Title, delegateScatterPointAndLinePlot plot)
         {
             InitializeComponent();
 
             //Binding Data Manually
             viewModel = new PlotWindowModel();
             DataContext = viewModel;
-            viewModel.PlotModel = plot(id, theta, dataX, dataY, Title);
+            viewModel.PlotModel = plot(id, theta, validTheta, dataX, dataY, Title);
 
             //NOTE: FormTitle will be used in OxyplotWindowTwoChart_Loaded() after this function return
             FormTitle = Title;
@@ -313,7 +315,7 @@ namespace SwarmRobotControlAndCommunication
             return plotModel1;
         }
 
-        public static PlotModel ScatterPointAndLinePlot(UInt32[] id, float[] theta, float[] dataX, float[] dataY, string Title)
+        public static PlotModel ScatterPointAndLinePlot(UInt32[] id, float[] theta, bool[] validTheta, float[] dataX, float[] dataY, string Title)
         {
             List<OxyPlot.OxyColor> randomColor = new List<OxyPlot.OxyColor>();
             randomColor.Add(OxyColors.Red);
@@ -355,60 +357,61 @@ namespace SwarmRobotControlAndCommunication
             if (dataX.Length != dataY.Length)
                 throw new Exception("Invalid length of X and Y!");
 
-            for (int i = 0; i < dataX.Length; i++)
+            if (theta.Length != validTheta.Length)
+                throw new Exception("Invalid length of theta and validTheta!");
+
+            if (id.Length != dataY.Length || id.Length != validTheta.Length)
+                throw new Exception("Invalid length of id!");
+
+            for (int i = 0; i < id.Length; i++)
             {
+                var circle = new OxyPlot.Annotations.EllipseAnnotation();
+                circle.Width = 12.5;
+                circle.Height = 12.5;
+                circle.StrokeThickness = 0;
+                circle.X = dataX[i];
+                circle.Y = dataY[i];
+                circle.Fill = OxyColors.LightGray;
+                circle.Stroke = OxyColors.LightGray;
+                circle.Layer = AnnotationLayer.BelowAxes;
+                plotModel1.Annotations.Add(circle);
+
                 var pointAnnotation1 = new PointAnnotation();
                 pointAnnotation1.X = dataX[i];
                 pointAnnotation1.Y = dataY[i];
-
                 //pointAnnotation1.Fill = OxyColors.Orange;
                 //pointAnnotation1.Stroke = OxyColors.IndianRed;
-
                 pointAnnotation1.Fill = OxyColors.Cyan;
                 pointAnnotation1.Stroke = OxyColors.DarkBlue;
-
-                //pointAnnotation1.Fill = OxyColors.DarkBlue;
-                //pointAnnotation1.Stroke = OxyColors.Cyan;
+                //pointAnnotation1.Fill = OxyColors.DarkGray;
+                //pointAnnotation1.Stroke = OxyColors.Gray;
                 pointAnnotation1.StrokeThickness = 3;
                 pointAnnotation1.Size = 10;
                 pointAnnotation1.Text = "0x" + id[i].ToString("X6");
+                pointAnnotation1.TextColor = pointAnnotation1.Stroke;
                 plotModel1.Annotations.Add(pointAnnotation1);
+
+                if (validTheta[i])
+                {
+                    var arrowAnnotation2 = new ArrowAnnotation();
+                    arrowAnnotation2.StrokeThickness = 3;
+                    arrowAnnotation2.HeadLength = 3;
+                    arrowAnnotation2.HeadWidth = 1;
+                    arrowAnnotation2.StartPoint = new DataPoint(dataX[i], dataY[i]);
+
+                    DataPoint unitVector = new DataPoint(6.5, 0); // 1 is unit vector length
+                    double angle = theta[i] * Math.PI / 180.0f;
+                    double direction = Math.Atan2(Math.Sin(angle), Math.Cos(angle));
+                    arrowAnnotation2.EndPoint = new DataPoint(unitVector.X * Math.Cos(direction) - unitVector.Y * Math.Sin(direction) + dataX[i],
+                        unitVector.X * Math.Sin(direction) + unitVector.Y * Math.Cos(direction) + dataY[i]);
+                    //arrowAnnotation2.Text = "0x" + id[i].ToString("X6");
+                    //arrowAnnotation2.TextPosition = new DataPoint(dataX[i], dataY[i]);
+                    //arrowAnnotation2.TextHorizontalAlignment = OxyPlot.HorizontalAlignment.Left;
+                    //arrowAnnotation2.TextVerticalAlignment = OxyPlot.VerticalAlignment.Bottom;
+                    arrowAnnotation2.Color = randomColor[i % randomColor.Count];
+                    plotModel1.Annotations.Add(arrowAnnotation2);
+                }
             }
-
-            for (int i = 0; i < theta.Length; i++)
-            {
-                var arrowAnnotation2 = new ArrowAnnotation();
-                arrowAnnotation2.StrokeThickness = 3;
-                arrowAnnotation2.HeadLength = 3;
-                arrowAnnotation2.HeadWidth = 2;
-                
-                arrowAnnotation2.StartPoint = new DataPoint(dataX[i], dataY[i]);
-
-                DataPoint unitVector = new DataPoint(6.0, 0); // 1 is unit vector length
-                double angle = theta[i] * Math.PI / 180.0f;
-                double direction = Math.Atan2(Math.Sin(angle), Math.Cos(angle));
-                //g_RobotLocationsTable[i].vector.x = x * cosf(fAngle) - y * sinf(fAngle);
-                //g_RobotLocationsTable[i].vector.y = x * sinf(fAngle) + y * cosf(fAngle);
-                arrowAnnotation2.EndPoint = new DataPoint(unitVector.X * Math.Cos(direction) - unitVector.Y * Math.Sin(direction) + dataX[i],
-                    unitVector.X * Math.Sin(direction) + unitVector.Y * Math.Cos(direction) + dataY[i]);
-
-                //arrowAnnotation2.Text = "0x" + id[i].ToString("X6");
-                //arrowAnnotation2.TextPosition = new DataPoint(dataX[i], dataY[i]);
-                //arrowAnnotation2.TextHorizontalAlignment = OxyPlot.HorizontalAlignment.Left;
-                //arrowAnnotation2.TextVerticalAlignment = OxyPlot.VerticalAlignment.Bottom;
-                arrowAnnotation2.Color = randomColor[i % randomColor.Count];
-                plotModel1.Annotations.Add(arrowAnnotation2);
-            }
-
-            //var arrowAnnotation3 = new ArrowAnnotation();
-            //arrowAnnotation3.Color = OxyColors.Red;
-            //arrowAnnotation3.EndPoint = new DataPoint(10, -3);
-            //arrowAnnotation3.HeadLength = 14;
-            //arrowAnnotation3.HeadWidth = 6;
-            //arrowAnnotation3.Veeness = 4;
-            //arrowAnnotation3.Text = "HeadLength = 20, HeadWidth = 10, Veeness = 4";
-            //plotModel1.Annotations.Add(arrowAnnotation3);
-
 
             return plotModel1;
         }
@@ -443,8 +446,19 @@ namespace SwarmRobotControlAndCommunication
             if (dataX.Length != dataY.Length)
                 throw new Exception("Invalid length of X and Y!");
 
-            for (int i = 0; i < dataX.Length; i++)
+            for (int i = 0; i < id.Length; i++)
             {
+                var circle = new OxyPlot.Annotations.EllipseAnnotation();
+                circle.Width = 12.5;
+                circle.Height = 12.5;
+                circle.StrokeThickness = 0;
+                circle.X = dataX[i];
+                circle.Y = dataY[i];
+                circle.Fill = OxyColors.LightGray;
+                circle.Stroke = OxyColors.LightGray;
+                circle.Layer = AnnotationLayer.BelowAxes;
+                plotModel1.Annotations.Add(circle);
+
                 var pointAnnotation1 = new PointAnnotation();
                 pointAnnotation1.X = dataX[i];
                 pointAnnotation1.Y = dataY[i];
