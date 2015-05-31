@@ -1580,8 +1580,12 @@ namespace SwarmRobotControlAndCommunication
                     ValuesArray[0] = fData[(int)PositionsArray[0]];
                     ValuesArray[1] = fData[(int)PositionsArray[1]]; 
                     ValuesArray[2] = fData[(int)PositionsArray[2]];
-                    localMaxValue[i] = fData[(int)localPeaksPosition[i]]; 
-			        interPeak(PositionsArray, ValuesArray, localPeaksPosition[i], localMaxValue[i], step, ref localPeaksPosition[i], ref localMaxValue[i]);
+                    localMaxValue[i] = fData[(int)localPeaksPosition[i]];
+
+                    if (PositionsArray[0] == 0 || PositionsArray[2] == (fData.Length - 1))
+                        continue;
+
+                    interPeak(PositionsArray, ValuesArray, localPeaksPosition[i], localMaxValue[i], step, ref localPeaksPosition[i], ref localMaxValue[i]);
 		        }
 		        interPeak(localPeaksPosition, localMaxValue, localPeaksPosition[1], localMaxValue[1], step, ref peakEnvelope, ref maxEnvelope);
                 peakEnvelope = peakEnvelope + START_SAMPLES_POSTITION;
@@ -1618,7 +1622,7 @@ namespace SwarmRobotControlAndCommunication
         {
 	        int SamplePosition = PeakPosition;
 
-            while (SamplePosition > 1 && SamplePosition < fData.Length)
+            while (SamplePosition >= 1 && SamplePosition < (fData.Length - 1))
             {
 		        if (fData[SamplePosition] < fData[SamplePosition + PointerIncreaseNumber]) 
                 {
@@ -1630,13 +1634,13 @@ namespace SwarmRobotControlAndCommunication
 		        }
 	        }
 
-	        return 0;
+            return (SamplePosition - PointerIncreaseNumber);
         }
         private int reachPeak(float[] fData, int PeakPosition, int PointerIncreaseNumber)
         {
 	        int SamplePosition = PeakPosition;
 
-            while (SamplePosition > 1 && SamplePosition < fData.Length)
+            while (SamplePosition >= 1 && SamplePosition < (fData.Length - 1))
             {
 		        if (fData[SamplePosition] > fData[SamplePosition + PointerIncreaseNumber]) 
                 {
@@ -1648,8 +1652,8 @@ namespace SwarmRobotControlAndCommunication
 		        }
 	        }
 
-	        return 0;
-        }
+            return (SamplePosition - PointerIncreaseNumber);
+        } 
         private void interPeak(double[] PositionsArray, double[] ValuesArray, double UserPosition, double UserMaxValue, float step, ref double ReturnPosition, ref double ReturnValue) 
         {
 	        double realLocalPeak = UserPosition;
@@ -1916,16 +1920,16 @@ namespace SwarmRobotControlAndCommunication
                 SwarmMessage message = new SwarmMessage(header);
 
                 theControlBoard.receivedDataFromRobot(receivedData, length, 1000, message);
-                string output = "";
+                StringBuilder output = new StringBuilder();
                 uint i = 0;
                 for (uint pointer = 0; pointer < length / 2; pointer++)
                 {
                     adcData[pointer] = receivedData[i + 1];
                     adcData[pointer] = (adcData[pointer] << 8) | receivedData[i];
                     i += 2;
-                    output += adcData[pointer] + ", ";
+                    output.Append(adcData[pointer] + ", ");
                 }
-                tBox.Text = output.Substring(0, output.Length - 2);
+                tBox.Text = output.ToString().Substring(0, output.Length - 2);
                 filterAndPlotResults(comment, adcData);
             }
             catch (Exception ex)
@@ -3044,9 +3048,8 @@ namespace SwarmRobotControlAndCommunication
                     e.Cancel = true;
                     break;
                 }
-                Thread.Sleep(100);
+                Thread.Sleep(80);
                 setTxAddress(ROBOT_ID_LIST[i].ToString("X8"));
-                Thread.Sleep(100);
                 try
                 {
                     SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_READ_ROBOT_IDENTITY);
