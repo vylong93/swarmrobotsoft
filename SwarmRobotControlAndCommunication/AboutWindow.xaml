@@ -40,8 +40,8 @@
                     </Hyperlink>
                 </TextBlock>
             </Label>
-            <Label Content="Falcuty of Electronics &amp; Telecommunications" FontFamily="Times New Roman"  Padding="0,1,0,0" MaxWidth="204" HorizontalAlignment="Center" ScrollViewer.VerticalScrollBarVisibility="Disabled" Width="210" FontSize="11"/>
-            <Label Content="University of Science" FontFamily="Times New Roman" HorizontalContentAlignment="Center"  Padding="0,0.5,0,0" Margin="0" FontSize="11"/>
+            <Label Content="Faculty of Electronics &amp; Telecommunications" FontFamily="Times New Roman"  Padding="0,1,0,0" MaxWidth="204" HorizontalAlignment="Center" ScrollViewer.VerticalScrollBarVisibility="Disabled" Width="210" FontSize="11"/>
+            <Label Content="The University of Science" FontFamily="Times New Roman" HorizontalContentAlignment="Center"  Padding="0,0.5,0,0" Margin="0" FontSize="11"/>
         </StackPanel>
 
         <StackPanel Grid.ColumnSpan="2" Grid.Row="2" VerticalAlignment="Top" Margin="0,13.2,0.4,0" Height="106">

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -418,6 +419,11 @@ namespace SwarmRobotControlAndCommunication
 
         public static PlotModel ScatterPointOnlyPlot(UInt32[] id, float[] dataX, float[] dataY, string Title)
         {
+            UInt32 ui32MainRobotId = 0;
+            Match titleMatch = Regex.Match(Title, @"\[(.*?)\]", RegexOptions.IgnoreCase);
+            if (titleMatch.Success)
+                ui32MainRobotId = UInt32.Parse(titleMatch.Groups[1].Value.Substring(2), System.Globalization.NumberStyles.HexNumber);
+
             var plotModel1 = new PlotModel();
             plotModel1.PlotAreaBorderThickness = new OxyThickness(0, 0, 0, 0);
             plotModel1.PlotMargins = new OxyThickness(10, 10, 10, 10);
@@ -463,14 +469,17 @@ namespace SwarmRobotControlAndCommunication
                 pointAnnotation1.X = dataX[i];
                 pointAnnotation1.Y = dataY[i];
 
-                //pointAnnotation1.Fill = OxyColors.Orange;
-                //pointAnnotation1.Stroke = OxyColors.IndianRed;
+                if (id[i] == ui32MainRobotId)
+                {
+                    pointAnnotation1.Fill = OxyColors.Orange;
+                    pointAnnotation1.Stroke = OxyColors.Red;
+                }
+                else
+                {
+                    pointAnnotation1.Fill = OxyColors.Cyan;
+                    pointAnnotation1.Stroke = OxyColors.DarkBlue;
+                }
 
-                pointAnnotation1.Fill = OxyColors.Cyan;
-                pointAnnotation1.Stroke = OxyColors.DarkBlue;
-
-                //pointAnnotation1.Fill = OxyColors.DarkBlue;
-                //pointAnnotation1.Stroke = OxyColors.Cyan;
                 pointAnnotation1.StrokeThickness = 3;
                 pointAnnotation1.Size = 10;
                 pointAnnotation1.Text = "0x" + id[i].ToString("X6");

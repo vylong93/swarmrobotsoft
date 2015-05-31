@@ -56,10 +56,10 @@ namespace SwarmRobotControlAndCommunication
             "State 5: Average Vector",
             "State 6: Correct Locations",
             "State 7: Locomotion",
-            "State 8: Rotate To Angle Use Step Controller",
-            "State 9: Forward In Period Use Step Controller",
-            "State 10: Forward In Rotate Use Step Controller",
-            "State 11: Update Location"
+            "State 8: Update Orientation",
+            "State 9: Follow Gradient Map",
+
+            "State custom: Update Location",
          };
 
         //------------Commands from Robots---------------------
@@ -3028,7 +3028,8 @@ namespace SwarmRobotControlAndCommunication
         }
         private void bgwScanRobotIdentity_DoWork(object sender, DoWorkEventArgs e)
         {
-            String outputContent = "Robot Identities Information\n";
+            StringBuilder outputContent = new StringBuilder();
+            outputContent.Append("Robot Identities Information\n");
 
             String foundRobot = " robot(s): ";
             int numberOfFoundRobot = 0;
@@ -3043,7 +3044,7 @@ namespace SwarmRobotControlAndCommunication
                     e.Cancel = true;
                     break;
                 }
-
+                Thread.Sleep(100);
                 setTxAddress(ROBOT_ID_LIST[i].ToString("X8"));
                 Thread.Sleep(100);
                 try
@@ -3072,16 +3073,16 @@ namespace SwarmRobotControlAndCommunication
                     Int32 GmHeight = construct4Byte(receivedData, 37);
                     Int32 GmWidth = construct4Byte(receivedData, 41);
                     Int32 GmValue = construct4Byte(receivedData, 45);
-                    
-                    outputContent += String.Format("Robot:0x{0} ({1}; {2})\n", Self_ID.ToString("X6"), x.ToString("G6"), y.ToString("G6"));
-                    outputContent += String.Format("Robot direction = {0} degree\n", thetaInDeg.ToString());
-                    outputContent += "Valid Orientation: " + ValidOrientation + "\n";
-                    outputContent += "Locomotion: " + Locomotion + "\n";
-                    outputContent += String.Format("Self neighbors = {0}\n", Self_NeighborsCount.ToString());
-                    outputContent += String.Format("Origin:0x{0}, neighbors = {1}, Hopth = {2}\n", Origin_ID.ToString("X6"), Origin_NeighborsCount.ToString(), Origin_Hopth.ToString());
-                    outputContent += String.Format("Rotation Hop:0x{0} ({1}; {2})\n", RotationHop_ID.ToString("X6"), RotationHop_x.ToString("G6"), RotationHop_y.ToString("G6"));
-                    outputContent += String.Format("Gradient Map ({0} x {1}) value = {2}\n", GmHeight.ToString(), GmWidth.ToString(), GmValue.ToString());
-                    outputContent += "\n";
+
+                    outputContent.Append(String.Format("Robot:0x{0} ({1}; {2})\n", Self_ID.ToString("X6"), x.ToString("G6"), y.ToString("G6")));
+                    outputContent.Append(String.Format("Robot direction = {0} degree\n", thetaInDeg));
+                    outputContent.Append("Valid Orientation: " + ValidOrientation + "\n");
+                    outputContent.Append("Locomotion: " + Locomotion + "\n");
+                    outputContent.Append(String.Format("Self neighbors = {0}\n", Self_NeighborsCount));
+                    outputContent.Append(String.Format("Origin:0x{0}, neighbors = {1}, Hopth = {2}\n", Origin_ID.ToString("X6"), Origin_NeighborsCount, Origin_Hopth));
+                    outputContent.Append(String.Format("Rotation Hop:0x{0} ({1}; {2})\n", RotationHop_ID.ToString("X6"), RotationHop_x.ToString("G6"), RotationHop_y.ToString("G6")));
+                    outputContent.Append(String.Format("Gradient Map ({0} x {1}) value = {2}\n", GmHeight, GmWidth, GmValue));
+                    outputContent.Append("\n");
 
                     numberOfFoundRobot += 1;
                     foundRobot = foundRobot + "0x" + ROBOT_ID_LIST[i].ToString("X6") + ", ";
@@ -3096,7 +3097,7 @@ namespace SwarmRobotControlAndCommunication
 
             if (numberOfFoundRobot > 0)
             {
-                mRobotIdentityTextFilePath = exportDataToTextFile("Output RobotIdentity", "RobotIdentity.txt", outputContent);
+                mRobotIdentityTextFilePath = exportDataToTextFile("Output RobotIdentity", "RobotIdentity.txt", outputContent.ToString());
                 displayTextDataFile(mRobotIdentityTextFilePath);
                 e.Result = "Found " + numberOfFoundRobot + foundRobot;
             }
