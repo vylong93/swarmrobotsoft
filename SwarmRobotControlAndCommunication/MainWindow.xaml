@@ -566,6 +566,7 @@
                             <ComboBoxItem Content="Read Neighbors Table"/>
                             <ComboBoxItem Content="Read One Hop Neighbors Table"/>
                             <ComboBoxItem Content="Read Locations Table"/>
+                            <ComboBoxItem Content="Read Robot Identity"/>
                             <ComboBoxItem Content="Self Correct Locations Table"/>
                             <ComboBoxItem Content="Self Correct Locations Table Except Rotation Hop"/>
                         </ComboBox>

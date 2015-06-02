@@ -30,10 +30,10 @@ namespace SwarmRobotControlAndCommunication
     {
         #region Constructor
 
-        private String FormTitle = "Hello World";
+        public String FormTitle = "Hello World";
 
         public PlotModel MyModel { get; private set; }
-        private PlotWindowModel viewModel;
+        public PlotWindowModel viewModel;
 
         public delegate PlotModel delegatePolyPlot(UInt32[] data, string Title);
         public delegate PlotModel delegateScatterPointPlot(float[] dataX, float[] dataY, string Title);
@@ -243,17 +243,14 @@ namespace SwarmRobotControlAndCommunication
         {
             var plotModel1 = new PlotModel();
             plotModel1.Title = Title;
-            var linearAxis1 = new LinearAxis();
-            linearAxis1.Maximum = dataX.Max() + 10;
-            linearAxis1.Minimum = 0;
+
+            var linearAxis1 = createOXaxis(0, dataX.Max() + 10);
             linearAxis1.Position = AxisPosition.Bottom;
             linearAxis1.MajorGridlineStyle = LineStyle.Solid;
             linearAxis1.MinorGridlineStyle = LineStyle.Dot;
             plotModel1.Axes.Add(linearAxis1);
 
-            var linearAxis2 = new LinearAxis();
-            linearAxis2.Maximum = dataY.Max() + dataX.Min();
-            linearAxis2.Minimum = 0;
+            var linearAxis2 = createOYaxis(0, dataY.Max() + dataX.Min());
             linearAxis2.MajorGridlineStyle = LineStyle.Solid;
             linearAxis2.MinorGridlineStyle = LineStyle.Dot;
             plotModel1.Axes.Add(linearAxis2);
@@ -335,24 +332,10 @@ namespace SwarmRobotControlAndCommunication
             plotModel1.PlotMargins = new OxyThickness(10, 10, 10, 10);
             plotModel1.Title = Title;
 
-            var linearAxis1 = new LinearAxis();
-            linearAxis1.Maximum = 70;
-            linearAxis1.Minimum = -70;
-            linearAxis1.PositionAtZeroCrossing = true;
-            linearAxis1.TickStyle = TickStyle.Crossing;
-            //linearAxis1.Position = AxisPosition.Bottom;
-            //linearAxis1.MajorGridlineStyle = LineStyle.Solid;
-            //linearAxis1.MinorGridlineStyle = LineStyle.Dot;
+            var linearAxis1 = createOXaxis(-70, 70);
             plotModel1.Axes.Add(linearAxis1);
 
-            var linearAxis2 = new LinearAxis();
-            linearAxis2.Maximum = 70;
-            linearAxis2.Minimum = -70;
-            linearAxis2.PositionAtZeroCrossing = true;
-            linearAxis2.TickStyle = TickStyle.Crossing;
-            linearAxis2.Position = AxisPosition.Bottom;
-            //linearAxis2.MajorGridlineStyle = LineStyle.Solid;
-            //linearAxis2.MinorGridlineStyle = LineStyle.Dot;
+            var linearAxis2 = createOYaxis(-70, 70);
             plotModel1.Axes.Add(linearAxis2);
 
             if (dataX.Length != dataY.Length)
@@ -366,51 +349,16 @@ namespace SwarmRobotControlAndCommunication
 
             for (int i = 0; i < id.Length; i++)
             {
-                var circle = new OxyPlot.Annotations.EllipseAnnotation();
-                circle.Width = 12.5;
-                circle.Height = 12.5;
-                circle.StrokeThickness = 0;
-                circle.X = dataX[i];
-                circle.Y = dataY[i];
-                circle.Fill = OxyColors.LightGray;
-                circle.Stroke = OxyColors.LightGray;
-                circle.Layer = AnnotationLayer.BelowAxes;
+                var circle = OxyplotWindow.createCircleAnnotations(12.5, dataX[i], dataY[i], OxyPlot.OxyColors.LightGray);
                 plotModel1.Annotations.Add(circle);
 
-                var pointAnnotation1 = new PointAnnotation();
-                pointAnnotation1.X = dataX[i];
-                pointAnnotation1.Y = dataY[i];
-                //pointAnnotation1.Fill = OxyColors.Orange;
-                //pointAnnotation1.Stroke = OxyColors.IndianRed;
-                pointAnnotation1.Fill = OxyColors.Cyan;
-                pointAnnotation1.Stroke = OxyColors.DarkBlue;
-                //pointAnnotation1.Fill = OxyColors.DarkGray;
-                //pointAnnotation1.Stroke = OxyColors.Gray;
-                pointAnnotation1.StrokeThickness = 3;
-                pointAnnotation1.Size = 10;
-                pointAnnotation1.Text = "0x" + id[i].ToString("X6");
-                pointAnnotation1.TextColor = pointAnnotation1.Stroke;
-                plotModel1.Annotations.Add(pointAnnotation1);
+                var pointAnnotation = createPointAnnotations(id[i], dataX[i], dataY[i], OxyColors.Cyan, OxyColors.DarkBlue);
+                plotModel1.Annotations.Add(pointAnnotation);
 
                 if (validTheta[i])
                 {
-                    var arrowAnnotation2 = new ArrowAnnotation();
-                    arrowAnnotation2.StrokeThickness = 3;
-                    arrowAnnotation2.HeadLength = 3;
-                    arrowAnnotation2.HeadWidth = 1;
-                    arrowAnnotation2.StartPoint = new DataPoint(dataX[i], dataY[i]);
-
-                    DataPoint unitVector = new DataPoint(6.5, 0); // 1 is unit vector length
-                    double angle = theta[i] * Math.PI / 180.0f;
-                    double direction = Math.Atan2(Math.Sin(angle), Math.Cos(angle));
-                    arrowAnnotation2.EndPoint = new DataPoint(unitVector.X * Math.Cos(direction) - unitVector.Y * Math.Sin(direction) + dataX[i],
-                        unitVector.X * Math.Sin(direction) + unitVector.Y * Math.Cos(direction) + dataY[i]);
-                    //arrowAnnotation2.Text = "0x" + id[i].ToString("X6");
-                    //arrowAnnotation2.TextPosition = new DataPoint(dataX[i], dataY[i]);
-                    //arrowAnnotation2.TextHorizontalAlignment = OxyPlot.HorizontalAlignment.Left;
-                    //arrowAnnotation2.TextVerticalAlignment = OxyPlot.VerticalAlignment.Bottom;
-                    arrowAnnotation2.Color = randomColor[i % randomColor.Count];
-                    plotModel1.Annotations.Add(arrowAnnotation2);
+                    var arrowAnnotation = createArrowAnnotations(6.5, theta[i], dataX[i], dataY[i], randomColor[i % randomColor.Count]);
+                    plotModel1.Annotations.Add(arrowAnnotation);
                 }
             }
 
@@ -429,24 +377,10 @@ namespace SwarmRobotControlAndCommunication
             plotModel1.PlotMargins = new OxyThickness(10, 10, 10, 10);
             plotModel1.Title = Title;
 
-            var linearAxis1 = new LinearAxis();
-            linearAxis1.Maximum = 70;
-            linearAxis1.Minimum = -70;
-            linearAxis1.PositionAtZeroCrossing = true;
-            linearAxis1.TickStyle = TickStyle.Crossing;
-            //linearAxis1.Position = AxisPosition.Bottom;
-            //linearAxis1.MajorGridlineStyle = LineStyle.Solid;
-            //linearAxis1.MinorGridlineStyle = LineStyle.Dot;
+            var linearAxis1 = createOXaxis(-70, 70);
             plotModel1.Axes.Add(linearAxis1);
 
-            var linearAxis2 = new LinearAxis();
-            linearAxis2.Maximum = 70;
-            linearAxis2.Minimum = -70;
-            linearAxis2.PositionAtZeroCrossing = true;
-            linearAxis2.TickStyle = TickStyle.Crossing;
-            linearAxis2.Position = AxisPosition.Bottom;
-            //linearAxis2.MajorGridlineStyle = LineStyle.Solid;
-            //linearAxis2.MinorGridlineStyle = LineStyle.Dot;
+            var linearAxis2 = createOYaxis(-70, 70);
             plotModel1.Axes.Add(linearAxis2);
 
             if (dataX.Length != dataY.Length)
@@ -454,39 +388,97 @@ namespace SwarmRobotControlAndCommunication
 
             for (int i = 0; i < id.Length; i++)
             {
-                var circle = new OxyPlot.Annotations.EllipseAnnotation();
-                circle.Width = 12.5;
-                circle.Height = 12.5;
-                circle.StrokeThickness = 0;
-                circle.X = dataX[i];
-                circle.Y = dataY[i];
-                circle.Fill = OxyColors.LightGray;
-                circle.Stroke = OxyColors.LightGray;
-                circle.Layer = AnnotationLayer.BelowAxes;
+                var circle = createCircleAnnotations(12.5, dataX[i], dataY[i], OxyColors.LightGray);
                 plotModel1.Annotations.Add(circle);
 
-                var pointAnnotation1 = new PointAnnotation();
-                pointAnnotation1.X = dataX[i];
-                pointAnnotation1.Y = dataY[i];
-
+                PointAnnotation pointAnnotation;
                 if (id[i] == ui32MainRobotId)
-                {
-                    pointAnnotation1.Fill = OxyColors.Orange;
-                    pointAnnotation1.Stroke = OxyColors.Red;
-                }
+                    pointAnnotation = createPointAnnotations(id[i], dataX[i], dataY[i], OxyColors.Orange, OxyColors.Red);
                 else
-                {
-                    pointAnnotation1.Fill = OxyColors.Cyan;
-                    pointAnnotation1.Stroke = OxyColors.DarkBlue;
-                }
+                    pointAnnotation = createPointAnnotations(id[i], dataX[i], dataY[i], OxyColors.Cyan, OxyColors.DarkBlue);
 
-                pointAnnotation1.StrokeThickness = 3;
-                pointAnnotation1.Size = 10;
-                pointAnnotation1.Text = "0x" + id[i].ToString("X6");
-                plotModel1.Annotations.Add(pointAnnotation1);
+                plotModel1.Annotations.Add(pointAnnotation);
             }
 
             return plotModel1;
         }
+
+
+        public static LinearAxis createOXaxis(double min, double max)
+        {
+            var linearAxis1 = new LinearAxis();
+            linearAxis1.Maximum = max;
+            linearAxis1.Minimum = min;
+            linearAxis1.PositionAtZeroCrossing = true;
+            linearAxis1.TickStyle = TickStyle.Crossing;
+            //linearAxis1.Position = AxisPosition.Bottom;
+            //linearAxis1.MajorGridlineStyle = LineStyle.Solid;
+            //linearAxis1.MinorGridlineStyle = LineStyle.Dot;
+            return linearAxis1;
+        }
+
+        public static LinearAxis createOYaxis(double min, double max)
+        {
+            var linearAxis2 = new LinearAxis();
+            linearAxis2.Maximum = max;
+            linearAxis2.Minimum = min;
+            linearAxis2.PositionAtZeroCrossing = true;
+            linearAxis2.TickStyle = TickStyle.Crossing;
+            linearAxis2.Position = AxisPosition.Bottom;
+            //linearAxis2.MajorGridlineStyle = LineStyle.Solid;
+            //linearAxis2.MinorGridlineStyle = LineStyle.Dot;
+            return linearAxis2;
+        }
+
+        public static EllipseAnnotation createCircleAnnotations(double radius, double x, double y, OxyColor color)
+        {
+            var circle = new OxyPlot.Annotations.EllipseAnnotation();
+            circle.Width = radius;
+            circle.Height = radius;
+            circle.StrokeThickness = 0;
+            circle.X = x;
+            circle.Y = y;
+            circle.Fill = OxyPlot.OxyColors.LightGray;
+            circle.Stroke = OxyPlot.OxyColors.LightGray;
+            circle.Layer = OxyPlot.Annotations.AnnotationLayer.BelowAxes;
+            circle.Fill = color;
+            circle.Stroke = color;
+
+            return circle;
+        }
+
+        public static PointAnnotation createPointAnnotations(UInt32 id, double x, double y, OxyColor fillColor, OxyColor strokeColor)
+        {
+            var point = new OxyPlot.Annotations.PointAnnotation();
+            point.X = x;
+            point.Y = y;
+            point.Fill = fillColor;
+            point.Stroke = strokeColor;
+            point.StrokeThickness = 3;
+            point.Size = 10;
+            point.Text = "0x" + id.ToString("X6");
+            point.TextColor = point.Stroke;
+
+            return point;
+        }
+
+        public static ArrowAnnotation createArrowAnnotations(double length, double fThetaInDeg, double x, double y, OxyColor color)
+        {
+            var arrowAnnotation = new OxyPlot.Annotations.ArrowAnnotation();
+            arrowAnnotation.StrokeThickness = 3;
+            arrowAnnotation.HeadLength = 3;
+            arrowAnnotation.HeadWidth = 1;
+            arrowAnnotation.StartPoint = new OxyPlot.DataPoint(x, y);
+
+            OxyPlot.DataPoint unitVector = new OxyPlot.DataPoint(length, 0);
+            double angle = fThetaInDeg * Math.PI / 180.0f;
+            double direction = Math.Atan2(Math.Sin(angle), Math.Cos(angle));
+            arrowAnnotation.EndPoint = new OxyPlot.DataPoint(unitVector.X * Math.Cos(direction) - unitVector.Y * Math.Sin(direction) + x,
+            unitVector.X * Math.Sin(direction) + unitVector.Y * Math.Cos(direction) + y);
+            arrowAnnotation.Color = color;
+
+            return arrowAnnotation;
+        }
+   
     }
 }

@@ -60,6 +60,8 @@ namespace SwarmRobotControlAndCommunication
             "State 9: Follow Gradient Map",
 
             "State custom: Update Location",
+            "State 11: Update Gradient Goal",
+            "State 12: Execute Actuator",
          };
 
         //------------Commands from Robots---------------------
@@ -245,6 +247,8 @@ namespace SwarmRobotControlAndCommunication
         public static ControlBoardInterface theControlBoard = new TM4C123ControlBoard(0x04D8, 0x003F);
 
         public BootLoaderInterface bootLoader = new TivaBootLoader(theControlBoard, 256);
+
+        public OxyplotWindow oxyplotWindowLocationMap = null;
 
         public MainWindow()
         {
@@ -2603,6 +2607,10 @@ namespace SwarmRobotControlAndCommunication
                         scanRobotIdentity((Button)sender);
                         break;
 
+                    case "Read Robot Identity":
+                        readRobotIdentityCommand();
+                        break;
+
                     default:
                         throw new Exception("Send Debug Command: Can not recognise command!");
                 }
@@ -2908,9 +2916,26 @@ namespace SwarmRobotControlAndCommunication
                 theta.CopyTo(listTheta);
                 validOrientation.CopyTo(listValidTheta);
 
-                OxyplotWindow oxyplotWindow = new OxyplotWindow(listID, listTheta, listValidTheta, Plot_dataX, Plot_dataY, title, OxyplotWindow.ScatterPointAndLinePlot);
-
-                oxyplotWindow.Show();
+                if (oxyplotWindowLocationMap == null)
+                {
+                    oxyplotWindowLocationMap = new OxyplotWindow(listID, listTheta, listValidTheta, Plot_dataX, Plot_dataY, title, OxyplotWindow.ScatterPointAndLinePlot);
+                    oxyplotWindowLocationMap.Show();
+                }
+                else
+                {
+                    MessageBoxResult result = MessageBox.Show("Plot in new window?", "Please confirm", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        oxyplotWindowLocationMap = new OxyplotWindow(listID, listTheta, listValidTheta, Plot_dataX, Plot_dataY, title, OxyplotWindow.ScatterPointAndLinePlot);
+                        oxyplotWindowLocationMap.Show();
+                    }
+                    else
+                    {
+                        oxyplotWindowLocationMap.viewModel.PlotModel = OxyplotWindow.ScatterPointAndLinePlot(listID, listTheta, listValidTheta, Plot_dataX, Plot_dataY, title);
+                        oxyplotWindowLocationMap.FormTitle = title;
+                        oxyplotWindowLocationMap.viewModel.PlotModel.InvalidatePlot(true);
+                    }
+                }
             }
             else
             {
@@ -3035,11 +3060,10 @@ namespace SwarmRobotControlAndCommunication
             StringBuilder outputContent = new StringBuilder();
             outputContent.Append("Robot Identities Information\n");
 
-            String foundRobot = " robot(s): ";
-            int numberOfFoundRobot = 0;
+            StringBuilder foundRobot = new StringBuilder();
+            foundRobot.Append(" robot(s): ");
 
-            uint length = 49;
-            byte[] receivedData = new byte[length];
+            int numberOfFoundRobot = 0;
 
             for (int i = 0; i < ROBOT_ID_LIST.Length; i++)
             {
@@ -3049,46 +3073,21 @@ namespace SwarmRobotControlAndCommunication
                     break;
                 }
                 Thread.Sleep(80);
+
                 setTxAddress(ROBOT_ID_LIST[i].ToString("X8"));
+
                 try
                 {
-                    SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_READ_ROBOT_IDENTITY);
-                    SwarmMessage message = new SwarmMessage(header);
+                    UInt32 id;
+                    float x;
+                    float y;
+                    string ValidOrientation;
+                    double thetaInDeg;
 
-                    theControlBoard.receivedDataFromRobot(receivedData, length, 2000, message);
-
-                    SwarmMessage rxMessage = SwarmMessage.ConstructFromByteArray(receivedData);
-
-                    UInt32 Self_ID = (UInt32)((receivedData[0] << 24) | (receivedData[1] << 16) | (receivedData[2] << 8) | receivedData[3]);
-                    UInt32 Origin_ID = (UInt32)((receivedData[4] << 24) | (receivedData[5] << 16) | (receivedData[6] << 8) | receivedData[7]);
-                    UInt32 RotationHop_ID = (UInt32)((receivedData[8] << 24) | (receivedData[9] << 16) | (receivedData[10] << 8) | receivedData[11]);
-                    byte Self_NeighborsCount = receivedData[12];
-                    byte Origin_NeighborsCount = receivedData[13];
-                    byte Origin_Hopth = receivedData[14];
-                    float x = (float)((Int32)((receivedData[15] << 24) | (receivedData[16] << 16) | (receivedData[17] << 8) | receivedData[18]) / 65536.0);
-                    float y = (float)((Int32)((receivedData[19] << 24) | (receivedData[20] << 16) | (receivedData[21] << 8) | receivedData[22]) / 65536.0);
-                    float RotationHop_x = (float)((Int32)((receivedData[23] << 24) | (receivedData[24] << 16) | (receivedData[25] << 8) | receivedData[26]) / 65536.0);
-                    float RotationHop_y = (float)((Int32)((receivedData[27] << 24) | (receivedData[28] << 16) | (receivedData[29] << 8) | receivedData[30]) / 65536.0);
-                    float theta = (float)((Int32)((receivedData[31] << 24) | (receivedData[32] << 16) | (receivedData[33] << 8) | receivedData[34]) / 65536.0);
-                    double thetaInDeg = theta * 180.0f / Math.PI;
-                    string ValidOrientation = (receivedData[35] == 0x01) ? ("true") : ("false");
-                    string Locomotion = (receivedData[36] == 0) ? ("SAME") : ((receivedData[36] == 1) ? ("DIFFERENT") : ("INVALID"));
-                    Int32 GmHeight = construct4Byte(receivedData, 37);
-                    Int32 GmWidth = construct4Byte(receivedData, 41);
-                    Int32 GmValue = construct4Byte(receivedData, 45);
-
-                    outputContent.Append(String.Format("Robot:0x{0} ({1}; {2})\n", Self_ID.ToString("X6"), x.ToString("G6"), y.ToString("G6")));
-                    outputContent.Append(String.Format("Robot direction = {0} degree\n", thetaInDeg));
-                    outputContent.Append("Valid Orientation: " + ValidOrientation + "\n");
-                    outputContent.Append("Locomotion: " + Locomotion + "\n");
-                    outputContent.Append(String.Format("Self neighbors = {0}\n", Self_NeighborsCount));
-                    outputContent.Append(String.Format("Origin:0x{0}, neighbors = {1}, Hopth = {2}\n", Origin_ID.ToString("X6"), Origin_NeighborsCount, Origin_Hopth));
-                    outputContent.Append(String.Format("Rotation Hop:0x{0} ({1}; {2})\n", RotationHop_ID.ToString("X6"), RotationHop_x.ToString("G6"), RotationHop_y.ToString("G6")));
-                    outputContent.Append(String.Format("Gradient Map ({0} x {1}) value = {2}\n", GmHeight, GmWidth, GmValue));
-                    outputContent.Append("\n");
+                    readRobotIdentity(ref outputContent, out id, out x, out y, out thetaInDeg, out ValidOrientation);
 
                     numberOfFoundRobot += 1;
-                    foundRobot = foundRobot + "0x" + ROBOT_ID_LIST[i].ToString("X6") + ", ";
+                    foundRobot.Append("0x" + ROBOT_ID_LIST[i].ToString("X6") + ", ");
                 }
                 catch (Exception ex)
                 {
@@ -3102,7 +3101,7 @@ namespace SwarmRobotControlAndCommunication
             {
                 mRobotIdentityTextFilePath = exportDataToTextFile("Output RobotIdentity", "RobotIdentity.txt", outputContent.ToString());
                 displayTextDataFile(mRobotIdentityTextFilePath);
-                e.Result = "Found " + numberOfFoundRobot + foundRobot;
+                e.Result = "Found " + numberOfFoundRobot + foundRobot.ToString().Substring(0, foundRobot.Length - 2);
             }
             else
             {
@@ -3139,6 +3138,158 @@ namespace SwarmRobotControlAndCommunication
             bgwScanRobotIdentity.ProgressChanged -= bgwScanRobotIdentity_ProgressChanged;
             bgwScanRobotIdentity.RunWorkerCompleted -= bgwScanRobotIdentity_RunWorkerCompleted;
             bgwScanRobotIdentity = null;
+        }
+
+        private void readRobotIdentityCommand()
+        {
+            StringBuilder outputContent = new StringBuilder();
+            outputContent.Append("Robot 0x" + this.TXAdrrComboBoxDebug.Text + " Identity\n");    
+
+            try
+            {
+                UInt32 id;
+                float x;
+                float y;
+                string ValidOrientation;
+                double thetaInDeg;
+                float goal_x;
+                float goal_y;
+
+                readRobotIdentity(ref outputContent, out id, out x, out y, out thetaInDeg, out ValidOrientation, out goal_x, out goal_y);
+                if (oxyplotWindowLocationMap != null)
+                { 
+                    MessageBoxResult result = MessageBox.Show(outputContent.ToString(), "Do you want to synch to Oxyplot?", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        var circle = OxyplotWindow.createCircleAnnotations(12.5, x, y, OxyPlot.OxyColors.LightGray);
+                        oxyplotWindowLocationMap.viewModel.PlotModel.Annotations.Add(circle);
+
+                        var circleGoal = OxyplotWindow.createCircleAnnotations(12.5, goal_x, goal_y, OxyPlot.OxyColors.LightGray);
+                        oxyplotWindowLocationMap.viewModel.PlotModel.Annotations.Add(circleGoal);
+
+                        var pointAnnotation = OxyplotWindow.createPointAnnotations(id, x, y, OxyPlot.OxyColors.Orange, OxyPlot.OxyColors.Red);
+                        oxyplotWindowLocationMap.viewModel.PlotModel.Annotations.Add(pointAnnotation);
+
+                        var pointGoalAnnotation = OxyplotWindow.createPointAnnotations(id, goal_x, goal_y, OxyPlot.OxyColors.GreenYellow, OxyPlot.OxyColors.Green);
+                        oxyplotWindowLocationMap.viewModel.PlotModel.Annotations.Add(pointGoalAnnotation);
+
+                        double length = Math.Sqrt(Math.Pow(goal_x - x, 2) + Math.Pow(goal_y - y, 2));
+                        double directionInDeg = Math.Atan2(goal_y - y, goal_x - x) * 180 / Math.PI;
+                        var arrowAnnotation = OxyplotWindow.createArrowAnnotations(length, directionInDeg, x, y, OxyPlot.OxyColors.Brown);
+                        oxyplotWindowLocationMap.viewModel.PlotModel.Annotations.Add(arrowAnnotation);
+
+                        oxyplotWindowLocationMap.viewModel.PlotModel.InvalidatePlot(true);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                defaultExceptionHandle(new Exception("readRobotIdentityCommand::" + ex.Message));
+            }
+        }
+
+        private void readRobotIdentity(ref StringBuilder outputContent, out UInt32 Self_ID, out float x, out float y, out double thetaInDeg, out string ValidOrientation)
+        {
+            //uint length = 57;
+            uint length = 39;
+            byte[] receivedData = new byte[length];
+
+            SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_READ_ROBOT_IDENTITY);
+            SwarmMessage message = new SwarmMessage(header);
+
+            theControlBoard.receivedDataFromRobot(receivedData, length, 2000, message);
+
+            SwarmMessage rxMessage = SwarmMessage.ConstructFromByteArray(receivedData);
+
+            int iBufferPointer = 0;
+            Self_ID = (UInt32)construct4Byte(receivedData, iBufferPointer); iBufferPointer += 4;
+            byte Self_NeighborsCount = receivedData[iBufferPointer]; iBufferPointer += 1;
+            x = (float)(construct4Byte(receivedData, iBufferPointer) / 65536.0); iBufferPointer += 4;
+            y = (float)(construct4Byte(receivedData, iBufferPointer) / 65536.0); iBufferPointer += 4;
+            float theta = (float)(construct4Byte(receivedData, iBufferPointer) / 65536.0); iBufferPointer += 4;
+            thetaInDeg = theta * 180.0f / Math.PI;
+            ValidOrientation = (receivedData[iBufferPointer] == 0x01) ? ("true") : ("false"); iBufferPointer += 1;
+            string Locomotion = (receivedData[iBufferPointer] == 0) ? ("SAME") : ((receivedData[iBufferPointer] == 1) ? ("DIFFERENT") : ("INVALID")); iBufferPointer += 1;
+
+            //UInt32 Origin_ID = (UInt32)construct4Byte(receivedData, iBufferPointer); iBufferPointer += 4;
+            //byte Origin_NeighborsCount = receivedData[iBufferPointer]; iBufferPointer += 1;
+            //byte Origin_Hopth = receivedData[iBufferPointer]; iBufferPointer += 1;
+
+            //UInt32 RotationHop_ID = (UInt32)construct4Byte(receivedData, iBufferPointer); iBufferPointer += 4;
+            //float RotationHop_x = (float)(construct4Byte(receivedData, iBufferPointer) / 65536.0); iBufferPointer += 4;
+            //float RotationHop_y = (float)(construct4Byte(receivedData, iBufferPointer) / 65536.0); iBufferPointer += 4;
+
+            Int32 GmHeight = construct4Byte(receivedData, iBufferPointer); iBufferPointer += 4;
+            Int32 GmWidth = construct4Byte(receivedData, iBufferPointer); iBufferPointer += 4;
+            Int32 GmValue = construct4Byte(receivedData, iBufferPointer); iBufferPointer += 4;
+            float GmNextGoal_x = (float)(construct4Byte(receivedData, iBufferPointer) / 65536.0); iBufferPointer += 4;
+            float GmNextGoal_y = (float)(construct4Byte(receivedData, iBufferPointer) / 65536.0); iBufferPointer += 4;
+
+            outputContent.Append(String.Format("Robot:0x{0} ({1}; {2})\n", Self_ID.ToString("X6"), x.ToString("G6"), y.ToString("G6")));
+            outputContent.Append(String.Format("Robot direction = {0} degree\n", thetaInDeg));
+            outputContent.Append("Valid Orientation: " + ValidOrientation + "\n");
+            outputContent.Append("Locomotion: " + Locomotion + "\n");
+            outputContent.Append(String.Format("Self neighbors = {0}\n", Self_NeighborsCount));
+
+            //outputContent.Append(String.Format("Origin:0x{0}, neighbors = {1}, Hopth = {2}\n", Origin_ID.ToString("X6"), Origin_NeighborsCount, Origin_Hopth));
+
+            //outputContent.Append(String.Format("Rotation Hop:0x{0} ({1}; {2})\n", RotationHop_ID.ToString("X6"), RotationHop_x.ToString("G6"), RotationHop_y.ToString("G6")));
+
+            outputContent.Append(String.Format("Gradient Map ({0} x {1}) value = {2}\n", GmHeight, GmWidth, GmValue));
+            outputContent.Append(String.Format("Next Goal ({0} x {1})\n", GmNextGoal_x.ToString("G6"), GmNextGoal_y.ToString("G6")));
+            outputContent.Append("\n");
+        }
+
+        private void readRobotIdentity(ref StringBuilder outputContent, out UInt32 Self_ID, out float x, out float y, out double thetaInDeg, out string ValidOrientation, out float goal_x, out float goal_y)
+        {
+            //uint length = 57;
+            uint length = 39;
+            byte[] receivedData = new byte[length];
+
+            SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_READ_ROBOT_IDENTITY);
+            SwarmMessage message = new SwarmMessage(header);
+
+            theControlBoard.receivedDataFromRobot(receivedData, length, 2000, message);
+
+            SwarmMessage rxMessage = SwarmMessage.ConstructFromByteArray(receivedData);
+
+            int iBufferPointer = 0;
+            Self_ID = (UInt32)construct4Byte(receivedData, iBufferPointer); iBufferPointer += 4;
+            byte Self_NeighborsCount = receivedData[iBufferPointer]; iBufferPointer += 1;
+            x = (float)(construct4Byte(receivedData, iBufferPointer) / 65536.0); iBufferPointer += 4;
+            y = (float)(construct4Byte(receivedData, iBufferPointer) / 65536.0); iBufferPointer += 4;
+            float theta = (float)(construct4Byte(receivedData, iBufferPointer) / 65536.0); iBufferPointer += 4;
+            thetaInDeg = theta * 180.0f / Math.PI;
+            ValidOrientation = (receivedData[iBufferPointer] == 0x01) ? ("true") : ("false"); iBufferPointer += 1;
+            string Locomotion = (receivedData[iBufferPointer] == 0) ? ("SAME") : ((receivedData[iBufferPointer] == 1) ? ("DIFFERENT") : ("INVALID")); iBufferPointer += 1;
+
+            //UInt32 Origin_ID = (UInt32)construct4Byte(receivedData, iBufferPointer); iBufferPointer += 4;
+            //byte Origin_NeighborsCount = receivedData[iBufferPointer]; iBufferPointer += 1;
+            //byte Origin_Hopth = receivedData[iBufferPointer]; iBufferPointer += 1;
+
+            //UInt32 RotationHop_ID = (UInt32)construct4Byte(receivedData, iBufferPointer); iBufferPointer += 4;
+            //float RotationHop_x = (float)(construct4Byte(receivedData, iBufferPointer) / 65536.0); iBufferPointer += 4;
+            //float RotationHop_y = (float)(construct4Byte(receivedData, iBufferPointer) / 65536.0); iBufferPointer += 4;
+
+            Int32 GmHeight = construct4Byte(receivedData, iBufferPointer); iBufferPointer += 4;
+            Int32 GmWidth = construct4Byte(receivedData, iBufferPointer); iBufferPointer += 4;
+            Int32 GmValue = construct4Byte(receivedData, iBufferPointer); iBufferPointer += 4;
+            goal_x = (float)(construct4Byte(receivedData, iBufferPointer) / 65536.0); iBufferPointer += 4;
+            goal_y = (float)(construct4Byte(receivedData, iBufferPointer) / 65536.0); iBufferPointer += 4;
+
+            outputContent.Append(String.Format("Robot:0x{0} ({1}; {2})\n", Self_ID.ToString("X6"), x.ToString("G6"), y.ToString("G6")));
+            outputContent.Append(String.Format("Robot direction = {0} degree\n", thetaInDeg));
+            outputContent.Append("Valid Orientation: " + ValidOrientation + "\n");
+            outputContent.Append("Locomotion: " + Locomotion + "\n");
+            outputContent.Append(String.Format("Self neighbors = {0}\n", Self_NeighborsCount));
+
+            //outputContent.Append(String.Format("Origin:0x{0}, neighbors = {1}, Hopth = {2}\n", Origin_ID.ToString("X6"), Origin_NeighborsCount, Origin_Hopth));
+
+            //outputContent.Append(String.Format("Rotation Hop:0x{0} ({1}; {2})\n", RotationHop_ID.ToString("X6"), RotationHop_x.ToString("G6"), RotationHop_y.ToString("G6")));
+
+            outputContent.Append(String.Format("Gradient Map ({0} x {1}) value = {2}\n", GmHeight, GmWidth, GmValue));
+            outputContent.Append(String.Format("Next Goal ({0} x {1})\n", goal_x.ToString("G6"), goal_y.ToString("G6")));
+            outputContent.Append("\n");
         }
 
         private void rotateAngleButton_Click(object sender, RoutedEventArgs e)
