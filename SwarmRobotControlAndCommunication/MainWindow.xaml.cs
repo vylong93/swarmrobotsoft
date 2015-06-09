@@ -3072,10 +3072,7 @@ namespace SwarmRobotControlAndCommunication
                     e.Cancel = true;
                     break;
                 }
-                Thread.Sleep(80);
-
                 setTxAddress(ROBOT_ID_LIST[i].ToString("X8"));
-
                 try
                 {
                     UInt32 id;
