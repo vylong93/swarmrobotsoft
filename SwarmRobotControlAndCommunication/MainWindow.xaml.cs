@@ -235,6 +235,12 @@ namespace SwarmRobotControlAndCommunication
 
         private List<Tuple<UInt32, UInt16[]>> listTupeEepromTable;
 
+        private byte[] RandomTableBlock0 = new byte[64];	// EEPROM start address Block 14 = 0x0380
+        private byte[] RandomTableBlock1 = new byte[64];	// EEPROM start address Block 15 = 0x03C0
+        private byte[] RandomTableBlock2 = new byte[64];	// EEPROM start address Block 16 = 0x0400
+        private byte[] RandomTableBlock3 = new byte[64];	// EEPROM start address Block 17 = 0x0440
+        private List<Tuple<UInt32, byte[]>> listTupeEepromRandomTable;
+
         #endregion
 
         #region Constructors
@@ -285,6 +291,13 @@ namespace SwarmRobotControlAndCommunication
             listTupeEepromTable.Add(new Tuple<uint, ushort[]>(0x02C0, ArcSineTableBlock3));
             listTupeEepromTable.Add(new Tuple<uint, ushort[]>(0x0300, ArcSineTableBlock4));
             listTupeEepromTable.Add(new Tuple<uint, ushort[]>(0x0340, ArcSineTableBlock5));
+
+            listTupeEepromRandomTable = new List<Tuple<UInt32, byte[]>>();
+
+            listTupeEepromRandomTable.Add(new Tuple<uint, byte[]>(0x0380, RandomTableBlock0));
+            listTupeEepromRandomTable.Add(new Tuple<uint, byte[]>(0x03C0, RandomTableBlock1));
+            listTupeEepromRandomTable.Add(new Tuple<uint, byte[]>(0x0400, RandomTableBlock2));
+            listTupeEepromRandomTable.Add(new Tuple<uint, byte[]>(0x0440, RandomTableBlock3));
         }
         private void addRobotIdListToCombobox(ref ComboBox target, UInt32[] content)
         {
@@ -869,6 +882,8 @@ namespace SwarmRobotControlAndCommunication
         #endregion
 
         #region EEPROM Tab
+        private const int EEPROM_MANIPULATION_BACKGROUNDWORKER_DELAY_IN_MS = 100;
+
         private void configureRFEEprom_Click(object sender, RoutedEventArgs e)
         {
             setTxAddress(this.TXAdrrEepromTextBox.Text);
@@ -884,7 +899,21 @@ namespace SwarmRobotControlAndCommunication
             SINE_ERROR_ARCSINE_OK = 3,
             SINE_ERROR_ARCSINE_ERROR = 4
         }
-       
+
+        private void EepromRandomGenButton_Click(object sender, RoutedEventArgs e)
+        {
+            List<int> listRandomValues = GenerateRandom(8, 0, 15);
+            int[] randomBuffer = listRandomValues.ToArray();
+            EepromRandom7TextBox.Text = Convert.ToString(randomBuffer[7]);
+            EepromRandom6TextBox.Text = Convert.ToString(randomBuffer[6]);
+            EepromRandom5TextBox.Text = Convert.ToString(randomBuffer[5]);
+            EepromRandom4TextBox.Text = Convert.ToString(randomBuffer[4]);
+            EepromRandom3TextBox.Text = Convert.ToString(randomBuffer[3]);
+            EepromRandom2TextBox.Text = Convert.ToString(randomBuffer[2]);
+            EepromRandom1TextBox.Text = Convert.ToString(randomBuffer[1]);
+            EepromRandom0TextBox.Text = Convert.ToString(randomBuffer[0]);
+        }   
+
         private void EepromDataReadButton_Click(object sender, RoutedEventArgs e)
         {
             byte unit = 5;
@@ -1103,83 +1132,12 @@ namespace SwarmRobotControlAndCommunication
 
             assignTaskForBackgroundWorker((Button)sender, "Cancel Update");
         }
-
         private void EepromTableVerifyButton_Click(object sender, RoutedEventArgs e)
         {
             assignTaskForBackgroundWorker((Button)sender, "Cancel Verify");
         }
 
-        private void EepromRandomGenButton_Click(object sender, RoutedEventArgs e)
-        {
-            List<int> listRandomValues = GenerateRandom(8, 0, 15);
-            int[] randomBuffer = listRandomValues.ToArray();
-            EepromRandom7TextBox.Text = Convert.ToString(randomBuffer[7]);
-            EepromRandom6TextBox.Text = Convert.ToString(randomBuffer[6]);
-            EepromRandom5TextBox.Text = Convert.ToString(randomBuffer[5]);
-            EepromRandom4TextBox.Text = Convert.ToString(randomBuffer[4]);
-            EepromRandom3TextBox.Text = Convert.ToString(randomBuffer[3]);
-            EepromRandom2TextBox.Text = Convert.ToString(randomBuffer[2]);
-            EepromRandom1TextBox.Text = Convert.ToString(randomBuffer[1]);
-            EepromRandom0TextBox.Text = Convert.ToString(randomBuffer[0]);
-        }
-        private List<int> GenerateRandom(int count, int min, int max)
-        {
-            Random random = new Random((int)DateTime.Now.Ticks);
-
-            //  initialize set S to empty
-            //  for J := N-M + 1 to N do
-            //    T := RandInt(1, J)
-            //    if T is not in S then
-            //      insert T in S
-            //    else
-            //      insert J in S
-            //
-            // adapted for C# which does not have an inclusive Next(..)
-            // and to make it from configurable range not just 1.
-
-            if (max <= min || count < 0 ||
-                // max - min > 0 required to avoid overflow
-                    (count > max - min && max - min > 0))
-            {
-                // need to use 64-bit to support big ranges (negative min, positive max)
-                throw new ArgumentOutOfRangeException("Range " + min + " to " + max +
-                        " (" + ((Int64)max - (Int64)min) + " values), or count " + count + " is illegal");
-            }
-
-            // generate count random values.
-            HashSet<int> candidates = new HashSet<int>();
-
-            // start count values before max, and end at max
-            for (int top = max - count; top < max; top++)
-            {
-                // May strike a duplicate.
-                // Need to add +1 to make inclusive generator
-                // +1 is safe even for MaxVal max value because top < max
-                if (!candidates.Add(random.Next(min, top + 1)))
-                {
-                    // collision, add inclusive max.
-                    // which could not possibly have been added before.
-                    candidates.Add(top);
-                }
-            }
-
-            // load them in to a list, to sort
-            List<int> result = candidates.ToList();
-
-            // shuffle the results because HashSet has messed
-            // with the order, and the algorithm does not produce
-            // random-ordered results (e.g. max-1 will never be the first value)
-            for (int i = result.Count - 1; i > 0; i--)
-            {
-                int k = random.Next(i + 1);
-                int tmp = result[k];
-                result[k] = result[i];
-                result[i] = tmp;
-            }
-            return result;
-        }
-
-        #region EEPROM backgroundWorker
+        #region EEPROM sine/arcSine table manipulation backgroundWorker
         private void assignTaskForBackgroundWorker(Button buttonClicked, string busyContent)
         {
             Object originalContent = buttonClicked.Content;
@@ -1222,7 +1180,7 @@ namespace SwarmRobotControlAndCommunication
                     toggleAllButtonStatusExceptSelected(buttonClicked);
                     setStatusBarContentAndColor("Busy", Brushes.Indigo);
 
-                    tableVerifyProgramBar.Value = 0;
+                    EepromDataManipulationStatusBar.Value = 0;
                     backgroundWorker.RunWorkerAsync((string)buttonClicked.Content);
 
                     buttonClicked.Content = busyContent;
@@ -1237,7 +1195,7 @@ namespace SwarmRobotControlAndCommunication
             {
                 if (bIsCancel)
                 {
-                    tableVerifyProgramBar.Value = 0;
+                    EepromDataManipulationStatusBar.Value = 0;
                     setStatusBarAndButtonsAppearanceFromDeviceState();
                 }
             }
@@ -1334,7 +1292,7 @@ namespace SwarmRobotControlAndCommunication
   
                         backgroundWorker.ReportProgress(currentBlock * 100 / TOTAL_BLOCK);
 
-                        System.Threading.Thread.Sleep(500);
+                        System.Threading.Thread.Sleep(EEPROM_MANIPULATION_BACKGROUNDWORKER_DELAY_IN_MS);
                     }
                     else
                     {
@@ -1388,7 +1346,7 @@ namespace SwarmRobotControlAndCommunication
 
                 backgroundWorker.ReportProgress(currentBlock  * 100 / TOTAL_BLOCK);
 
-                System.Threading.Thread.Sleep(500);
+                System.Threading.Thread.Sleep(EEPROM_MANIPULATION_BACKGROUNDWORKER_DELAY_IN_MS);
             }
 
             if(currentBlock >= TOTAL_BLOCK)
@@ -1396,10 +1354,25 @@ namespace SwarmRobotControlAndCommunication
             else
                 e.Result = e_VerifyTableReturn.SINE_ERROR_ARCSINE_ERROR;
         }
+        private void fillStartAddressAndWordContent(UInt32 address, UInt16[] pui16ContentBuffer, byte[] data, uint offset)
+        {
+            // fill Address
+            data[offset++] = (byte)(address >> 24);
+            data[offset++] = (byte)(address >> 16);
+            data[offset++] = (byte)(address >> 8);
+            data[offset++] = (byte)address;
+
+            // fill Word content
+            for (int i = 0; i < pui16ContentBuffer.Length; i++)
+            {
+                data[offset++] = (byte)(pui16ContentBuffer[i] & 0xFF);
+                data[offset++] = (byte)((pui16ContentBuffer[i] >> 8) & 0xFF);
+            }
+        }
 
         private void backgroundWorkerTableManipulation_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
-            tableVerifyProgramBar.Value = e.ProgressPercentage;
+            EepromDataManipulationStatusBar.Value = e.ProgressPercentage;
 
             Double percentSineTable;
             Double percentArcSineTable;
@@ -1475,7 +1448,7 @@ namespace SwarmRobotControlAndCommunication
                 }
             }
 
-            tableVerifyProgramBar.Value = 0;
+            EepromDataManipulationStatusBar.Value = 0;
             setStatusBarAndButtonsAppearanceFromDeviceState();
 
             backgroundWorker.DoWork -= backgroundWorkerTableManipulation_DoWork;
@@ -1483,22 +1456,283 @@ namespace SwarmRobotControlAndCommunication
         }
         #endregion
 
-        private void fillStartAddressAndWordContent(UInt32 address, UInt16[] pui16ContentBuffer, byte[] data, uint offset)
+        private void EepromRandomTableGenButton_Click(object sender, RoutedEventArgs e)
         {
-            // fill Address
-            data[offset++] = (byte)(address >> 24);
-            data[offset++] = (byte)(address >> 16);
-            data[offset++] = (byte)(address >> 8);
-            data[offset++] = (byte)address;
-           
-            // fill Word content
-            for (int i = 0; i < pui16ContentBuffer.Length; i++)
+            int count = 256;
+            List<int> listRandomValues = GenerateRandom(count, 0, 256);
+
+            StringBuilder randomData = new StringBuilder();
+            foreach (var item in listRandomValues)
+                randomData.Append(item + ", ");
+            randomData.Remove(randomData.Length - 2, 2);
+
+            EepromRandomBytesTextBox.Text = randomData.ToString();
+        }
+      
+        private BackgroundWorker bgwProgramRandomBytesTableToEEPROM;
+        private void EepromRandomTableProgramButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Hanlde for second event when scanning
+            if (bgwProgramRandomBytesTableToEEPROM != null && bgwProgramRandomBytesTableToEEPROM.IsBusy)
             {
-                data[offset++] = (byte)(pui16ContentBuffer[i] & 0xFF);
-                data[offset++] = (byte)((pui16ContentBuffer[i] >> 8) & 0xFF);
+                bgwProgramRandomBytesTableToEEPROM.CancelAsync();
+                return;
+            }
+
+            bool bIsInputValid = true;
+            String[] inputArray = Regex.Split(this.EepromRandomBytesTextBox.Text, @",\s+");
+            byte[] inputByteArray = new byte[inputArray.Length];
+            for (int i = 0; i < inputByteArray.Length; i++)
+            {
+                if (!byte.TryParse(inputArray[i], out inputByteArray[i]))
+                {
+                    bIsInputValid = false;
+                    break;
+                }
+            }
+
+            if (inputByteArray.Length != 256 || !bIsInputValid)
+            {
+                MessageBox.Show("Random bytes array have not innitialize yet", "Invalid bytes array", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            for (int i = 0; i < 64; i++)
+            {
+                listTupeEepromRandomTable[0].Item2[i] = inputByteArray[i];
+                listTupeEepromRandomTable[1].Item2[i] = inputByteArray[i + 64];
+                listTupeEepromRandomTable[2].Item2[i] = inputByteArray[i + 128 /*64x2*/];
+                listTupeEepromRandomTable[3].Item2[i] = inputByteArray[i + 192 /*64x3*/];
+            }
+
+            // User confirm
+            MessageBoxResult result = MessageBox.Show("This action will change robot's EEPROM data!", "Do you want to continue", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (result == MessageBoxResult.No)
+                return;
+
+            // Init BackgroundWorker
+            bgwProgramRandomBytesTableToEEPROM = new BackgroundWorker();
+            bgwProgramRandomBytesTableToEEPROM.WorkerReportsProgress = true;
+            bgwProgramRandomBytesTableToEEPROM.WorkerSupportsCancellation = true;
+
+            bgwProgramRandomBytesTableToEEPROM.DoWork += new DoWorkEventHandler(bgwProgramRandomBytesTableToEEPROM_DoWork);
+            bgwProgramRandomBytesTableToEEPROM.ProgressChanged += new ProgressChangedEventHandler(bgwProgramRandomBytesTableToEEPROM_ProgressChanged);
+            bgwProgramRandomBytesTableToEEPROM.RunWorkerCompleted += new RunWorkerCompletedEventHandler(bgwProgramRandomBytesTableToEEPROM_RunWorkerCompleted);
+
+            // Lock UI
+            this.EepromRandomBytesTextBox.IsEnabled = false;
+            this.EepromRandomTableProgramButton.Content = "Stop Program EEPROM";
+            toggleAllButtonStatusExceptSelected((Button)sender);
+            setStatusBarContentAndColor("0%::programing random bytes...", Brushes.Indigo);
+
+            // Active BackgroundWorker
+            bgwProgramRandomBytesTableToEEPROM.RunWorkerAsync();
+        }
+        #region backgroundWorker program random bytes table to EEPROM
+        private void bgwProgramRandomBytesTableToEEPROM_DoWork(object sender, DoWorkEventArgs e)
+        {
+            const byte TOTAL_BLOCK = 4; // 16 word * 4 = 256 bytes 
+            const byte NUMBER_OF_WORD = 16;
+            byte[] data = new byte[1 + 4 + 4 * NUMBER_OF_WORD];
+
+            for (int currentBlock = 0; currentBlock < TOTAL_BLOCK; currentBlock++)
+            {
+                if (bgwProgramRandomBytesTableToEEPROM.CancellationPending)
+                {
+                    e.Cancel = true;
+                    break;
+                }
+
+                UInt32 address = listTupeEepromRandomTable[currentBlock].Item1;
+                byte[] pui8Data = listTupeEepromRandomTable[currentBlock].Item2;
+
+                data[0] = NUMBER_OF_WORD;
+                parse32bitTo4Bytes(data, 1, (Int32)address);
+                for (int i = 0; i < pui8Data.Length; i++)
+                    data[i + 5] = pui8Data[i];
+
+                SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_EEPROM_DATA_WRITE_BULK);
+                SwarmMessage message = new SwarmMessage(header, data);
+
+                if (!theControlBoard.sendMessageToRobot(message))
+                {
+                    e.Result = false;
+                    return;
+                }
+
+                bgwProgramRandomBytesTableToEEPROM.ReportProgress(currentBlock * 100 / TOTAL_BLOCK);
+
+                System.Threading.Thread.Sleep(EEPROM_MANIPULATION_BACKGROUNDWORKER_DELAY_IN_MS);
+            }
+
+            e.Result = true;
+        }
+        private void bgwProgramRandomBytesTableToEEPROM_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            EepromDataManipulationStatusBar.Value = e.ProgressPercentage;
+            setStatusBarContent(EepromDataManipulationStatusBar.Value.ToString() + "% " + "::programing random bytes...");
+        }
+        private void bgwProgramRandomBytesTableToEEPROM_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            EepromDataManipulationStatusBar.Value = 0;
+            setStatusBarAndButtonsAppearanceFromDeviceState();
+
+            if (e.Cancelled)
+                setStatusBarContent("Program random bytes process is terminated.");
+            else
+            {
+                if ((Boolean)e.Result)
+                    setStatusBarContent("Program random bytes process completed.");
+                else
+                    setStatusBarContent("Failed to program random bytes to EEPROM");
+            }
+
+            this.EepromRandomTableProgramButton.Content = "Program Random Table";
+            this.EepromRandomBytesTextBox.IsEnabled = true;
+            bgwProgramRandomBytesTableToEEPROM.DoWork -= bgwProgramRandomBytesTableToEEPROM_DoWork;
+            bgwProgramRandomBytesTableToEEPROM.ProgressChanged -= bgwProgramRandomBytesTableToEEPROM_ProgressChanged;
+            bgwProgramRandomBytesTableToEEPROM.RunWorkerCompleted -= bgwProgramRandomBytesTableToEEPROM_RunWorkerCompleted;
+            bgwProgramRandomBytesTableToEEPROM = null;
+        }
+        #endregion
+
+        private BackgroundWorker bgwReadRandomBytesTableToEEPROM;
+        private void EepromRandomTableReadButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Hanlde for second event when scanning
+            if (bgwReadRandomBytesTableToEEPROM != null && bgwReadRandomBytesTableToEEPROM.IsBusy)
+            {
+                bgwReadRandomBytesTableToEEPROM.CancelAsync();
+                return;
+            }
+
+            // Init BackgroundWorker
+            bgwReadRandomBytesTableToEEPROM = new BackgroundWorker();
+            bgwReadRandomBytesTableToEEPROM.WorkerReportsProgress = true;
+            bgwReadRandomBytesTableToEEPROM.WorkerSupportsCancellation = true;
+
+            bgwReadRandomBytesTableToEEPROM.DoWork += new DoWorkEventHandler(bgwReadRandomBytesTableToEEPROM_DoWork);
+            bgwReadRandomBytesTableToEEPROM.ProgressChanged += new ProgressChangedEventHandler(bgwReadRandomBytesTableToEEPROM_ProgressChanged);
+            bgwReadRandomBytesTableToEEPROM.RunWorkerCompleted += new RunWorkerCompletedEventHandler(bgwReadRandomBytesTableToEEPROM_RunWorkerCompleted);
+
+            // Lock UI
+            this.EepromRandomBytesTextBox.IsEnabled = false;
+            this.EepromRandomTableReadButton.Content = "Stop Read EEPROM";
+            toggleAllButtonStatusExceptSelected((Button)sender);
+            setStatusBarContentAndColor("0%::reading random bytes...", Brushes.Indigo);
+
+            // Active BackgroundWorker
+            bgwReadRandomBytesTableToEEPROM.RunWorkerAsync();
+        }
+        #region backgroundWorker read random bytes table to EEPROM
+        private void bgwReadRandomBytesTableToEEPROM_DoWork(object sender, DoWorkEventArgs e)
+        {
+            e.Result = true;
+
+            const byte TOTAL_BLOCK = 4; 
+            const byte NUMBER_OF_WORD = 16;
+            byte[] data = new byte[1 + 4];
+
+            UInt32 bufferLength = 2 + 1 + 4 + 4 * NUMBER_OF_WORD;
+            byte[] dataBuffer = new byte[bufferLength];
+            UInt32 rxAddress;
+
+            try
+            {
+                for (int currentBlock = 0; currentBlock < TOTAL_BLOCK; currentBlock++)
+                {
+                    if (bgwReadRandomBytesTableToEEPROM.CancellationPending)
+                    {
+                        e.Cancel = true;
+                        break;
+                    }
+
+                    UInt32 address = listTupeEepromRandomTable[currentBlock].Item1;
+
+                    data[0] = NUMBER_OF_WORD;
+                    parse32bitTo4Bytes(data, 1, (Int32)address);
+
+                    SwarmMessageHeader header = new SwarmMessageHeader(e_MessageType.MESSAGE_TYPE_HOST_COMMAND, COMMAND_EEPROM_DATA_READ_BULK);
+                    SwarmMessage message = new SwarmMessage(header, data);
+
+                    theControlBoard.receivedDataFromRobot(dataBuffer, bufferLength, 1000, message);
+                    SwarmMessage rxMessage = SwarmMessage.ConstructFromByteArray(dataBuffer);
+                    byte[] messageContent;
+                    if (rxMessage.getHeader().getMessageType() == e_MessageType.MESSAGE_TYPE_ROBOT_RESPONSE
+                        && rxMessage.getHeader().getCmd() == ROBOT_RESPONSE_TO_HOST_OK)
+                    {
+                        messageContent = rxMessage.getData();
+
+                        rxAddress = (UInt32)construct4Byte(messageContent, 1);
+                        if (messageContent[0] == NUMBER_OF_WORD && rxAddress == listTupeEepromRandomTable[currentBlock].Item1)
+                        {
+                            for (int i = 0; i < listTupeEepromRandomTable[currentBlock].Item2.Length; i++)
+                                listTupeEepromRandomTable[currentBlock].Item2[i] = messageContent[i + 5];
+                        }
+                        else
+                        {
+                            e.Result = false;
+                            break;
+                        }
+
+                        bgwReadRandomBytesTableToEEPROM.ReportProgress(currentBlock * 100 / TOTAL_BLOCK);
+
+                        System.Threading.Thread.Sleep(EEPROM_MANIPULATION_BACKGROUNDWORKER_DELAY_IN_MS);
+                    }
+                    else
+                    {
+                        e.Result = false;
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                defaultExceptionHandle(ex);
             }
         }
+        private void bgwReadRandomBytesTableToEEPROM_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            EepromDataManipulationStatusBar.Value = e.ProgressPercentage;
+            setStatusBarContent(EepromDataManipulationStatusBar.Value.ToString() + "% " + "::reading random bytes...");
+        }
+        private void bgwReadRandomBytesTableToEEPROM_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            EepromDataManipulationStatusBar.Value = 0;
+            setStatusBarAndButtonsAppearanceFromDeviceState();
 
+            if (e.Cancelled)
+                setStatusBarContent("Read random bytes process is terminated.");
+            else
+            {
+                if ((Boolean)e.Result)
+                {
+                    setStatusBarContent("Read random bytes process completed.");
+
+                    StringBuilder randomData = new StringBuilder();
+
+                    foreach (var item in listTupeEepromRandomTable)
+                    {
+                        for (int i = 0; i < item.Item2.Length; i++)
+                            randomData.Append(item.Item2[i] + ", ");
+                    }
+                    randomData.Remove(randomData.Length - 2, 2);
+
+                    EepromRandomBytesTextBox.Text = randomData.ToString();
+                }
+                else
+                    setStatusBarContent("Failed to read random bytes in EEPROM");
+            }
+
+            this.EepromRandomTableReadButton.Content = "Read Random Table";
+            this.EepromRandomBytesTextBox.IsEnabled = true;
+
+            bgwReadRandomBytesTableToEEPROM.DoWork -= bgwReadRandomBytesTableToEEPROM_DoWork;
+            bgwReadRandomBytesTableToEEPROM.ProgressChanged -= bgwReadRandomBytesTableToEEPROM_ProgressChanged;
+            bgwReadRandomBytesTableToEEPROM.RunWorkerCompleted -= bgwReadRandomBytesTableToEEPROM_RunWorkerCompleted;
+            bgwReadRandomBytesTableToEEPROM = null;
+        }
+        #endregion
         #endregion
 
         #region Calibration Tab
@@ -3621,7 +3855,7 @@ namespace SwarmRobotControlAndCommunication
         }
         #endregion
     
-        #region Helper Data manipulation methods
+        #region Helper Data manipulation methods and utils
         private void parse32bitTo4Bytes(byte[] pBuff, int offset, Int32 i32Data)
         {
             pBuff[offset] = (byte)((i32Data >> 24) & 0xFF);
@@ -3644,6 +3878,63 @@ namespace SwarmRobotControlAndCommunication
         private Int16 construct2Byte(byte[] pBuff, int offset)
         {
             return (Int16)((pBuff[offset] << 8) | pBuff[offset + 1]);
+        }
+
+        private List<int> GenerateRandom(int count, int min, int max)
+        {
+            Random random = new Random((int)DateTime.Now.Ticks);
+
+            //  initialize set S to empty
+            //  for J := N-M + 1 to N do
+            //    T := RandInt(1, J)
+            //    if T is not in S then
+            //      insert T in S
+            //    else
+            //      insert J in S
+            //
+            // adapted for C# which does not have an inclusive Next(..)
+            // and to make it from configurable range not just 1.
+
+            if (max <= min || count < 0 ||
+                // max - min > 0 required to avoid overflow
+                    (count > max - min && max - min > 0))
+            {
+                // need to use 64-bit to support big ranges (negative min, positive max)
+                throw new ArgumentOutOfRangeException("Range " + min + " to " + max +
+                        " (" + ((Int64)max - (Int64)min) + " values), or count " + count + " is illegal");
+            }
+
+            // generate count random values.
+            HashSet<int> candidates = new HashSet<int>();
+
+            // start count values before max, and end at max
+            for (int top = max - count; top < max; top++)
+            {
+                // May strike a duplicate.
+                // Need to add +1 to make inclusive generator
+                // +1 is safe even for MaxVal max value because top < max
+                if (!candidates.Add(random.Next(min, top + 1)))
+                {
+                    // collision, add inclusive max.
+                    // which could not possibly have been added before.
+                    candidates.Add(top);
+                }
+            }
+
+            // load them in to a list, to sort
+            List<int> result = candidates.ToList();
+
+            // shuffle the results because HashSet has messed
+            // with the order, and the algorithm does not produce
+            // random-ordered results (e.g. max-1 will never be the first value)
+            for (int i = result.Count - 1; i > 0; i--)
+            {
+                int k = random.Next(i + 1);
+                int tmp = result[k];
+                result[k] = result[i];
+                result[i] = tmp;
+            }
+            return result;
         }
         #endregion
     }
