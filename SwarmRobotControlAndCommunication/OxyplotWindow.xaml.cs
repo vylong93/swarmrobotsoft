@@ -244,13 +244,23 @@ namespace SwarmRobotControlAndCommunication
             var plotModel1 = new PlotModel();
             plotModel1.Title = Title;
 
-            var linearAxis1 = createOXaxis(0, dataX.Max() + 10);
+            var linearAxis1 = new LinearAxis();
+            linearAxis1.Maximum = dataX.Max() + 10;
+            linearAxis1.Minimum = 0;
+            linearAxis1.PositionAtZeroCrossing = true;
+            linearAxis1.TickStyle = TickStyle.Crossing;
+            //var linearAxis1 = createOXaxis(0, dataX.Max() + 10);
             linearAxis1.Position = AxisPosition.Bottom;
             linearAxis1.MajorGridlineStyle = LineStyle.Solid;
             linearAxis1.MinorGridlineStyle = LineStyle.Dot;
             plotModel1.Axes.Add(linearAxis1);
 
-            var linearAxis2 = createOYaxis(0, dataY.Max() + dataX.Min());
+            var linearAxis2 = new LinearAxis();
+            linearAxis2.Maximum = dataY.Max() + dataX.Min();
+            linearAxis2.Minimum = 0;
+            linearAxis2.PositionAtZeroCrossing = true;
+            linearAxis2.TickStyle = TickStyle.Crossing;
+            //var linearAxis2 = createOYaxis(0, dataY.Max() + dataX.Min());
             linearAxis2.MajorGridlineStyle = LineStyle.Solid;
             linearAxis2.MinorGridlineStyle = LineStyle.Dot;
             plotModel1.Axes.Add(linearAxis2);
@@ -265,9 +275,7 @@ namespace SwarmRobotControlAndCommunication
                 throw new Exception("Invalid length of X and Y!");
 
             for (int i = 0; i < dataY.Length; i++)
-            {
                 scatterSeries.Points.Add(new ScatterPoint(dataX[i], dataY[i]));
-            }
 
             plotModel1.Series.Add(scatterSeries);
 

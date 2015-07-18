@@ -58,10 +58,10 @@ namespace SwarmRobotControlAndCommunication
             "State 7: Locomotion",
             "State 8: Update Orientation",
             "State 9: Follow Gradient Map",
-
             "State custom: Update Location",
             "State 11: Update Gradient Goal",
             "State 12: Execute Actuator",
+            "State 13: Check Location",
          };
 
         //------------Commands from Robots---------------------
